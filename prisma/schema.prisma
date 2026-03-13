@@ -30,17 +30,32 @@ model Project {
   conversation    Conversation?
   pagePlan        PagePlan?
   page            Page?
+  workflowRun     WorkflowRun?
 }
 
 model Conversation {
   id            String   @id @default(uuid())
   projectId     String   @unique
   messages      String   @default("[]")
-  workflowState String   @default("intake")
   aiContext     String   @default("{}")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model WorkflowRun {
+  id              String    @id @default(uuid())
+  projectId       String    @unique
+  state           String    @default("intake")
+  currentStep     String    @default("")
+  steps           String    @default("[]")
+  canUserReply    Boolean   @default(true)
+  progressPercent Int       @default(0)
+  lastError       String?
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  updatedAt       DateTime  @updatedAt
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model PagePlan {

@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
+import { buildStatus } from "@/lib/workflow/engine";
 
-// Get conversation messages (read-only)
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -11,18 +11,16 @@ export async function GET(
   if ("error" in auth) return auth.error;
   const { id } = await params;
 
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: { conversation: true },
-  });
-
+  const project = await prisma.project.findUnique({ where: { id } });
   if (!project || project.userId !== auth.user.userId) {
     return errorResponse("Project not found", 404);
   }
 
-  return jsonResponse({
-    messages: project.conversation
-      ? JSON.parse(project.conversation.messages)
-      : [],
-  });
+  const status = await buildStatus(id);
+
+  // Include conversation messages
+  const conv = await prisma.conversation.findUnique({ where: { projectId: id } });
+  const messages = conv ? JSON.parse(conv.messages) : [];
+
+  return jsonResponse({ ...status, messages });
 }
