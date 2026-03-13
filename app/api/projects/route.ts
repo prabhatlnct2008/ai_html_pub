@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     data: {
       projectId: project.id,
       messages: JSON.stringify([]),
-      workflowState: "intake",
+
       aiContext: JSON.stringify(businessContext),
     },
   });

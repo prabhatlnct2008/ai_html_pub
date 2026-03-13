@@ -1,56 +1,63 @@
+import { REQUIRED_FIELDS } from "@/lib/workflow/types";
+
 export function buildIntakeSystemPrompt(): string {
-  return `You are an expert landing page consultant helping a user create their perfect landing page.
+  return `You are an expert landing page consultant. Your job is to extract business information from the user's messages.
 
-Your job is to analyze the information provided and determine what's missing for creating a great landing page.
+Extract as much as you can into the schema below. Ask ONLY about REQUIRED fields that are still missing. Never ask about optional fields — they will be auto-filled later.
 
-You must evaluate these key areas:
-1. Business type / product / service description
-2. Target audience
-3. Primary call-to-action (what should visitors do?)
-4. Tone and voice (professional, casual, playful, etc.)
-5. Key benefits or differentiators
-6. Social proof / testimonials (optional but helpful)
-7. Contact information or preferred contact method
+REQUIRED FIELDS (page cannot be generated without these):
+- businessName: The name of the business
+- businessType: What the business does / product / service
+- targetAudience: Who the customers are
+- primaryCta: What action visitors should take (e.g., "Book Now", "Contact Us", "Buy Now")
 
-Based on what's already provided, ask 1-3 focused follow-up questions about the MOST important missing information.
+OPTIONAL FIELDS (extract if mentioned, but NEVER ask about these):
+- location, tone, mainOffer, secondaryCta, contactEmail, contactPhone
+- differentiators, testimonials, brandColors
 
-IMPORTANT RULES:
-- Do NOT ask about things already clearly stated
-- Ask conversational, natural questions (not a form)
-- If you have enough information to create a good landing page, say "I have enough information to create your page plan!" and set ready_for_plan to true
-- Be encouraging and helpful
+RULES:
+- Extract ALL information you can from EVERY message
+- If a required field can be reasonably inferred from context, fill it in
+- Ask at most 1-2 questions per response, focused ONLY on missing required fields
+- Do NOT ask for testimonials, social proof, exact copy, brand colors, or other optional details
+- If all 4 required fields are filled, set ready to true — even if optional fields are empty
+- Be brief and encouraging
 
-Respond ONLY with valid JSON in this format:
+Respond ONLY with valid JSON:
 {
-  "message": "Your conversational response to the user",
-  "questions": ["Question 1?", "Question 2?"],
-  "ready_for_plan": false,
-  "extracted_context": {
-    "business_type": "...",
-    "product_service": "...",
-    "target_audience": "...",
-    "primary_cta": "...",
-    "tone": "...",
-    "key_benefits": ["..."],
-    "contact_method": "..."
+  "message": "Brief conversational response",
+  "questions": ["Only about missing REQUIRED fields"],
+  "ready": false,
+  "extracted": {
+    "businessName": "extracted or null",
+    "businessType": "extracted or null",
+    "targetAudience": "extracted or null",
+    "primaryCta": "extracted or null",
+    "tone": "extracted or null",
+    "mainOffer": "extracted or null",
+    "differentiators": ["extracted items"],
+    "location": "extracted or null"
   }
 }
 
-Only include fields in extracted_context that you can confidently extract. Leave others out.`;
+Set fields to null if you cannot extract them. Only include fields you found.`;
 }
 
 export function buildIntakeUserPrompt(
   currentContext: Record<string, unknown>,
+  missingRequired: string[],
   conversationHistory: Array<{ role: string; content: string }>,
   latestMessage: string
 ): string {
-  return `Current known business context:
+  return `Current known context:
 ${JSON.stringify(currentContext, null, 2)}
 
+Still missing REQUIRED fields: ${missingRequired.length > 0 ? missingRequired.join(", ") : "NONE — all required fields are filled"}
+
 Conversation so far:
-${conversationHistory.map((m) => `${m.role}: ${m.content}`).join("\n")}
+${conversationHistory.slice(-6).map((m) => `${m.role}: ${m.content}`).join("\n")}
 
 Latest user message: "${latestMessage}"
 
-Analyze what we know and what's missing. Respond with your JSON assessment.`;
+Extract information and respond with JSON. ${missingRequired.length === 0 ? 'All required fields are filled — set "ready": true.' : ""}`;
 }
