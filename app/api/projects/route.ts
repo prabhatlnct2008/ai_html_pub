@@ -43,8 +43,12 @@ export async function POST(request: NextRequest) {
 
   const slug = await ensureUniqueSlug(baseSlug);
 
+  // Map form fields to BusinessContext schema
+  // businessName comes from the project name
+  // businessType comes from businessDescription
   const businessContext = {
-    businessDescription: businessDescription || "",
+    businessName: name,
+    businessType: businessDescription || "",
     competitorUrl: competitorUrl || "",
     targetAudience: targetAudience || "",
     primaryCta: primaryCta || "",

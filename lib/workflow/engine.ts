@@ -49,12 +49,19 @@ export async function runWorkflow(projectId: string): Promise<WorkflowStatus> {
     await updateStepStatus(projectId, state, "in_progress");
     await updateWorkflowState(projectId, state, getStepMessage(state));
 
+    // Post a progress message to the chat so the user sees what's happening
+    const progressMsg = getProgressChatMessage(state);
+    if (progressMsg) {
+      await addConversationMessage(projectId, progressMsg);
+    }
+
     try {
       const result = await executeState(projectId, state);
 
       if (result.error) {
         await updateStepStatus(projectId, state, "failed", result.error);
         await updateWorkflowState(projectId, "failed", result.error);
+        await addConversationMessage(projectId, `Something went wrong: ${result.error}`);
         state = "failed";
         break;
       }
@@ -235,4 +242,35 @@ function getProgressMessage(state: WorkflowState): string {
     failed: "An error occurred. You can retry.",
   };
   return messages[state] || "";
+}
+
+/**
+ * Get a chat message to show the user when a step starts executing.
+ * These appear in the chat panel so the user understands what's happening.
+ */
+function getProgressChatMessage(state: WorkflowState): string | null {
+  const messages: Partial<Record<WorkflowState, string>> = {
+    competitor_analysis_running: "Analyzing the competitor website for design insights...",
+    plan_generation_running: "Creating your page plan with sections, branding, and layout...",
+    generation_running: "Writing content for each section of your page. This may take a moment...",
+    rendering: "Assembling your landing page HTML...",
+    saving: "Saving your project...",
+  };
+  return messages[state] || null;
+}
+
+/**
+ * Add a message to the conversation so it appears in the chat panel.
+ */
+async function addConversationMessage(projectId: string, content: string) {
+  const conv = await prisma.conversation.findUnique({ where: { projectId } });
+  if (!conv) return;
+
+  const messages = JSON.parse(conv.messages) as Array<{ role: string; content: string }>;
+  messages.push({ role: "assistant", content });
+
+  await prisma.conversation.update({
+    where: { id: conv.id },
+    data: { messages: JSON.stringify(messages) },
+  });
 }

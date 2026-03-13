@@ -71,7 +71,7 @@ export async function POST(
     const status = await buildStatus(id);
     const allMessages = conv ? JSON.parse((await prisma.conversation.findUnique({ where: { projectId: id } }))?.messages || "[]") : [];
 
-    return jsonResponse({ ...status, plan: modified, messages: allMessages });
+    return jsonResponse({ workflow: { ...status, plan: modified }, messages: allMessages });
   } catch (err: unknown) {
     console.error("Plan revision error:", err);
     return errorResponse("Failed to revise plan. Please try again.", 500);
