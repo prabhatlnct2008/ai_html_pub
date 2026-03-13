@@ -90,14 +90,14 @@ export default function NewProjectPage() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium">
-              Business Description
+              What does your business do?
             </label>
             <textarea
               value={form.businessDescription}
               onChange={(e) => updateForm("businessDescription", e.target.value)}
               rows={3}
               className="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-              placeholder="Describe what your business does, what you offer..."
+              placeholder="e.g., Dog training services including puppy training, obedience, and agility"
             />
           </div>
 

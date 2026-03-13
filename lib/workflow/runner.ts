@@ -176,6 +176,8 @@ async function executeSectionGeneration(
     });
   }
 
+  await addSystemMessage(projectId, `All ${sections.length} sections generated successfully. Now rendering your page...`);
+
   return { nextState: "rendering" };
 }
 
