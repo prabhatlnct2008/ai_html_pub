@@ -1,45 +1,48 @@
 # Architectural Design Document
 
+> **Stack Update**: Adapted from Flask + React to **Next.js** for Vercel deployment compatibility.
+> Core architecture (sections JSON, AI orchestration, editor) is unchanged.
+
 ## 1. Application Architecture
 
 The application follows a layered architecture with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                 Frontend (React)                 │
+│            Frontend (Next.js App Router)          │
 │  ┌──────────┬──────────┬──────────┬───────────┐ │
 │  │Dashboard │AI Chat   │Plan View │Page Editor│ │
 │  └──────────┴──────────┴──────────┴───────────┘ │
 ├─────────────────────────────────────────────────┤
-│              Backend API (Flask)                  │
+│           API Routes (Next.js /api)              │
 │  ┌──────────┬──────────┬──────────┬───────────┐ │
 │  │Auth      │Project   │AI Orch.  │Page       │ │
 │  │Routes    │Routes    │Routes    │Routes     │ │
 │  └──────────┴──────────┴──────────┴───────────┘ │
 ├─────────────────────────────────────────────────┤
-│              Service Layer                       │
+│              Service Layer (lib/)                 │
 │  ┌──────────┬──────────┬──────────┬───────────┐ │
 │  │Auth      │Project   │AI        │Page       │ │
 │  │Service   │Service   │Orchestr. │Service    │ │
 │  └──────────┴──────────┴──────────┴───────────┘ │
 ├─────────────────────────────────────────────────┤
-│              AI Layer                            │
+│              AI Layer (lib/ai/)                   │
 │  ┌──────────┬──────────┬──────────┬───────────┐ │
 │  │Intake    │Competitor│Planner   │Generator  │ │
 │  │Agent     │Analyzer  │          │           │ │
 │  └──────────┴──────────┴──────────┴───────────┘ │
 ├─────────────────────────────────────────────────┤
-│         Persistence (SQLite + SQLAlchemy)        │
+│       Persistence (Prisma + SQLite/Postgres)     │
 └─────────────────────────────────────────────────┘
 ```
 
 ### Layers
 
-- **Frontend**: React SPA with Tailwind CSS. Handles all UI rendering, user interaction, editor behavior.
-- **API Routes**: Thin Flask route handlers. Validate input, call services, return responses. No business logic.
-- **Service Layer**: Business logic lives here. Auth, project management, page operations, AI orchestration coordination.
+- **Frontend**: Next.js App Router with Tailwind CSS. Server and client components. Handles all UI rendering, user interaction, editor behavior.
+- **API Routes**: Next.js Route Handlers in `app/api/`. Validate input, call services, return responses. No business logic.
+- **Service Layer**: Business logic in `lib/`. Auth, project management, page operations, AI orchestration coordination.
 - **AI Layer**: Self-contained AI orchestration with clear responsibilities per workflow stage. Prompts are centralized and versioned.
-- **Persistence**: SQLite via SQLAlchemy ORM. Clean models, explicit relationships.
+- **Persistence**: Prisma ORM. SQLite for local development, Postgres (Neon/Vercel Postgres) for production on Vercel.
 
 ---
 
@@ -350,96 +353,88 @@ A server-side renderer (`backend/services/html_renderer.py`) that:
 
 | Layer | Choice | Rationale |
 |-------|--------|-----------|
-| Frontend | React + Tailwind CSS | Modular UI, good editor support, fast styling |
-| Backend | Flask + SQLAlchemy | Simple, proven, good Python AI integration |
-| Database | SQLite | Sufficient for MVP, easy setup, migrate to Postgres later |
+| Framework | Next.js 14 (App Router) | Vercel-native, SSR + API routes in one project |
+| Styling | Tailwind CSS | Fast utility-first styling |
+| Database | Prisma + SQLite (dev) / Postgres (prod) | ORM with easy DB switching for Vercel |
 | AI | OpenAI API (GPT-4) | Best structured output quality, JSON mode support |
 | Orchestration | Custom state machine | Full control, no framework overhead |
-| HTML Rendering | Jinja2 templates | Server-side, fast, reliable |
-| Auth | Flask-Login + bcrypt | Simple session-based auth |
+| HTML Rendering | TypeScript template functions | Server-side, fast, reliable |
+| Auth | JWT in httpOnly cookies + bcrypt | Simple, stateless, Vercel-compatible |
 
 ### Project Structure
 
 ```
 ai_html_pub/
-├── backend/
-│   ├── app.py                    # Flask app factory
-│   ├── config.py                 # Configuration
-│   ├── models/                   # SQLAlchemy models
-│   │   ├── user.py
-│   │   ├── project.py
-│   │   ├── conversation.py
-│   │   ├── page_plan.py
-│   │   └── page.py
-│   ├── routes/                   # API route handlers
-│   │   ├── auth.py
-│   │   ├── projects.py
-│   │   ├── ai_builder.py
-│   │   └── pages.py
-│   ├── services/                 # Business logic
-│   │   ├── auth_service.py
-│   │   ├── project_service.py
-│   │   ├── page_service.py
-│   │   └── html_renderer.py
-│   ├── ai/                       # AI orchestration
-│   │   ├── orchestrator.py       # Main workflow controller
-│   │   ├── intake.py             # Intake agent
-│   │   ├── competitor.py         # Competitor analyzer
-│   │   ├── planner.py            # Plan generator
-│   │   ├── generator.py          # Page generator
-│   │   ├── section_updater.py    # Section regenerator
-│   │   └── prompts/              # Centralized prompts
-│   │       ├── intake_prompts.py
-│   │       ├── competitor_prompts.py
-│   │       ├── planner_prompts.py
-│   │       ├── generator_prompts.py
-│   │       └── section_update_prompts.py
-│   ├── templates/                # Jinja2 section templates for HTML rendering
-│   │   ├── page_base.html
-│   │   ├── sections/
-│   │   │   ├── hero.html
-│   │   │   ├── features.html
-│   │   │   ├── testimonials.html
-│   │   │   ├── pricing.html
-│   │   │   ├── faq.html
-│   │   │   ├── cta.html
-│   │   │   └── contact.html
-│   └── migrations/
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── pages/                # Route-level components
-│   │   │   ├── Landing.jsx
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── NewProject.jsx
-│   │   │   ├── AIBuilder.jsx
-│   │   │   └── PageEditor.jsx
-│   │   ├── components/           # Reusable components
-│   │   │   ├── editor/
-│   │   │   │   ├── EditorCanvas.jsx
-│   │   │   │   ├── SectionWrapper.jsx
-│   │   │   │   ├── SectionControls.jsx
-│   │   │   │   ├── InlineEditor.jsx
-│   │   │   │   ├── AddSectionMenu.jsx
-│   │   │   │   └── EditorToolbar.jsx
-│   │   │   ├── chat/
-│   │   │   │   ├── ChatPanel.jsx
-│   │   │   │   └── MessageBubble.jsx
-│   │   │   ├── plan/
-│   │   │   │   └── PlanViewer.jsx
-│   │   │   └── common/
-│   │   │       ├── Navbar.jsx
-│   │   │       ├── LoadingSpinner.jsx
-│   │   │       └── ErrorBanner.jsx
-│   │   ├── services/             # API client
-│   │   │   └── api.js
-│   │   ├── context/              # React context for state
-│   │   │   ├── AuthContext.jsx
-│   │   │   └── EditorContext.jsx
-│   │   └── utils/
-│   └── tailwind.config.js
+├── app/                          # Next.js App Router
+│   ├── layout.tsx                # Root layout
+│   ├── page.tsx                  # Landing page
+│   ├── login/page.tsx
+│   ├── register/page.tsx
+│   ├── dashboard/page.tsx
+│   ├── projects/
+│   │   ├── new/page.tsx
+│   │   └── [id]/
+│   │       ├── builder/page.tsx
+│   │       └── editor/page.tsx
+│   ├── p/[slug]/page.tsx         # Published page view
+│   └── api/                      # API routes
+│       ├── auth/
+│       │   ├── register/route.ts
+│       │   ├── login/route.ts
+│       │   ├── logout/route.ts
+│       │   └── me/route.ts
+│       └── projects/
+│           ├── route.ts
+│           └── [id]/
+│               ├── route.ts
+│               ├── conversation/route.ts
+│               ├── plan/route.ts
+│               └── page/
+│                   ├── route.ts
+│                   └── regenerate/route.ts
+├── components/                   # Reusable components
+│   ├── editor/
+│   │   ├── EditorCanvas.tsx
+│   │   ├── SectionWrapper.tsx
+│   │   ├── SectionControls.tsx
+│   │   ├── InlineEditor.tsx
+│   │   ├── AddSectionMenu.tsx
+│   │   └── EditorToolbar.tsx
+│   ├── chat/
+│   │   ├── ChatPanel.tsx
+│   │   └── MessageBubble.tsx
+│   ├── plan/
+│   │   └── PlanViewer.tsx
+│   └── common/
+│       ├── Navbar.tsx
+│       ├── LoadingSpinner.tsx
+│       └── ErrorBanner.tsx
+├── lib/                          # Business logic and services
+│   ├── db.ts                     # Prisma client singleton
+│   ├── auth.ts                   # JWT helpers, password hashing
+│   ├── api-helpers.ts            # Route handler utilities
+│   ├── html-renderer.ts          # Section JSON → HTML renderer
+│   └── ai/                       # AI orchestration
+│       ├── orchestrator.ts
+│       ├── intake.ts
+│       ├── competitor.ts
+│       ├── planner.ts
+│       ├── generator.ts
+│       ├── section-updater.ts
+│       └── prompts/
+│           ├── intake.ts
+│           ├── competitor.ts
+│           ├── planner.ts
+│           ├── generator.ts
+│           └── section-update.ts
+├── prisma/
+│   └── schema.prisma             # Database schema
+├── public/
+├── next.config.js
+├── tailwind.config.ts
+├── tsconfig.json
+├── package.json
+├── .env.local                    # Local environment variables
 ├── design.md
 ├── planning.md
 ├── phases.md
