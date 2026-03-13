@@ -63,5 +63,5 @@ export async function POST(
   const conv = await prisma.conversation.findUnique({ where: { projectId: id } });
   const messages = conv ? JSON.parse(conv.messages) : [];
 
-  return jsonResponse({ ...status, messages });
+  return jsonResponse({ workflow: status, messages });
 }

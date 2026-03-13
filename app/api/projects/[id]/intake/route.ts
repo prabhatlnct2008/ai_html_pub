@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { processIntakeMessage } from "@/lib/ai/intake";
 import { runWorkflow, buildStatus } from "@/lib/workflow/engine";
-import type { BusinessContext } from "@/lib/workflow/types";
+import { buildInitialSteps, type BusinessContext } from "@/lib/workflow/types";
 
 export async function POST(
   request: NextRequest,
@@ -26,12 +26,7 @@ export async function POST(
   const { message } = body;
   if (!message) return errorResponse("Message is required");
 
-  // Ensure workflow exists
-  if (!project.workflowRun) {
-    // Will be created by buildStatus/runWorkflow
-  }
-
-  // Get current conversation
+  // Ensure conversation exists
   let conv = project.conversation;
   if (!conv) {
     conv = await prisma.conversation.create({
@@ -39,6 +34,24 @@ export async function POST(
         projectId: id,
         messages: "[]",
         aiContext: project.businessContext,
+      },
+    });
+  }
+
+  // Ensure workflow exists
+  let workflow = project.workflowRun;
+  if (!workflow) {
+    const ctx = JSON.parse(project.businessContext || "{}");
+    const hasCompetitorUrl = !!ctx.competitorUrl;
+    const steps = buildInitialSteps(hasCompetitorUrl);
+
+    workflow = await prisma.workflowRun.create({
+      data: {
+        projectId: id,
+        state: "intake",
+        currentStep: "Understanding your business",
+        steps: JSON.stringify(steps),
+        canUserReply: true,
       },
     });
   }
@@ -69,47 +82,42 @@ export async function POST(
     await prisma.project.update({
       where: { id },
       data: {
-        status: "building",
         businessContext: JSON.stringify(result.extractedContext),
       },
     });
 
     if (result.isReady) {
-      // Transition to intake_complete and run workflow autonomously
-      const workflow = await prisma.workflowRun.findUnique({ where: { projectId: id } });
-      if (workflow) {
-        await prisma.workflowRun.update({
-          where: { projectId: id },
-          data: { state: "intake_complete" },
-        });
-      }
-
       // Mark intake step as completed
-      if (workflow) {
-        const steps = JSON.parse(workflow.steps);
-        const intakeStep = steps.find((s: { name: string }) => s.name === "intake");
-        if (intakeStep) {
-          intakeStep.status = "completed";
-          intakeStep.completedAt = new Date().toISOString();
-        }
-        await prisma.workflowRun.update({
-          where: { projectId: id },
-          data: { steps: JSON.stringify(steps) },
-        });
+      const steps = JSON.parse(workflow.steps);
+      const intakeStep = steps.find((s: { name: string }) => s.name === "intake");
+      if (intakeStep) {
+        intakeStep.status = "completed";
+        intakeStep.completedAt = new Date().toISOString();
       }
 
-      // Run the autonomous workflow
+      // Transition to intake_complete so runWorkflow will auto-advance
+      await prisma.workflowRun.update({
+        where: { projectId: id },
+        data: {
+          state: "intake_complete",
+          steps: JSON.stringify(steps),
+          canUserReply: false,
+          currentStep: "Business info collected",
+        },
+      });
+
+      // Run the autonomous workflow (will auto-advance from intake_complete)
       const status = await runWorkflow(id);
 
       return jsonResponse({
-        ...status,
+        workflow: status,
         messages,
       });
     }
 
     // Still in intake — return current status
     const status = await buildStatus(id);
-    return jsonResponse({ ...status, messages });
+    return jsonResponse({ workflow: status, messages });
   } catch (err: unknown) {
     console.error("Intake error:", err);
     return errorResponse("Something went wrong. Please try again.", 500);
