@@ -1,6 +1,10 @@
 import type { SectionType, Asset } from "@/lib/page/schema";
 import { getPlaceholderUrl, type PlaceholderCategory } from "@/lib/assets/placeholders";
-import { v4 as uuid } from "uuid";
+import crypto from "crypto";
+
+function uuid(): string {
+  return crypto.randomUUID();
+}
 
 // Asset planner: for each section, determine what image slots exist
 // and create placeholder assets for them.
