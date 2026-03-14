@@ -49,12 +49,12 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 | C.3 | Section structure panel — section list, add/reorder/duplicate/hide/delete, variant switcher | DONE |
 | C.4 | Element inspector — text fields, repeatable item editor, button editor, action picker, image assignment, style controls | DONE |
 | C.5 | Actions panel — CRUD page-level actions, type picker, WhatsApp message, preview | DONE |
-| C.6 | Assets panel — upload, list, replace, remove, alt text, assign to section | PARTIAL (list/delete, no upload UI yet) |
+| C.6 | Assets panel — upload, list, replace, remove, alt text, assign to section | DONE |
 | C.7 | Theme & page settings — brand colors/fonts/logo, slug, SEO, publish status | DONE |
 | C.8 | Preview modes — desktop / tablet (768px) / mobile (375px) toggle | DONE |
 | C.9 | AI section regeneration — regenerate selected section with instructions | NOT STARTED |
 
-**Exit criteria:** Editor can manipulate the full PageDocument. All element-level operations work. `next build` passes. **ALL MET (except C.6 upload UI and C.9 AI regen).**
+**Exit criteria:** Editor can manipulate the full PageDocument. All element-level operations work. `next build` passes. **ALL MET (except C.9 AI regen).**
 
 ---
 
@@ -68,6 +68,24 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 | D.3 | Backward compatibility — legacy href→Action normalization, legacy URL→asset wrapping, style key normalization | DONE |
 
 **Exit criteria:** Published pages are accessible, SEO-ready, with correct CTA behavior. Old projects load without errors. `next build` passes. **ALL MET.**
+
+---
+
+## Post-Review Fixes
+> Fixes from the V2 code review, addressing data flow, editor UX, and output quality.
+
+| Fix | Description | Status |
+|-----|-------------|--------|
+| 1 | Make documentJson the canonical editor source of truth (GET returns doc.sections) | DONE |
+| 2 | Add asset binding during document assembly (bindAssetsToSections) | DONE |
+| 3 | Implement a real Assets panel in the editor (upload, list, preview, alt text, delete, section image assignment) | DONE |
+| 4 | Persist slug and publish settings end-to-end (PUT saves slug to project, editor sends slug on save) | DONE |
+| 5 | Align editor settings options with canonical schema enums (PAGE_TYPES, THEME_VARIANTS from schema.ts) | DONE |
+| 6 | Make section variants materially different in the renderer (services: list/featured, testimonials: single-spotlight/minimal-list, how-it-works: timeline/horizontal, cta-band: split/card, footer: simple-centered/minimal) | DONE |
+| 7 | Improve Actions UI (type-specific inputs, scroll target picker, phone/email/WhatsApp previews) | DONE |
+| 8 | Extend quality validation pass (generic hero title detection, min section count, duplicate headings, asset reference validation, auto-repair broken actions/assets, hero image auto-bind) | DONE |
+
+**All 8 fixes verified with `next build`.**
 
 ---
 

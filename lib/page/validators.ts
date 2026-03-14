@@ -1,4 +1,4 @@
-import type { Section, SectionType, PageDocument, Action, ButtonRef } from "./schema";
+import type { Section, SectionType, PageDocument, Action, Asset, ButtonRef } from "./schema";
 
 // ---- Per-Section Content Validation ----
 
@@ -56,6 +56,14 @@ const PLACEHOLDER_TITLES = [
   "our services", "our features", "welcome to our business",
   "your headline here", "company name",
   "description here", "step one", "step two", "step three",
+  "lorem ipsum", "untitled", "heading", "subheading",
+  "enter title", "title here", "add title",
+];
+
+const GENERIC_HERO_TITLES = [
+  "welcome", "welcome to our website", "home",
+  "your business name", "hero title",
+  "we are the best", "number one",
 ];
 
 export function validateDocumentQuality(doc: PageDocument): QualityIssue[] {
@@ -102,6 +110,46 @@ export function validateDocumentQuality(doc: PageDocument): QualityIssue[] {
     }
   }
 
+  // Hero has a non-generic title
+  if (hasHero) {
+    const hero = doc.sections.find((s) => s.type === "hero");
+    const heroHeading = (hero?.content.heading as string || "").toLowerCase().trim();
+    if (heroHeading && GENERIC_HERO_TITLES.includes(heroHeading)) {
+      issues.push({
+        severity: "warning",
+        section: hero!.id,
+        message: `Hero has generic title: "${hero!.content.heading}"`,
+        autoRepairable: false,
+      });
+    }
+  }
+
+  // Check minimum meaningful sections (hero + at least 2 body + footer)
+  const visibleSections = doc.sections.filter((s) => s.visible);
+  if (visibleSections.length < 4) {
+    issues.push({
+      severity: "warning",
+      message: `Page has only ${visibleSections.length} section(s) — consider at least 4 for a complete page`,
+      autoRepairable: false,
+    });
+  }
+
+  // Check for duplicate section headings
+  const headings = doc.sections
+    .filter((s) => s.visible && s.content.heading)
+    .map((s) => (s.content.heading as string).toLowerCase().trim());
+  const seen = new Set<string>();
+  for (const h of headings) {
+    if (seen.has(h)) {
+      issues.push({
+        severity: "warning",
+        message: `Duplicate section heading: "${h}"`,
+        autoRepairable: false,
+      });
+    }
+    seen.add(h);
+  }
+
   // Check for placeholder copy
   for (const section of doc.sections) {
     checkPlaceholderCopy(section, issues);
@@ -110,6 +158,11 @@ export function validateDocumentQuality(doc: PageDocument): QualityIssue[] {
   // Check actions resolve
   for (const section of doc.sections) {
     checkActionReferences(section, doc.actions, issues);
+  }
+
+  // Check assets referenced actually exist
+  for (const section of doc.sections) {
+    checkAssetReferences(section, doc.assets, issues);
   }
 
   return issues;
@@ -155,8 +208,52 @@ function checkActionReferences(section: Section, actions: Action[], issues: Qual
         severity: "error",
         section: section.id,
         message: `Button "${button.text}" references unknown action ID: "${button.actionId}"`,
-        autoRepairable: false,
+        autoRepairable: true,
       });
+    }
+  }
+}
+
+function checkAssetReferences(section: Section, assets: Asset[], issues: QualityIssue[]): void {
+  const assetIds = new Set(assets.map((a) => a.id));
+
+  // Check heroImageId
+  const heroImgId = section.content.heroImageId as string | undefined;
+  if (heroImgId && !assetIds.has(heroImgId)) {
+    issues.push({
+      severity: "warning",
+      section: section.id,
+      message: `Section "${section.type}" references missing asset: "${heroImgId}"`,
+      autoRepairable: true,
+    });
+  }
+
+  // Check gallery images
+  const images = section.content.images as Array<{ imageId?: string }> | undefined;
+  if (images) {
+    for (const img of images) {
+      if (img.imageId && !assetIds.has(img.imageId)) {
+        issues.push({
+          severity: "warning",
+          section: section.id,
+          message: `Gallery image references missing asset: "${img.imageId}"`,
+          autoRepairable: true,
+        });
+      }
+    }
+  }
+
+  // Check section-level asset refs
+  if (section.assets?.imageIds) {
+    for (const id of section.assets.imageIds) {
+      if (!assetIds.has(id)) {
+        issues.push({
+          severity: "warning",
+          section: section.id,
+          message: `Section "${section.type}" asset list references missing asset: "${id}"`,
+          autoRepairable: true,
+        });
+      }
     }
   }
 }
@@ -167,7 +264,9 @@ function checkActionReferences(section: Section, actions: Action[], issues: Qual
  */
 export function autoRepairDocument(doc: PageDocument): { doc: PageDocument; repairs: string[] } {
   const repairs: string[] = [];
-  const sections = [...doc.sections];
+  let sections = [...doc.sections];
+  const actions = [...doc.actions];
+  const assetIds = new Set(doc.assets.map((a) => a.id));
 
   // Ensure footer exists
   const hasFooter = sections.some((s) => s.type === "footer" && s.visible);
@@ -190,5 +289,80 @@ export function autoRepairDocument(doc: PageDocument): { doc: PageDocument; repa
     repairs.push("Added missing footer section");
   }
 
-  return { doc: { ...doc, sections }, repairs };
+  // Repair broken action references — remove buttons with invalid actionIds
+  sections = sections.map((section) => {
+    const buttons = section.content.buttons as ButtonRef[] | undefined;
+    if (!buttons) return section;
+
+    const validButtons = buttons.filter((btn) => {
+      if (!btn.actionId) return true;
+      return actions.some((a) => a.id === btn.actionId);
+    });
+
+    if (validButtons.length < buttons.length) {
+      repairs.push(`Removed ${buttons.length - validButtons.length} broken button(s) from "${section.type}"`);
+      return { ...section, content: { ...section.content, buttons: validButtons } };
+    }
+    return section;
+  });
+
+  // Repair broken asset references — clear refs to missing assets
+  sections = sections.map((section) => {
+    const content = { ...section.content };
+    let changed = false;
+
+    // Clear broken heroImageId
+    const heroImgId = content.heroImageId as string | undefined;
+    if (heroImgId && !assetIds.has(heroImgId)) {
+      delete content.heroImageId;
+      changed = true;
+    }
+
+    // Clear broken gallery image refs
+    const images = content.images as Array<{ imageId?: string }> | undefined;
+    if (images) {
+      content.images = images.map((img) => {
+        if (img.imageId && !assetIds.has(img.imageId)) {
+          changed = true;
+          return { ...img, imageId: undefined };
+        }
+        return img;
+      });
+    }
+
+    // Clean section-level asset refs
+    if (section.assets?.imageIds) {
+      const validIds = section.assets.imageIds.filter((id) => assetIds.has(id));
+      if (validIds.length < section.assets.imageIds.length) {
+        changed = true;
+        return { ...section, content, assets: { ...section.assets, imageIds: validIds } };
+      }
+    }
+
+    if (changed) {
+      repairs.push(`Cleaned broken asset references in "${section.type}"`);
+      return { ...section, content };
+    }
+    return section;
+  });
+
+  // Auto-bind hero image if hero has visual variant but no image, and assets are available
+  const heroSection = sections.find((s) => s.type === "hero" && s.visible);
+  if (heroSection) {
+    const hasVisualVariant = heroSection.variant === "split-image" || heroSection.variant === "background-image";
+    const hasImage = !!(heroSection.content.heroImageId as string);
+    if (hasVisualVariant && !hasImage && doc.assets.length > 0) {
+      const heroAsset = doc.assets.find((a) => a.kind === "image");
+      if (heroAsset) {
+        sections = sections.map((s) =>
+          s.id === heroSection.id
+            ? { ...s, content: { ...s.content, heroImageId: heroAsset.id } }
+            : s
+        );
+        repairs.push(`Auto-assigned hero image from available assets`);
+      }
+    }
+  }
+
+  return { doc: { ...doc, sections, actions }, repairs };
 }
