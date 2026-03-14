@@ -25,17 +25,17 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 
 | Step | Description | Status |
 |------|-------------|--------|
-| B.1 | Workflow states — add `image_prompt_generation`, `image_generation`; update transitions + progress + builder polling | NOT STARTED |
-| B.2 | Strategy generation — output pageType, heroVariant, sectionSequence, ctaStrategy, visualNeeds | NOT STARTED |
-| B.3 | Theme generation — primary/secondary/accent colors, heading/body fonts, density, variant | NOT STARTED |
-| B.4 | Asset planning — determine image slots, icon intent needs per section | NOT STARTED |
-| B.5 | Image prompt generation — business-specific DALL-E prompts from context | NOT STARTED |
-| B.6 | Image generation — DALL-E calls, Asset records with `source: "ai"`, fallback to placeholder | NOT STARTED |
-| B.7 | Content generation — actionId refs, iconIntent, no placeholder copy | NOT STARTED |
-| B.8 | Document assembly — create Action objects, assign actionIds + assetIds, set variants | NOT STARTED |
-| B.9 | Quality validation pass — hero/footer/CTA checks, placeholder copy detection, auto-repair | NOT STARTED |
+| B.1 | Workflow states — add `image_prompt_generation`, `image_generation`; update transitions + progress + builder polling | DONE |
+| B.2 | Strategy generation — output pageType, heroVariant, sectionSequence, ctaStrategy, visualNeeds | DONE (already existed) |
+| B.3 | Theme generation — primary/secondary/accent colors, heading/body fonts, density, variant | DONE (already existed) |
+| B.4 | Asset planning — determine image slots, icon intent needs per section | DONE (already existed) |
+| B.5 | Image prompt generation — business-specific DALL-E prompts from context | DONE |
+| B.6 | Image generation — DALL-E calls, Asset records with `source: "ai"`, fallback to placeholder | DONE |
+| B.7 | Content generation — actionId refs, iconIntent, no placeholder copy | DONE |
+| B.8 | Document assembly — create Action objects, assign actionIds + assetIds, set variants | DONE |
+| B.9 | Quality validation pass — hero/footer/CTA checks, placeholder copy detection, auto-repair | DONE |
 
-**Exit criteria:** Full workflow produces a valid PageDocument with actions, assets, and quality-checked content. `next build` passes.
+**Exit criteria:** Full workflow produces a valid PageDocument with actions, assets, and quality-checked content. `next build` passes. **ALL MET.**
 
 ---
 

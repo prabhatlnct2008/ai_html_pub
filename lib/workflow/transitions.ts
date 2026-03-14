@@ -22,6 +22,8 @@ export function getNextState(
     case "strategy_generation":
     case "theme_generation":
     case "asset_planning":
+    case "image_prompt_generation":
+    case "image_generation":
     case "plan_generation_running":
     case "generation_running":
     case "document_assembly":
@@ -58,6 +60,10 @@ export function stateToStepName(state: WorkflowState): string {
       return "theme_generation";
     case "asset_planning":
       return "asset_planning";
+    case "image_prompt_generation":
+      return "image_prompt_generation";
+    case "image_generation":
+      return "image_generation";
     case "plan_generation_running":
       return "plan_generation";
     case "plan_review":
@@ -86,12 +92,14 @@ export function stateToProgress(state: WorkflowState, hasCompetitorUrl: boolean)
         "intake", "intake_complete",
         "competitor_analysis_running", "competitor_analysis_complete",
         "strategy_generation", "theme_generation", "asset_planning",
+        "image_prompt_generation", "image_generation",
         "plan_generation_running", "plan_review",
         "generation_running", "document_assembly", "rendering", "saving", "complete",
       ]
     : [
         "intake", "intake_complete",
         "strategy_generation", "theme_generation", "asset_planning",
+        "image_prompt_generation", "image_generation",
         "plan_generation_running", "plan_review",
         "generation_running", "document_assembly", "rendering", "saving", "complete",
       ];
