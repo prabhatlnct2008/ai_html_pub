@@ -22,6 +22,14 @@ export default async function PublishedPage({ params }: Props) {
   const auth = await getCurrentUser();
   const isOwner = auth?.userId === project.userId;
 
+  // Enforce publish gating: draft pages only visible to owner
+  if (project.page.documentJson && project.page.documentJson !== "{}") {
+    const doc = JSON.parse(project.page.documentJson);
+    if (doc.meta?.publishStatus === "draft" && !isOwner) {
+      notFound();
+    }
+  }
+
   return (
     <PublishedPageClient
       html={project.page.renderedHtml}

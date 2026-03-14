@@ -60,6 +60,7 @@ interface EditorState {
   brand: BrandData;
   selectedSectionId: string | null;
   isDirty: boolean;
+  projectId: string;
 }
 
 type EditorAction =
@@ -80,6 +81,7 @@ type EditorAction =
   | { type: "UPDATE_ACTION"; actionId: string; updates: Partial<Action> }
   | { type: "DELETE_ACTION"; actionId: string }
   | { type: "ADD_ASSET"; asset: Asset }
+  | { type: "UPDATE_ASSET"; assetId: string; updates: Partial<Asset> }
   | { type: "DELETE_ASSET"; assetId: string }
   | { type: "MARK_CLEAN" };
 
@@ -238,6 +240,13 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
     case "ADD_ASSET":
       return { ...state, assets: [...state.assets, action.asset], isDirty: true };
 
+    case "UPDATE_ASSET": {
+      const assets = state.assets.map((a) =>
+        a.id === action.assetId ? { ...a, ...action.updates } : a
+      );
+      return { ...state, assets, isDirty: true };
+    }
+
     case "DELETE_ASSET": {
       const assets = state.assets.filter((a) => a.id !== action.assetId);
       return { ...state, assets, isDirty: true };
@@ -260,6 +269,7 @@ interface EditorContextType {
   brand: BrandData;
   selectedSectionId: string | null;
   isDirty: boolean;
+  projectId: string;
   isPreview: boolean;
   previewMode: PreviewMode;
   previewWidth: string;
@@ -287,6 +297,7 @@ interface EditorContextType {
   updateAction: (actionId: string, updates: Partial<Action>) => void;
   deleteAction: (actionId: string) => void;
   addAsset: (asset: Asset) => void;
+  updateAsset: (assetId: string, updates: Partial<Asset>) => void;
   deleteAsset: (assetId: string) => void;
   markClean: () => void;
   // Helpers
@@ -296,7 +307,7 @@ interface EditorContextType {
 
 const EditorContext = createContext<EditorContextType | null>(null);
 
-export function EditorProvider({ children }: { children: ReactNode }) {
+export function EditorProvider({ children, projectId = "" }: { children: ReactNode; projectId?: string }) {
   const [state, dispatch] = useReducer(editorReducer, {
     sections: [],
     globalStyles: {},
@@ -306,6 +317,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     brand: DEFAULT_BRAND,
     selectedSectionId: null,
     isDirty: false,
+    projectId,
   });
 
   const [isPreview, setPreview] = useState(false);
@@ -389,6 +401,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     (asset: Asset) => dispatch({ type: "ADD_ASSET", asset }),
     []
   );
+  const updateAsset = useCallback(
+    (assetId: string, updates: Partial<Asset>) =>
+      dispatch({ type: "UPDATE_ASSET", assetId, updates }),
+    []
+  );
   const deleteAsset = useCallback(
     (assetId: string) => dispatch({ type: "DELETE_ASSET", assetId }),
     []
@@ -433,6 +450,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         updateAction,
         deleteAction,
         addAsset,
+        updateAsset,
         deleteAsset,
         markClean,
         getSelectedSection,
