@@ -369,12 +369,48 @@ function renderProblemSolution(section: Section, sectionStyle: string, brand: Br
 
 function renderHowItWorks(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as HowItWorksContent;
-  return `<section data-section-id="${section.id}" data-section-type="how-it-works" id="how-it-works" class="section" style="${sectionStyle}">
-  <div class="container">
-    <div class="text-center" style="margin-bottom: 48px;">
+  const headerHtml = `<div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>`;
+
+  if (section.variant === "timeline") {
+    return `<section data-section-id="${section.id}" data-section-type="how-it-works" id="how-it-works" class="section" style="${sectionStyle}">
+  <div class="container" style="max-width: 700px;">
+    ${headerHtml}
+    ${c.steps.map((step, i) => `<div style="display: flex; gap: 24px; margin-bottom: ${i < c.steps.length - 1 ? "0" : "0"};">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; flex-shrink: 0;">${esc(step.step)}</div>
+        ${i < c.steps.length - 1 ? `<div style="width: 2px; flex: 1; background: ${brand.primaryColor}30; margin: 8px 0;"></div>` : ""}
+      </div>
+      <div style="padding-bottom: 40px;">
+        <h3>${esc(step.title)}</h3>
+        <p style="opacity: 0.7;">${esc(step.description)}</p>
+      </div>
+    </div>`).join("\n    ")}
+  </div>
+</section>`;
+  }
+
+  if (section.variant === "horizontal") {
+    return `<section data-section-id="${section.id}" data-section-type="how-it-works" id="how-it-works" class="section" style="${sectionStyle}">
+  <div class="container">
+    ${headerHtml}
+    <div style="display: flex; align-items: flex-start; gap: 16px; max-width: 1000px; margin: 0 auto;">
+      ${c.steps.map((step, i) => `<div style="flex: 1; text-align: center;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin: 0 auto 16px;">${esc(step.step)}</div>
+        <h3>${esc(step.title)}</h3>
+        <p style="opacity: 0.7; font-size: 15px;">${esc(step.description)}</p>
+      </div>${i < c.steps.length - 1 ? `<div style="flex-shrink: 0; margin-top: 24px; font-size: 24px; color: ${brand.primaryColor}; opacity: 0.5;">&#10132;</div>` : ""}`).join("\n      ")}
     </div>
+  </div>
+</section>`;
+  }
+
+  // Default: numbered-steps (centered grid)
+  return `<section data-section-id="${section.id}" data-section-type="how-it-works" id="how-it-works" class="section" style="${sectionStyle}">
+  <div class="container">
+    ${headerHtml}
     <div class="grid-3" style="max-width: 900px; margin: 0 auto;">
       ${c.steps.map((step) => `<div class="text-center">
         <div style="width: 64px; height: 64px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; margin: 0 auto 16px;">${esc(step.step)}</div>
@@ -388,12 +424,63 @@ function renderHowItWorks(section: Section, sectionStyle: string, brand: Brand):
 
 function renderServices(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as ServicesContent;
-  return `<section data-section-id="${section.id}" data-section-type="services" id="services" class="section" style="${sectionStyle}">
-  <div class="container">
-    <div class="text-center" style="margin-bottom: 48px;">
+  const headerHtml = `<div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>`;
+
+  if (section.variant === "list") {
+    return `<section data-section-id="${section.id}" data-section-type="services" id="services" class="section" style="${sectionStyle}">
+  <div class="container" style="max-width: 800px;">
+    ${headerHtml}
+    ${c.items.map((item) => {
+      const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
+      return `<div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 32px; padding-bottom: 32px; border-bottom: 1px solid rgba(0,0,0,0.08);">
+      <div style="flex-shrink: 0; width: 56px; height: 56px; border-radius: 12px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center;">${iconHtml}</div>
+      <div>
+        <h3>${esc(item.title)}</h3>
+        <p style="opacity: 0.7;">${esc(item.description)}</p>
+      </div>
+    </div>`;
+    }).join("\n    ")}
+  </div>
+</section>`;
+  }
+
+  if (section.variant === "featured") {
+    const featured = c.items[0];
+    const rest = c.items.slice(1);
+    const featuredIcon = featured?.iconIntent ? resolveIcon(featured.iconIntent) : getSimpleIcon(featured?.icon);
+    return `<section data-section-id="${section.id}" data-section-type="services" id="services" class="section" style="${sectionStyle}">
+  <div class="container">
+    ${headerHtml}
+    ${featured ? `<div class="card" style="margin-bottom: 32px; padding: 48px; border-left: 4px solid ${brand.primaryColor};">
+      <div style="display: flex; gap: 24px; align-items: flex-start;">
+        <div style="flex-shrink: 0; width: 64px; height: 64px; border-radius: 16px; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px;">${featuredIcon}</div>
+        <div>
+          <h3 style="font-size: 28px;">${esc(featured.title)}</h3>
+          <p style="opacity: 0.7; font-size: 17px;">${esc(featured.description)}</p>
+        </div>
+      </div>
+    </div>` : ""}
+    <div class="grid-${Math.min(rest.length, 3)}">
+      ${rest.map((item) => {
+        const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
+        return `<div class="card">
+        <div style="width: 48px; height: 48px; border-radius: 10px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">${iconHtml}</div>
+        <h3>${esc(item.title)}</h3>
+        <p style="opacity: 0.7;">${esc(item.description)}</p>
+      </div>`;
+      }).join("\n      ")}
     </div>
+  </div>
+</section>`;
+  }
+
+  // Default: cards grid
+  return `<section data-section-id="${section.id}" data-section-type="services" id="services" class="section" style="${sectionStyle}">
+  <div class="container">
+    ${headerHtml}
     <div class="grid-3">
       ${c.items.map((item) => {
         const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
@@ -410,9 +497,41 @@ function renderServices(section: Section, sectionStyle: string, brand: Brand): s
 
 function renderTestimonials(section: Section, sectionStyle: string): string {
   const c = section.content as unknown as TestimonialsContent;
+  const headingHtml = `<h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>`;
+
+  if (section.variant === "single-spotlight" && c.items.length > 0) {
+    const featured = c.items[0];
+    return `<section data-section-id="${section.id}" data-section-type="testimonials" id="testimonials" class="section" style="${sectionStyle}">
+  <div class="container" style="max-width: 700px;">
+    ${headingHtml}
+    <div class="card text-center" style="padding: 48px;">
+      <p style="font-size: 24px; font-style: italic; line-height: 1.6; margin-bottom: 24px;">&ldquo;${esc(featured.quote)}&rdquo;</p>
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; color: #6b7280; margin: 0 auto 12px;">${esc(featured.author.charAt(0))}</div>
+      <strong style="font-size: 18px;">${esc(featured.author)}</strong>
+      ${featured.role ? `<br><span style="opacity: 0.6;">${esc(featured.role)}</span>` : ""}
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (section.variant === "minimal-list") {
+    return `<section data-section-id="${section.id}" data-section-type="testimonials" id="testimonials" class="section" style="${sectionStyle}">
+  <div class="container" style="max-width: 800px;">
+    ${headingHtml}
+    ${c.items.map((item) => `<div style="border-left: 3px solid rgba(0,0,0,0.15); padding: 24px 0 24px 24px; margin-bottom: 32px;">
+      <p style="font-size: 18px; font-style: italic; line-height: 1.6; margin-bottom: 12px;">&ldquo;${esc(item.quote)}&rdquo;</p>
+      <div>
+        <strong>${esc(item.author)}</strong>${item.role ? ` &mdash; <span style="opacity: 0.6;">${esc(item.role)}</span>` : ""}
+      </div>
+    </div>`).join("\n    ")}
+  </div>
+</section>`;
+  }
+
+  // Default: cards grid
   return `<section data-section-id="${section.id}" data-section-type="testimonials" id="testimonials" class="section" style="${sectionStyle}">
   <div class="container">
-    <h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>
+    ${headingHtml}
     <div class="grid-${Math.min(c.items.length, 3)}">
       ${c.items.map((item) => `<div class="card">
         <p style="font-style: italic; font-size: 18px; margin-bottom: 16px; line-height: 1.6;">&ldquo;${esc(item.quote)}&rdquo;</p>
@@ -499,6 +618,37 @@ function renderCtaBand(section: Section, sectionStyle: string, actions: Action[]
     ? `<a href="${esc(c.secondaryButtonHref || "#")}" class="btn btn-ghost" style="padding: 16px 40px;">${esc(c.secondaryButtonText)}</a>`
     : "";
 
+  if (section.variant === "split") {
+    return `<section data-section-id="${section.id}" data-section-type="cta-band" id="cta-band" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px;">
+      <div style="flex: 1; min-width: 280px;">
+        <h2 style="margin-bottom: 8px;">${esc(c.heading)}</h2>
+        ${c.subheading ? `<p style="font-size: 18px; opacity: 0.9;">${esc(c.subheading)}</p>` : ""}
+      </div>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        ${buttonsHtml}${secondaryLegacy}
+      </div>
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (section.variant === "card") {
+    return `<section data-section-id="${section.id}" data-section-type="cta-band" id="cta-band" class="section" style="padding: 80px 0;">
+  <div class="container" style="max-width: 800px;">
+    <div class="card text-center" style="padding: 56px; ${sectionStyle} border-radius: 16px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>` : ""}
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        ${buttonsHtml}${secondaryLegacy}
+      </div>
+    </div>
+  </div>
+</section>`;
+  }
+
+  // Default: centered
   return `<section data-section-id="${section.id}" data-section-type="cta-band" id="cta-band" class="section" style="${sectionStyle}">
   <div class="container text-center" style="max-width: 700px;">
     <h2>${esc(c.heading)}</h2>
@@ -560,15 +710,48 @@ function renderContactForm(c: ContactContent, brand: Brand, btnText: string): st
 
 function renderFooter(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as FooterContent;
+  const copyrightHtml = `<p>&copy; ${esc(c.copyrightYear)} ${esc(c.companyName)}. All rights reserved.</p>`;
+  const legalHtml = c.legalLinks?.length
+    ? `<div style="display: flex; gap: 24px;">${c.legalLinks.map((l) => `<a href="${esc(l.href || "#")}" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("")}</div>`
+    : "";
+  const socialHtml = c.socialLinks?.length
+    ? `<div style="display: flex; gap: 12px; margin-top: 16px;">${c.socialLinks.map((sl) => `<a href="${esc(sl.url)}" style="color: inherit; opacity: 0.6; text-decoration: none; font-size: 14px;">${esc(sl.platform)}</a>`).join("\n          ")}</div>`
+    : "";
+
+  if (section.variant === "simple-centered") {
+    return `<footer data-section-id="${section.id}" data-section-type="footer" style="${sectionStyle}">
+  <div class="container text-center">
+    <h3 style="color: #ffffff; font-size: 22px; margin-bottom: 8px;">${esc(c.companyName)}</h3>
+    ${c.tagline ? `<p style="opacity: 0.6; margin-bottom: 16px;">${esc(c.tagline)}</p>` : ""}
+    ${socialHtml ? `<div style="display: flex; gap: 16px; justify-content: center; margin-bottom: 24px;">${c.socialLinks?.map((sl) => `<a href="${esc(sl.url)}" style="color: inherit; opacity: 0.6; text-decoration: none;">${esc(sl.platform)}</a>`).join(" ") || ""}</div>` : ""}
+    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; font-size: 14px; opacity: 0.6;">
+      ${copyrightHtml}
+      ${legalHtml ? `<div style="margin-top: 12px; display: flex; gap: 24px; justify-content: center;">${c.legalLinks?.map((l) => `<a href="${esc(l.href || "#")}" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("") || ""}</div>` : ""}
+    </div>
+  </div>
+</footer>`;
+  }
+
+  if (section.variant === "minimal") {
+    return `<footer data-section-id="${section.id}" data-section-type="footer" style="${sectionStyle}">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 14px; opacity: 0.7;">
+      <span style="font-weight: 600;">${esc(c.companyName)}</span>
+      ${copyrightHtml}
+      ${legalHtml}
+    </div>
+  </div>
+</footer>`;
+  }
+
+  // Default: multi-column
   return `<footer data-section-id="${section.id}" data-section-type="footer" style="${sectionStyle}">
   <div class="container">
     <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 48px; margin-bottom: 48px;">
       <div style="min-width: 200px;">
         <h3 style="color: #ffffff; font-size: 22px; margin-bottom: 8px;">${esc(c.companyName)}</h3>
         ${c.tagline ? `<p style="opacity: 0.6; max-width: 280px;">${esc(c.tagline)}</p>` : ""}
-        ${c.socialLinks?.length ? `<div style="display: flex; gap: 12px; margin-top: 16px;">
-          ${c.socialLinks.map((sl) => `<a href="${esc(sl.url)}" style="color: inherit; opacity: 0.6; text-decoration: none; font-size: 14px;">${esc(sl.platform)}</a>`).join("\n          ")}
-        </div>` : ""}
+        ${socialHtml}
       </div>
       ${c.columns.map((col) => `<div style="min-width: 140px;">
         <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 16px;">${esc(col.title)}</h4>
@@ -578,8 +761,8 @@ function renderFooter(section: Section, sectionStyle: string, brand: Brand): str
       </div>`).join("\n      ")}
     </div>
     <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 14px; opacity: 0.6;">
-      <p>&copy; ${esc(c.copyrightYear)} ${esc(c.companyName)}. All rights reserved.</p>
-      ${c.legalLinks?.length ? `<div style="display: flex; gap: 24px;">${c.legalLinks.map((l) => `<a href="${esc(l.href || "#")}" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("")}</div>` : ""}
+      ${copyrightHtml}
+      ${legalHtml}
     </div>
   </div>
 </footer>`;

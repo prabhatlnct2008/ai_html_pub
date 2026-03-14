@@ -57,7 +57,10 @@ function EditorContent({ projectId }: { projectId: string }) {
       const res = await fetch(`/api/projects/${projectId}/page`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sections, globalStyles, actions, assets, meta, brand }),
+        body: JSON.stringify({
+          sections, globalStyles, actions, assets, meta, brand,
+          slug: meta.slug || slug,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -65,6 +68,7 @@ function EditorContent({ projectId }: { projectId: string }) {
       }
       const data = await res.json();
       setVersion(data.version);
+      if (data.slug) setSlug(data.slug);
       markClean();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Save failed");

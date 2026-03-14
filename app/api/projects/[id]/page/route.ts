@@ -36,8 +36,11 @@ export async function GET(
     doc = normalizeDocumentActions(doc);
   }
 
+  // V2: prefer documentJson sections as canonical source; fall back to sectionsJson for legacy
+  const canonicalSections = doc?.sections || JSON.parse(project.page.sectionsJson);
+
   return jsonResponse({
-    sections: JSON.parse(project.page.sectionsJson),
+    sections: canonicalSections,
     globalStyles: JSON.parse(project.page.globalStyles),
     // V2 fields from PageDocument
     actions: doc?.actions || [],
@@ -55,7 +58,7 @@ export async function GET(
       themeVariant: project.page.themeVariant || "clean",
     },
     brand: doc?.brand || null,
-    documentJson: doc,
+    hasDocument: !!doc,
     pageType: project.page.pageType || null,
     themeVariant: project.page.themeVariant || null,
     version: project.page.version,
@@ -89,7 +92,7 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { sections, globalStyles, actions, assets, meta, brand } = body;
+  const { sections, globalStyles, actions, assets, meta, brand, slug: newSlug } = body;
 
   if (!sections || !Array.isArray(sections)) {
     return errorResponse("Sections array is required");
@@ -109,7 +112,7 @@ export async function PUT(
   let documentJson: string;
 
   if (existingDoc || actions || meta || brand) {
-    // Build/update the PageDocument with all V2 fields
+    // Build/update the PageDocument — this is the canonical source of truth
     const updatedDoc: PageDocument = {
       meta: meta || existingDoc?.meta || {
         title: project.name,
@@ -137,7 +140,7 @@ export async function PUT(
     renderedHtml = renderPageHtml(sections, stylesObj, planData.page_meta);
   }
 
-  // Atomic transaction: version backup + page update together
+  // Atomic transaction: version backup + page update + slug persist
   const updated = await prisma.$transaction(async (tx) => {
     await tx.pageVersion.create({
       data: {
@@ -149,11 +152,21 @@ export async function PUT(
       },
     });
 
+    // Persist slug changes back to project
+    if (newSlug && typeof newSlug === "string" && newSlug !== project.slug) {
+      await tx.project.update({
+        where: { id },
+        data: { slug: newSlug },
+      });
+    }
+
     return tx.page.update({
       where: { id: project.page!.id },
       data: {
+        // sectionsJson kept as backward-compat mirror
         sectionsJson: JSON.stringify(sections),
         globalStyles: JSON.stringify(stylesObj),
+        // documentJson is the canonical payload
         documentJson,
         renderedHtml,
         version: { increment: 1 },
@@ -163,6 +176,7 @@ export async function PUT(
 
   return jsonResponse({
     version: updated.version,
+    slug: newSlug || project.slug,
     message: "Page saved successfully",
   });
 }

@@ -11,7 +11,7 @@ import { generateImages } from "@/lib/ai/image-generator";
 import { renderPageFromDocument } from "@/lib/page/renderer";
 import { renderPageHtml } from "@/lib/html-renderer";
 import { validateDocumentQuality, autoRepairDocument } from "@/lib/page/validators";
-import type { PageDocument, Section, Brand, SectionType, Action } from "@/lib/page/schema";
+import type { PageDocument, Section, Brand, SectionType, Action, Asset } from "@/lib/page/schema";
 import { fillDefaults, type BusinessContext, type WorkflowState } from "./types";
 
 /**
@@ -459,6 +459,18 @@ async function executeDocumentAssembly(
 
   const sections = JSON.parse(project.page.sectionsJson) as Section[];
 
+  // Build asset list from DB
+  const docAssets = project.assets.map((a) => ({
+    id: a.id,
+    kind: a.kind as "image" | "icon" | "video",
+    source: a.source as "upload" | "stock" | "ai" | "placeholder",
+    url: a.url,
+    alt: a.altText || undefined,
+  }));
+
+  // Wire assets into sections by matching asset slots to section types
+  const assetBindings = bindAssetsToSections(sections, docAssets);
+
   // Build PageDocument
   const pageDocument: PageDocument = {
     meta: {
@@ -475,15 +487,9 @@ async function executeDocumentAssembly(
       fontHeading: plan?.branding?.font_family || "Inter",
       fontBody: plan?.branding?.font_family || "Inter",
     },
-    assets: project.assets.map((a) => ({
-      id: a.id,
-      kind: a.kind as "image" | "icon" | "video",
-      source: a.source as "upload" | "stock" | "ai" | "placeholder",
-      url: a.url,
-      alt: a.altText || undefined,
-    })),
+    assets: docAssets,
     actions: (rawCtx._generatedActions as Action[]) || [],
-    sections,
+    sections: assetBindings,
   };
 
   // Run quality validation and auto-repair
@@ -507,7 +513,7 @@ async function executeDocumentAssembly(
     }
   }
 
-  // Store PageDocument
+  // Store PageDocument as canonical source
   await prisma.page.update({
     where: { id: project.page.id },
     data: { documentJson: JSON.stringify(finalDoc) },
@@ -568,6 +574,82 @@ async function executeSaving(
   await addSystemMessage(projectId, "Your landing page has been generated! Redirecting to the editor...");
 
   return { nextState: "complete" };
+}
+
+// ---- Asset Binding ----
+
+/**
+ * Bind generated/planned assets to section content fields.
+ * Matches assets by slot name (e.g. "hero_image") to the appropriate
+ * section content field (e.g. heroImageId on hero sections).
+ */
+function bindAssetsToSections(sections: Section[], assets: Asset[]): Section[] {
+  // Index assets by their slot hint (parsed from the asset ID pattern: asset_<source>_<slot>_<rand>)
+  const assetsBySlot = new Map<string, Asset>();
+  const assetsBySource: Record<string, Asset[]> = {};
+
+  for (const asset of assets) {
+    // Extract slot from ID: "asset_ai_hero_image_abc123" -> "hero_image"
+    // or "asset_placeholder_hero_image_abc123" -> "hero_image"
+    const match = asset.id.match(/^asset_(?:ai|placeholder|upload|stock)_(.+?)_[a-z0-9]{4,8}$/);
+    if (match) {
+      assetsBySlot.set(match[1], asset);
+    }
+    const sourceKey = asset.source || "unknown";
+    if (!assetsBySource[sourceKey]) assetsBySource[sourceKey] = [];
+    assetsBySource[sourceKey].push(asset);
+  }
+
+  return sections.map((section) => {
+    const content = { ...section.content };
+    const sectionAssets: { imageIds?: string[]; backgroundImageId?: string } = { ...(section.assets || {}) };
+
+    switch (section.type) {
+      case "hero": {
+        // Bind hero image
+        const heroAsset = assetsBySlot.get("hero_image");
+        if (heroAsset && !content.heroImageId) {
+          content.heroImageId = heroAsset.id;
+          sectionAssets.imageIds = [...(sectionAssets.imageIds || []), heroAsset.id];
+        }
+        break;
+      }
+      case "gallery": {
+        // Bind gallery images to gallery items
+        const images = content.images as Array<Record<string, unknown>> | undefined;
+        if (images) {
+          const galleryAssets = assets.filter((a) => a.kind === "image" && a.source !== "placeholder");
+          content.images = images.map((img, i) => {
+            if (img.imageId) return img;
+            const available = galleryAssets[i];
+            return available ? { ...img, imageId: available.id } : img;
+          });
+        }
+        break;
+      }
+      case "testimonials": {
+        // Bind testimonial avatar images if available
+        const items = content.items as Array<Record<string, unknown>> | undefined;
+        if (items) {
+          const testimonialAsset = assetsBySlot.get("testimonials_image");
+          if (testimonialAsset) {
+            sectionAssets.imageIds = [...(sectionAssets.imageIds || []), testimonialAsset.id];
+          }
+        }
+        break;
+      }
+      default: {
+        // Try to match any asset with this section's type as the slot
+        const sectionAsset = assetsBySlot.get(`${section.type}_image`);
+        if (sectionAsset) {
+          sectionAssets.imageIds = [...(sectionAssets.imageIds || []), sectionAsset.id];
+        }
+        break;
+      }
+    }
+
+    return { ...section, content, assets: sectionAssets };
+  });
 }
 
 // ---- Helpers ----
