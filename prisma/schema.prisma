@@ -31,6 +31,7 @@ model Project {
   pagePlan        PagePlan?
   page            Page?
   workflowRun     WorkflowRun?
+  assets          Asset[]
 }
 
 model Conversation {
@@ -73,7 +74,10 @@ model Page {
   projectId    String        @unique
   sectionsJson String        @default("[]")
   globalStyles String        @default("{}")
+  documentJson String        @default("{}")
   renderedHtml String        @default("")
+  pageType     String        @default("")
+  themeVariant String        @default("")
   version      Int           @default(1)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -86,7 +90,19 @@ model PageVersion {
   pageId        String
   sectionsJson  String
   globalStyles  String
+  documentJson  String   @default("{}")
   versionNumber Int
   createdAt     DateTime @default(now())
   page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model Asset {
+  id        String   @id @default(uuid())
+  projectId String
+  kind      String
+  source    String
+  url       String
+  altText   String?
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

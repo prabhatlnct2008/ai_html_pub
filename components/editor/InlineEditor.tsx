@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 interface InlineEditorProps {
   value: string;
   onChange: (value: string) => void;
-  tag?: "h1" | "h2" | "h3" | "p" | "span" | "button";
+  tag?: "h1" | "h2" | "h3" | "h4" | "p" | "span" | "div" | "button";
   className?: string;
   style?: React.CSSProperties;
   multiline?: boolean;

@@ -15,6 +15,9 @@ export interface SectionData {
   order: number;
   content: Record<string, unknown>;
   style: Record<string, string>;
+  variant?: string;
+  visible?: boolean;
+  assets?: Record<string, unknown>;
 }
 
 interface EditorState {

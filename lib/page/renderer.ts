@@ -1,0 +1,485 @@
+import type {
+  PageDocument,
+  Section,
+  Brand,
+  Asset,
+  HeroContent,
+  TrustBarContent,
+  FeaturesContent,
+  BenefitsContent,
+  ProblemSolutionContent,
+  HowItWorksContent,
+  ServicesContent,
+  TestimonialsContent,
+  ResultsContent,
+  PricingContent,
+  FaqContent,
+  CtaBandContent,
+  ContactContent,
+  FooterContent,
+} from "./schema";
+import { getPlaceholderUrl } from "@/lib/assets/placeholders";
+
+// ---- Main Render Function ----
+
+export function renderPageFromDocument(doc: PageDocument): string {
+  const visibleSections = doc.sections
+    .filter((s) => s.visible)
+    .sort((a, b) => a.order - b.order);
+
+  const sectionsHtml = visibleSections
+    .map((s) => renderSection(s, doc.brand, doc.assets))
+    .join("\n");
+
+  const fontFamilies = [doc.brand.fontHeading];
+  if (doc.brand.fontBody !== doc.brand.fontHeading) {
+    fontFamilies.push(doc.brand.fontBody);
+  }
+  const fontsParam = fontFamilies
+    .map((f) => `family=${encodeURIComponent(f)}:wght@400;500;600;700;800`)
+    .join("&");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="${esc(doc.meta.description)}">
+  <title>${esc(doc.meta.title)}</title>
+  <link href="https://fonts.googleapis.com/css2?${fontsParam}&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: '${doc.brand.fontBody}', system-ui, -apple-system, sans-serif; color: #1a1a1a; line-height: 1.6; }
+    h1, h2, h3, h4 { font-family: '${doc.brand.fontHeading}', system-ui, -apple-system, sans-serif; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 80px 0; }
+    .btn { display: inline-block; padding: 14px 32px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 16px; transition: all 0.2s; cursor: pointer; border: none; font-family: inherit; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary { background-color: ${doc.brand.primaryColor}; color: #ffffff; }
+    .btn-secondary { background-color: transparent; color: ${doc.brand.primaryColor}; border: 2px solid ${doc.brand.primaryColor}; }
+    .btn-white { background: #ffffff; color: ${doc.brand.primaryColor}; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .text-center { text-align: center; }
+    .card { background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); }
+    h1 { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    h2 { font-size: 40px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    h3 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+    p { line-height: 1.7; }
+    img { max-width: 100%; height: auto; }
+    @media (max-width: 768px) {
+      h1 { font-size: 36px; }
+      h2 { font-size: 30px; }
+      h3 { font-size: 20px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .section { padding: 48px 0; }
+      .hero-split { flex-direction: column !important; }
+    }
+  </style>
+</head>
+<body>
+${sectionsHtml}
+</body>
+</html>`;
+}
+
+// ---- Section Dispatcher ----
+
+function renderSection(section: Section, brand: Brand, assets: Asset[]): string {
+  const resolveAsset = (id?: string) => assets.find((a) => a.id === id);
+  const bgColor = section.style.backgroundColor;
+  const textColor = section.style.textColor;
+  const padding = section.style.padding;
+  const sectionStyle = `background-color: ${bgColor}; color: ${textColor}; padding: ${padding};`;
+
+  const renderers: Record<string, () => string> = {
+    hero: () => renderHero(section, sectionStyle, brand, resolveAsset),
+    "trust-bar": () => renderTrustBar(section, sectionStyle, brand),
+    features: () => renderFeatures(section, sectionStyle, brand),
+    benefits: () => renderBenefits(section, sectionStyle, brand),
+    "problem-solution": () => renderProblemSolution(section, sectionStyle, brand),
+    "how-it-works": () => renderHowItWorks(section, sectionStyle, brand),
+    services: () => renderServices(section, sectionStyle, brand),
+    testimonials: () => renderTestimonials(section, sectionStyle),
+    results: () => renderResults(section, sectionStyle),
+    pricing: () => renderPricing(section, sectionStyle, brand),
+    faq: () => renderFaq(section, sectionStyle),
+    "cta-band": () => renderCtaBand(section, sectionStyle),
+    contact: () => renderContact(section, sectionStyle, brand),
+    footer: () => renderFooter(section, sectionStyle, brand),
+  };
+
+  const render = renderers[section.type];
+  if (render) return render();
+  return `<section data-section-id="${section.id}" style="${sectionStyle}"><div class="container text-center"><p>Unknown section: ${section.type}</p></div></section>`;
+}
+
+// ---- Individual Section Renderers ----
+
+function renderHero(
+  section: Section,
+  sectionStyle: string,
+  brand: Brand,
+  resolveAsset: (id?: string) => Asset | undefined
+): string {
+  const c = section.content as unknown as HeroContent;
+  const heroAsset = resolveAsset(c.heroImageId);
+  const heroImgUrl = heroAsset?.url || (section.variant === "split-image" ? getPlaceholderUrl("hero", 600, 500) : "");
+  const hasSplitImage = section.variant === "split-image" && heroImgUrl;
+
+  if (hasSplitImage) {
+    return `<section data-section-id="${section.id}" data-section-type="hero" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="hero-split" style="display: flex; align-items: center; gap: 48px;">
+      <div style="flex: 1;">
+        ${c.eyebrow ? `<p style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 12px;">${esc(c.eyebrow)}</p>` : ""}
+        <h1>${esc(c.heading)}</h1>
+        <p style="font-size: 20px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+          <a href="${esc(c.primaryCtaHref)}" class="btn btn-white">${esc(c.primaryCtaText)}</a>
+          ${c.secondaryCtaText ? `<a href="${esc(c.secondaryCtaHref || "#")}" class="btn" style="background: rgba(255,255,255,0.15); color: inherit; border: 2px solid rgba(255,255,255,0.3);">${esc(c.secondaryCtaText)}</a>` : ""}
+        </div>
+        ${c.trustPoints?.length ? `<div style="margin-top: 24px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; opacity: 0.8;">${c.trustPoints.map((t) => `<span>&#10003; ${esc(t)}</span>`).join("")}</div>` : ""}
+      </div>
+      <div style="flex: 1;">
+        <img src="${esc(heroImgUrl)}" alt="${esc(heroAsset?.alt || "Hero image")}" style="width: 100%; border-radius: 12px; object-fit: cover;" />
+      </div>
+    </div>
+  </div>
+</section>`;
+  }
+
+  // Centered variant (default)
+  return `<section data-section-id="${section.id}" data-section-type="hero" class="section" style="${sectionStyle}">
+  <div class="container text-center" style="max-width: 800px;">
+    ${c.eyebrow ? `<p style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 12px;">${esc(c.eyebrow)}</p>` : ""}
+    <h1>${esc(c.heading)}</h1>
+    <p style="font-size: 20px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      <a href="${esc(c.primaryCtaHref)}" class="btn btn-white">${esc(c.primaryCtaText)}</a>
+      ${c.secondaryCtaText ? `<a href="${esc(c.secondaryCtaHref || "#")}" class="btn" style="background: rgba(255,255,255,0.15); color: inherit; border: 2px solid rgba(255,255,255,0.3);">${esc(c.secondaryCtaText)}</a>` : ""}
+    </div>
+    ${c.trustPoints?.length ? `<div style="margin-top: 24px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; font-size: 14px; opacity: 0.8;">${c.trustPoints.map((t) => `<span>&#10003; ${esc(t)}</span>`).join("")}</div>` : ""}
+  </div>
+</section>`;
+}
+
+function renderTrustBar(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as TrustBarContent;
+  return `<section data-section-id="${section.id}" data-section-type="trust-bar" style="${sectionStyle}">
+  <div class="container">
+    <div style="display: flex; justify-content: center; align-items: center; gap: 32px; flex-wrap: wrap;">
+      ${c.items.map((item) => `<div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px;">
+        <span style="color: ${brand.primaryColor}; font-size: 20px;">${getSimpleIcon(item.icon)}</span>
+        <span>${esc(item.text)}</span>
+      </div>`).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderFeatures(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as FeaturesContent;
+  const gridClass = section.variant === "grid-2" ? "grid-2" : "grid-3";
+
+  return `<section data-section-id="${section.id}" data-section-type="features" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    <div class="${gridClass}">
+      ${c.items.map((item) => `<div class="card text-center">
+        <div style="width: 56px; height: 56px; border-radius: 12px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">${getSimpleIcon(item.icon)}</div>
+        <h3>${esc(item.title)}</h3>
+        <p style="opacity: 0.7;">${esc(item.description)}</p>
+      </div>`).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderBenefits(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as BenefitsContent;
+  return `<section data-section-id="${section.id}" data-section-type="benefits" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    <div class="grid-2" style="max-width: 900px; margin: 0 auto;">
+      ${c.items.map((item) => `<div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px;">&#10003;</div>
+        <div>
+          <h3 style="margin-bottom: 4px;">${esc(item.title)}</h3>
+          <p style="opacity: 0.7;">${esc(item.description)}</p>
+        </div>
+      </div>`).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderProblemSolution(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as ProblemSolutionContent;
+  return `<section data-section-id="${section.id}" data-section-type="problem-solution" class="section" style="${sectionStyle}">
+  <div class="container">
+    <h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>
+    <div class="grid-2">
+      <div class="card" style="border-left: 4px solid #ef4444;">
+        <h3 style="color: #ef4444; margin-bottom: 12px;">${esc(c.problem.heading)}</h3>
+        <p style="margin-bottom: 16px; opacity: 0.8;">${esc(c.problem.description)}</p>
+        <ul style="list-style: none;">
+          ${c.problem.points.map((p) => `<li style="padding: 6px 0; display: flex; gap: 8px; align-items: center;"><span style="color: #ef4444;">&#10007;</span> ${esc(p)}</li>`).join("\n          ")}
+        </ul>
+      </div>
+      <div class="card" style="border-left: 4px solid ${brand.primaryColor};">
+        <h3 style="color: ${brand.primaryColor}; margin-bottom: 12px;">${esc(c.solution.heading)}</h3>
+        <p style="margin-bottom: 16px; opacity: 0.8;">${esc(c.solution.description)}</p>
+        <ul style="list-style: none;">
+          ${c.solution.points.map((p) => `<li style="padding: 6px 0; display: flex; gap: 8px; align-items: center;"><span style="color: ${brand.primaryColor};">&#10003;</span> ${esc(p)}</li>`).join("\n          ")}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>`;
+}
+
+function renderHowItWorks(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as HowItWorksContent;
+  return `<section data-section-id="${section.id}" data-section-type="how-it-works" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    <div class="grid-3" style="max-width: 900px; margin: 0 auto;">
+      ${c.steps.map((step, i) => `<div class="text-center">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; margin: 0 auto 16px;">${esc(step.step)}</div>
+        ${i < c.steps.length - 1 ? "" : ""}
+        <h3>${esc(step.title)}</h3>
+        <p style="opacity: 0.7;">${esc(step.description)}</p>
+      </div>`).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderServices(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as ServicesContent;
+  return `<section data-section-id="${section.id}" data-section-type="services" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    <div class="grid-3">
+      ${c.items.map((item) => `<div class="card">
+        <div style="width: 48px; height: 48px; border-radius: 10px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 22px;">${getSimpleIcon(item.icon)}</div>
+        <h3>${esc(item.title)}</h3>
+        <p style="opacity: 0.7;">${esc(item.description)}</p>
+      </div>`).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderTestimonials(section: Section, sectionStyle: string): string {
+  const c = section.content as unknown as TestimonialsContent;
+  return `<section data-section-id="${section.id}" data-section-type="testimonials" class="section" style="${sectionStyle}">
+  <div class="container">
+    <h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>
+    <div class="grid-${Math.min(c.items.length, 3)}">
+      ${c.items.map((item) => `<div class="card">
+        <p style="font-style: italic; font-size: 18px; margin-bottom: 16px; line-height: 1.6;">&ldquo;${esc(item.quote)}&rdquo;</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; color: #6b7280;">${esc(item.author.charAt(0))}</div>
+          <div>
+            <strong>${esc(item.author)}</strong>
+            ${item.role ? `<br><span style="opacity: 0.6; font-size: 14px;">${esc(item.role)}</span>` : ""}
+          </div>
+        </div>
+      </div>`).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderResults(section: Section, sectionStyle: string): string {
+  const c = section.content as unknown as ResultsContent;
+  return `<section data-section-id="${section.id}" data-section-type="results" class="section" style="${sectionStyle}">
+  <div class="container text-center">
+    <h2 style="margin-bottom: 12px;">${esc(c.heading)}</h2>
+    ${c.subheading ? `<p style="font-size: 18px; opacity: 0.8; margin-bottom: 48px;">${esc(c.subheading)}</p>` : ""}
+    <div class="grid-${Math.min(c.stats.length, 4)}" style="max-width: 900px; margin: 0 auto;">
+      ${c.stats.map((stat) => `<div>
+        <div style="font-size: 48px; font-weight: 800; line-height: 1;">${esc(stat.value)}</div>
+        <div style="font-size: 16px; opacity: 0.8; margin-top: 8px;">${esc(stat.label)}</div>
+      </div>`).join("\n      ")}
+    </div>
+    ${c.description ? `<p style="margin-top: 32px; font-size: 18px; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">${esc(c.description)}</p>` : ""}
+  </div>
+</section>`;
+}
+
+function renderPricing(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as PricingContent;
+  return `<section data-section-id="${section.id}" data-section-type="pricing" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    <div class="grid-${Math.min(c.plans.length, 3)}" style="max-width: 900px; margin: 0 auto;">
+      ${c.plans.map((plan) => `<div class="card text-center" style="${plan.highlighted ? `border: 2px solid ${brand.primaryColor}; transform: scale(1.03); position: relative;` : "border: 1px solid #e5e7eb;"}">
+        ${plan.highlighted ? `<div style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: ${brand.primaryColor}; color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;">POPULAR</div>` : ""}
+        <h3>${esc(plan.name)}</h3>
+        ${plan.description ? `<p style="opacity: 0.6; font-size: 14px; margin-bottom: 8px;">${esc(plan.description)}</p>` : ""}
+        <div style="font-size: 48px; font-weight: 800; margin: 16px 0;">${esc(plan.price)}<span style="font-size: 16px; font-weight: 400; opacity: 0.6;">${esc(plan.period)}</span></div>
+        <ul style="list-style: none; margin-bottom: 24px; text-align: left;">
+          ${plan.features.map((f) => `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">&#10003; ${esc(f)}</li>`).join("\n          ")}
+        </ul>
+        <a href="#contact" class="btn ${plan.highlighted ? "btn-primary" : "btn-secondary"}" style="width: 100%;">${esc(plan.ctaText)}</a>
+      </div>`).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderFaq(section: Section, sectionStyle: string): string {
+  const c = section.content as unknown as FaqContent;
+  return `<section data-section-id="${section.id}" data-section-type="faq" class="section" style="${sectionStyle}">
+  <div class="container" style="max-width: 800px;">
+    <h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>
+    ${c.subheading ? `<p class="text-center" style="font-size: 18px; opacity: 0.7; margin-top: -36px; margin-bottom: 48px;">${esc(c.subheading)}</p>` : ""}
+    ${c.items.map((item) => `<details style="border-bottom: 1px solid #e5e7eb; padding: 20px 0;">
+      <summary style="font-weight: 600; font-size: 18px; cursor: pointer; list-style: none;">${esc(item.question)}</summary>
+      <p style="margin-top: 12px; opacity: 0.7; line-height: 1.7;">${esc(item.answer)}</p>
+    </details>`).join("\n    ")}
+  </div>
+</section>`;
+}
+
+function renderCtaBand(section: Section, sectionStyle: string): string {
+  const c = section.content as unknown as CtaBandContent;
+  return `<section data-section-id="${section.id}" data-section-type="cta-band" class="section" style="${sectionStyle}">
+  <div class="container text-center" style="max-width: 700px;">
+    <h2>${esc(c.heading)}</h2>
+    ${c.subheading ? `<p style="font-size: 18px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>` : ""}
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      <a href="${esc(c.buttonHref)}" class="btn btn-white" style="font-weight: 700; padding: 16px 40px;">${esc(c.buttonText)}</a>
+      ${c.secondaryButtonText ? `<a href="${esc(c.secondaryButtonHref || "#")}" class="btn" style="background: rgba(255,255,255,0.15); color: inherit; border: 2px solid rgba(255,255,255,0.3); padding: 16px 40px;">${esc(c.secondaryButtonText)}</a>` : ""}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderContact(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as ContactContent;
+  const hasContactInfo = c.email || c.phone || c.address;
+
+  if (section.variant === "form-with-info" && hasContactInfo) {
+    return `<section data-section-id="${section.id}" data-section-type="contact" class="section" style="${sectionStyle}">
+  <div class="container">
+    <h2 class="text-center" style="margin-bottom: 8px;">${esc(c.heading)}</h2>
+    ${c.subheading ? `<p class="text-center" style="font-size: 18px; opacity: 0.7; margin-bottom: 48px;">${esc(c.subheading)}</p>` : ""}
+    <div class="grid-2" style="max-width: 900px; margin: 0 auto;">
+      <div>
+        ${c.email ? `<div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;"><span style="font-size: 20px;">&#9993;</span><div><div style="font-weight: 600;">Email</div><div style="opacity: 0.7;">${esc(c.email)}</div></div></div>` : ""}
+        ${c.phone ? `<div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;"><span style="font-size: 20px;">&#9742;</span><div><div style="font-weight: 600;">Phone</div><div style="opacity: 0.7;">${esc(c.phone)}</div></div></div>` : ""}
+        ${c.address ? `<div style="display: flex; gap: 12px; align-items: center;"><span style="font-size: 20px;">&#9873;</span><div><div style="font-weight: 600;">Address</div><div style="opacity: 0.7;">${esc(c.address)}</div></div></div>` : ""}
+      </div>
+      <div>
+        ${renderContactForm(c, brand)}
+      </div>
+    </div>
+  </div>
+</section>`;
+  }
+
+  return `<section data-section-id="${section.id}" data-section-type="contact" class="section" style="${sectionStyle}">
+  <div class="container" style="max-width: 600px;">
+    <div class="text-center" style="margin-bottom: 32px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    ${renderContactForm(c, brand)}
+  </div>
+</section>`;
+}
+
+function renderContactForm(c: ContactContent, brand: Brand): string {
+  const fields = c.fields || ["name", "email", "message"];
+  return `<form style="display: flex; flex-direction: column; gap: 16px;">
+    ${fields.map((field) => {
+      if (field === "message") {
+        return `<textarea placeholder="${esc(field.charAt(0).toUpperCase() + field.slice(1))}" rows="4" style="width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; font-family: inherit;"></textarea>`;
+      }
+      return `<input type="${field === "email" ? "email" : field === "phone" ? "tel" : "text"}" placeholder="${esc(field.charAt(0).toUpperCase() + field.slice(1))}" style="width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; font-family: inherit;">`;
+    }).join("\n    ")}
+    <button type="submit" class="btn btn-primary" style="width: 100%; background-color: ${brand.primaryColor};">${esc(c.buttonText)}</button>
+  </form>`;
+}
+
+function renderFooter(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as FooterContent;
+  return `<footer data-section-id="${section.id}" data-section-type="footer" style="${sectionStyle}">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 48px; margin-bottom: 48px;">
+      <div style="min-width: 200px;">
+        <h3 style="color: #ffffff; font-size: 22px; margin-bottom: 8px;">${esc(c.companyName)}</h3>
+        ${c.tagline ? `<p style="opacity: 0.6; max-width: 280px;">${esc(c.tagline)}</p>` : ""}
+        ${c.socialLinks?.length ? `<div style="display: flex; gap: 12px; margin-top: 16px;">
+          ${c.socialLinks.map((sl) => `<a href="${esc(sl.url)}" style="color: inherit; opacity: 0.6; text-decoration: none; font-size: 14px;">${esc(sl.platform)}</a>`).join("\n          ")}
+        </div>` : ""}
+      </div>
+      ${c.columns.map((col) => `<div style="min-width: 140px;">
+        <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 16px;">${esc(col.title)}</h4>
+        <ul style="list-style: none;">
+          ${col.links.map((link) => `<li style="margin-bottom: 8px;"><a href="${esc(link.href)}" style="color: inherit; text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">${esc(link.text)}</a></li>`).join("\n          ")}
+        </ul>
+      </div>`).join("\n      ")}
+    </div>
+    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 14px; opacity: 0.6;">
+      <p>&copy; ${esc(c.copyrightYear)} ${esc(c.companyName)}. All rights reserved.</p>
+      ${c.legalLinks?.length ? `<div style="display: flex; gap: 24px;">${c.legalLinks.map((l) => `<a href="${esc(l.href)}" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("")}</div>` : ""}
+    </div>
+  </div>
+</footer>`;
+}
+
+// ---- Utilities ----
+
+function esc(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function getSimpleIcon(name?: string): string {
+  const icons: Record<string, string> = {
+    star: "&#9733;",
+    check: "&#10003;",
+    zap: "&#9889;",
+    shield: "&#128737;",
+    users: "&#128101;",
+    clock: "&#128339;",
+    phone: "&#128222;",
+    mail: "&#9993;",
+    briefcase: "&#128188;",
+    "trending-up": "&#128200;",
+    heart: "&#10084;",
+    target: "&#127919;",
+    award: "&#127942;",
+    globe: "&#127758;",
+    settings: "&#9881;",
+    layers: "&#9776;",
+    lock: "&#128274;",
+    rocket: "&#128640;",
+  };
+  return icons[name || "star"] || icons["star"];
+}

@@ -2,7 +2,7 @@ import type { WorkflowState } from "./types";
 
 /**
  * Given the current state, determine the next auto-transition state.
- * Returns null if the state requires user input or is terminal.
+ * Returns null if the state requires execution or user input or is terminal.
  */
 export function getNextState(
   current: WorkflowState,
@@ -12,28 +12,22 @@ export function getNextState(
     case "intake_complete":
       return context.hasCompetitorUrl
         ? "competitor_analysis_running"
-        : "plan_generation_running";
-
-    case "competitor_analysis_running":
-      // Runner will execute this, then advance
-      return null; // runner handles transition after execution
+        : "strategy_generation";
 
     case "competitor_analysis_complete":
-      return "plan_generation_running";
+      return "strategy_generation";
 
+    // States that require runner execution (return null)
+    case "competitor_analysis_running":
+    case "strategy_generation":
+    case "theme_generation":
+    case "asset_planning":
     case "plan_generation_running":
-      // Runner executes, then moves to plan_review
-      return null;
-
     case "generation_running":
-      // Runner executes, then moves to rendering
-      return null;
-
+    case "document_assembly":
     case "rendering":
-      return null; // runner handles
-
     case "saving":
-      return null; // runner handles
+      return null;
 
     // User-input states and terminal states
     case "intake":
@@ -58,12 +52,20 @@ export function stateToStepName(state: WorkflowState): string {
     case "competitor_analysis_running":
     case "competitor_analysis_complete":
       return "competitor_analysis";
+    case "strategy_generation":
+      return "strategy_generation";
+    case "theme_generation":
+      return "theme_generation";
+    case "asset_planning":
+      return "asset_planning";
     case "plan_generation_running":
       return "plan_generation";
     case "plan_review":
       return "plan_approval";
     case "generation_running":
       return "section_generation";
+    case "document_assembly":
+      return "document_assembly";
     case "rendering":
       return "rendering";
     case "saving":
@@ -83,13 +85,15 @@ export function stateToProgress(state: WorkflowState, hasCompetitorUrl: boolean)
     ? [
         "intake", "intake_complete",
         "competitor_analysis_running", "competitor_analysis_complete",
+        "strategy_generation", "theme_generation", "asset_planning",
         "plan_generation_running", "plan_review",
-        "generation_running", "rendering", "saving", "complete",
+        "generation_running", "document_assembly", "rendering", "saving", "complete",
       ]
     : [
         "intake", "intake_complete",
+        "strategy_generation", "theme_generation", "asset_planning",
         "plan_generation_running", "plan_review",
-        "generation_running", "rendering", "saving", "complete",
+        "generation_running", "document_assembly", "rendering", "saving", "complete",
       ];
 
   const idx = allStates.indexOf(state);
