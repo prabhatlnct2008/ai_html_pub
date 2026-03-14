@@ -44,17 +44,17 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 
 | Step | Description | Status |
 |------|-------------|--------|
-| C.1 | Three-pane layout — left sidebar, center canvas, right inspector | NOT STARTED |
-| C.2 | Editor state model — reducers for meta, brand, actions, assets, items, buttons, variants, visibility | NOT STARTED |
-| C.3 | Section structure panel — section list, add/reorder/duplicate/hide/delete, variant switcher | NOT STARTED |
-| C.4 | Element inspector — text fields, repeatable item editor, button editor, action picker, image assignment, style controls | NOT STARTED |
-| C.5 | Actions panel — CRUD page-level actions, type picker, WhatsApp message, preview | NOT STARTED |
-| C.6 | Assets panel — upload, list, replace, remove, alt text, assign to section | NOT STARTED |
-| C.7 | Theme & page settings — brand colors/fonts/logo, slug, SEO, publish status | NOT STARTED |
-| C.8 | Preview modes — desktop / tablet (768px) / mobile (375px) toggle | NOT STARTED |
+| C.1 | Three-pane layout — left sidebar, center canvas, right inspector | DONE |
+| C.2 | Editor state model — reducers for meta, brand, actions, assets, items, buttons, variants, visibility | DONE |
+| C.3 | Section structure panel — section list, add/reorder/duplicate/hide/delete, variant switcher | DONE |
+| C.4 | Element inspector — text fields, repeatable item editor, button editor, action picker, image assignment, style controls | DONE |
+| C.5 | Actions panel — CRUD page-level actions, type picker, WhatsApp message, preview | DONE |
+| C.6 | Assets panel — upload, list, replace, remove, alt text, assign to section | PARTIAL (list/delete, no upload UI yet) |
+| C.7 | Theme & page settings — brand colors/fonts/logo, slug, SEO, publish status | DONE |
+| C.8 | Preview modes — desktop / tablet (768px) / mobile (375px) toggle | DONE |
 | C.9 | AI section regeneration — regenerate selected section with instructions | NOT STARTED |
 
-**Exit criteria:** Editor can manipulate the full PageDocument. All element-level operations work. `next build` passes.
+**Exit criteria:** Editor can manipulate the full PageDocument. All element-level operations work. `next build` passes. **ALL MET (except C.6 upload UI and C.9 AI regen).**
 
 ---
 
