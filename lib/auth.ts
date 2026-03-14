@@ -2,7 +2,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-change-me";
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required. Set it before starting the server.");
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const COOKIE_NAME = "auth_token";
 
 export interface JWTPayload {
