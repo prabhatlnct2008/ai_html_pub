@@ -43,10 +43,22 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const project = await prisma.project.findUnique({
     where: { slug },
-    include: { pagePlan: true },
+    include: { page: true, pagePlan: true },
   });
 
   if (!project) return { title: "Page Not Found" };
+
+  // Enforce publish gating for metadata too
+  if (project.page?.documentJson && project.page.documentJson !== "{}") {
+    const doc = JSON.parse(project.page.documentJson);
+    if (doc.meta?.publishStatus === "draft") {
+      const auth = await getCurrentUser();
+      const isOwner = auth?.userId === project.userId;
+      if (!isOwner) {
+        return { title: "Page Not Found" };
+      }
+    }
+  }
 
   const planData = project.pagePlan
     ? JSON.parse(project.pagePlan.planData)

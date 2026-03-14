@@ -106,6 +106,19 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 
 ---
 
+## Post-Review Fixes (Round 3)
+> Fixes from the third V2 code review, addressing asset persistence, item-level image editing, and metadata gating.
+
+| Fix | Description | Status |
+|-----|-------------|--------|
+| 1 | Persistent asset PATCH/DELETE — per-asset API route with DB update, file cleanup, and documentJson reference cleanup on delete | DONE |
+| 2 | Item-level image assignment — repeatable items editor shows image picker for features/services imageId, testimonials avatarImageId, about-team members imageId | DONE |
+| 3 | Publish gating in generateMetadata — draft pages return generic metadata to non-owners | DONE |
+
+**All 3 fixes verified with `next build`.**
+
+---
+
 ## Implementation Notes
 
 - Phases are sequential: A → B → C → D
