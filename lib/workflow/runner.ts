@@ -5,10 +5,13 @@ import { generateAllSections } from "@/lib/ai/generator";
 import { generateStrategy } from "@/lib/ai/strategist";
 import { generateTheme } from "@/lib/ai/theme-generator";
 import { planAssets } from "@/lib/ai/asset-planner";
-import { generateAllSectionsV2 } from "@/lib/ai/section-generator";
+import { generateAllSectionsV2, generateAllSectionsWithActions } from "@/lib/ai/section-generator";
+import { generateImagePrompts } from "@/lib/ai/image-prompt-generator";
+import { generateImages } from "@/lib/ai/image-generator";
 import { renderPageFromDocument } from "@/lib/page/renderer";
 import { renderPageHtml } from "@/lib/html-renderer";
-import type { PageDocument, Section, Brand, SectionType } from "@/lib/page/schema";
+import { validateDocumentQuality, autoRepairDocument } from "@/lib/page/validators";
+import type { PageDocument, Section, Brand, SectionType, Action } from "@/lib/page/schema";
 import { fillDefaults, type BusinessContext, type WorkflowState } from "./types";
 
 /**
@@ -32,6 +35,10 @@ export async function executeState(
       return executeThemeGeneration(projectId);
     case "asset_planning":
       return executeAssetPlanning(projectId);
+    case "image_prompt_generation":
+      return executeImagePromptGeneration(projectId);
+    case "image_generation":
+      return executeImageGeneration(projectId);
     case "plan_generation_running":
       return executePlanGeneration(projectId);
     case "generation_running":
@@ -198,6 +205,81 @@ async function executeAssetPlanning(
 
   await addSystemMessage(projectId, `Asset plan created: ${assets.length} placeholder images ready for replacement.`);
 
+  return { nextState: "image_prompt_generation" };
+}
+
+async function executeImagePromptGeneration(
+  projectId: string
+): Promise<{ nextState: WorkflowState; error?: string }> {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) return { nextState: "failed", error: "Project not found" };
+
+  const rawCtx = JSON.parse(project.businessContext);
+  const strategy = rawCtx._strategy;
+  const theme = rawCtx._theme;
+
+  if (!strategy) return { nextState: "failed", error: "No strategy found" };
+
+  const prompts = await generateImagePrompts(
+    rawCtx,
+    strategy,
+    { tone: theme?.brand?.tone || rawCtx.tone || "professional", primaryColor: theme?.brand?.primaryColor || "#2563eb", themeVariant: theme?.themeVariant }
+  );
+
+  // Store prompts in context for next step
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      businessContext: JSON.stringify({
+        ...rawCtx,
+        _imagePrompts: prompts,
+      }),
+    },
+  });
+
+  await addSystemMessage(projectId, `Generated ${prompts.length} image prompt(s) for hero and section visuals.`);
+
+  return { nextState: "image_generation" };
+}
+
+async function executeImageGeneration(
+  projectId: string
+): Promise<{ nextState: WorkflowState; error?: string }> {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) return { nextState: "failed", error: "Project not found" };
+
+  const rawCtx = JSON.parse(project.businessContext);
+  const imagePrompts = rawCtx._imagePrompts || [];
+
+  if (imagePrompts.length === 0) {
+    await addSystemMessage(projectId, "No image prompts to process. Continuing with plan generation.");
+    return { nextState: "plan_generation_running" };
+  }
+
+  const assets = await generateImages(imagePrompts, projectId);
+
+  // Store AI-generated assets in DB
+  for (const asset of assets) {
+    await prisma.asset.create({
+      data: {
+        id: asset.id,
+        projectId,
+        kind: asset.kind,
+        source: asset.source,
+        url: asset.url,
+        altText: asset.alt || null,
+      },
+    });
+  }
+
+  const aiCount = assets.filter((a) => a.source === "ai").length;
+  const placeholderCount = assets.filter((a) => a.source === "placeholder").length;
+  const msg = aiCount > 0
+    ? `Generated ${aiCount} AI image(s)${placeholderCount > 0 ? ` and ${placeholderCount} placeholder(s)` : ""}.`
+    : `Using ${placeholderCount} placeholder image(s). AI image generation requires OPENAI_API_KEY.`;
+
+  await addSystemMessage(projectId, msg);
+
   return { nextState: "plan_generation_running" };
 }
 
@@ -285,17 +367,20 @@ async function executeSectionGeneration(
 
   // Use the new V2 generator if we have strategy/theme data
   let sections: Section[];
+  let generatedActions: import("@/lib/page/schema").Action[] = [];
   if (theme?.brand) {
     const brand: Brand = theme.brand;
     const sectionPlans = plan.sections.map((s: { type: string; description: string }) => ({
       type: s.type as SectionType,
       description: s.description,
     }));
-    sections = await generateAllSectionsV2(
+    const result = await generateAllSectionsWithActions(
       sectionPlans,
       businessContext as unknown as Record<string, unknown>,
       brand
     );
+    sections = result.sections;
+    generatedActions = result.actions;
   } else {
     // Fallback to legacy generator for existing projects
     const legacySections = await generateAllSections(plan, businessContext as unknown as Record<string, unknown>);
@@ -333,6 +418,21 @@ async function executeSectionGeneration(
         globalStyles: JSON.stringify(globalStyles),
         pageType: rawCtx._strategy?.pageType || "",
         themeVariant: theme?.themeVariant || "",
+      },
+    });
+  }
+
+  // Store generated actions for document assembly
+  if (generatedActions.length > 0) {
+    const latestProject = await prisma.project.findUnique({ where: { id: projectId } });
+    const latestCtx = JSON.parse(latestProject?.businessContext || "{}");
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        businessContext: JSON.stringify({
+          ...latestCtx,
+          _generatedActions: generatedActions,
+        }),
       },
     });
   }
@@ -382,13 +482,35 @@ async function executeDocumentAssembly(
       url: a.url,
       alt: a.altText || undefined,
     })),
+    actions: (rawCtx._generatedActions as Action[]) || [],
     sections,
   };
+
+  // Run quality validation and auto-repair
+  const qualityIssues = validateDocumentQuality(pageDocument);
+  const errors = qualityIssues.filter((i) => i.severity === "error");
+  const warnings = qualityIssues.filter((i) => i.severity === "warning");
+
+  let finalDoc = pageDocument;
+  if (errors.length > 0 || warnings.length > 0) {
+    const { doc: repairedDoc, repairs } = autoRepairDocument(pageDocument);
+    finalDoc = repairedDoc;
+
+    if (repairs.length > 0) {
+      await addSystemMessage(projectId, `Auto-repaired: ${repairs.join(", ")}`);
+    }
+    if (warnings.length > 0) {
+      await addSystemMessage(
+        projectId,
+        `Quality check: ${warnings.length} warning(s) — ${warnings.map((w) => w.message).join("; ")}`
+      );
+    }
+  }
 
   // Store PageDocument
   await prisma.page.update({
     where: { id: project.page.id },
-    data: { documentJson: JSON.stringify(pageDocument) },
+    data: { documentJson: JSON.stringify(finalDoc) },
   });
 
   return { nextState: "rendering" };

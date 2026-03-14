@@ -1,4 +1,4 @@
-// ---- Workflow States ----
+// ---- Workflow States (V2) ----
 
 export const WORKFLOW_STATES = [
   "intake",
@@ -8,6 +8,8 @@ export const WORKFLOW_STATES = [
   "strategy_generation",
   "theme_generation",
   "asset_planning",
+  "image_prompt_generation",
+  "image_generation",
   "plan_generation_running",
   "plan_review",
   "generation_running",
@@ -31,6 +33,8 @@ export const AUTO_EXECUTE_STATES: WorkflowState[] = [
   "strategy_generation",
   "theme_generation",
   "asset_planning",
+  "image_prompt_generation",
+  "image_generation",
   "plan_generation_running",
   "generation_running",
   "document_assembly",
@@ -59,6 +63,8 @@ export const STEP_DEFINITIONS: Array<{ name: string; label: string }> = [
   { name: "strategy_generation", label: "Page strategy" },
   { name: "theme_generation", label: "Theme & branding" },
   { name: "asset_planning", label: "Planning assets" },
+  { name: "image_prompt_generation", label: "Creating image prompts" },
+  { name: "image_generation", label: "Generating images" },
   { name: "plan_generation", label: "Building page plan" },
   { name: "plan_approval", label: "Waiting for approval" },
   { name: "section_generation", label: "Generating sections" },

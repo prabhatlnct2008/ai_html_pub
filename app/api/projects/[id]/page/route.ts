@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { renderPageHtml } from "@/lib/html-renderer";
 import { renderPageFromDocument } from "@/lib/page/renderer";
+import { normalizeDocumentActions } from "@/lib/actions/normalizer";
 import type { PageDocument } from "@/lib/page/schema";
 
 // Get page data
@@ -16,7 +17,7 @@ export async function GET(
 
   const project = await prisma.project.findUnique({
     where: { id },
-    include: { page: true, pagePlan: true },
+    include: { page: true, pagePlan: true, assets: true },
   });
 
   if (!project || project.userId !== auth.user.userId) {
@@ -27,12 +28,34 @@ export async function GET(
     return errorResponse("No page generated yet", 404);
   }
 
+  // Parse document if available, normalize legacy actions
+  let doc = project.page.documentJson && project.page.documentJson !== "{}"
+    ? JSON.parse(project.page.documentJson) as PageDocument
+    : null;
+  if (doc) {
+    doc = normalizeDocumentActions(doc);
+  }
+
   return jsonResponse({
     sections: JSON.parse(project.page.sectionsJson),
     globalStyles: JSON.parse(project.page.globalStyles),
-    documentJson: project.page.documentJson && project.page.documentJson !== "{}"
-      ? JSON.parse(project.page.documentJson)
-      : null,
+    // V2 fields from PageDocument
+    actions: doc?.actions || [],
+    assets: doc?.assets || project.assets.map((a) => ({
+      id: a.id,
+      kind: a.kind,
+      source: a.source,
+      url: a.url,
+      alt: a.altText || undefined,
+    })),
+    meta: doc?.meta || {
+      title: project.name,
+      description: "",
+      pageType: project.page.pageType || "service-business",
+      themeVariant: project.page.themeVariant || "clean",
+    },
+    brand: doc?.brand || null,
+    documentJson: doc,
     pageType: project.page.pageType || null,
     themeVariant: project.page.themeVariant || null,
     version: project.page.version,
@@ -66,7 +89,7 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { sections, globalStyles } = body;
+  const { sections, globalStyles, actions, assets, meta, brand } = body;
 
   if (!sections || !Array.isArray(sections)) {
     return errorResponse("Sections array is required");
@@ -85,10 +108,25 @@ export async function PUT(
   let renderedHtml: string;
   let documentJson: string;
 
-  if (existingDoc) {
-    // Update the PageDocument with new sections
+  if (existingDoc || actions || meta || brand) {
+    // Build/update the PageDocument with all V2 fields
     const updatedDoc: PageDocument = {
-      ...existingDoc,
+      meta: meta || existingDoc?.meta || {
+        title: project.name,
+        description: "",
+        pageType: project.page.pageType || "service-business",
+        themeVariant: project.page.themeVariant || "clean",
+      },
+      brand: brand || existingDoc?.brand || {
+        tone: "professional",
+        primaryColor: "#2563eb",
+        secondaryColor: "#1e40af",
+        accentColor: "#f59e0b",
+        fontHeading: "Inter",
+        fontBody: "Inter",
+      },
+      assets: assets || existingDoc?.assets || [],
+      actions: actions || existingDoc?.actions || [],
       sections,
     };
     documentJson = JSON.stringify(updatedDoc);

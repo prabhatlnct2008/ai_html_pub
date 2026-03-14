@@ -8,9 +8,11 @@ import { useAuth } from "@/components/common/AuthProvider";
 import { EditorProvider, useEditor } from "@/components/editor/EditorContext";
 import EditorCanvas from "@/components/editor/EditorCanvas";
 import EditorToolbar from "@/components/editor/EditorToolbar";
+import SectionListPanel from "@/components/editor/SectionListPanel";
+import SectionInspector from "@/components/editor/SectionInspector";
 
 function EditorContent({ projectId }: { projectId: string }) {
-  const { setSections, sections, globalStyles, markClean } = useEditor();
+  const { setSections, sections, globalStyles, actions, assets, meta, brand, markClean, isPreview, previewWidth } = useEditor();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [slug, setSlug] = useState("");
@@ -29,7 +31,12 @@ function EditorContent({ projectId }: { projectId: string }) {
         throw new Error("Failed to load page");
       }
       const data = await res.json();
-      setSections(data.sections, data.globalStyles);
+      setSections(data.sections, data.globalStyles, {
+        actions: data.actions || [],
+        assets: data.assets || [],
+        meta: data.meta || {},
+        brand: data.brand || {},
+      });
       setSlug(data.slug);
       setVersion(data.version);
     } catch {
@@ -50,7 +57,7 @@ function EditorContent({ projectId }: { projectId: string }) {
       const res = await fetch(`/api/projects/${projectId}/page`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sections, globalStyles }),
+        body: JSON.stringify({ sections, globalStyles, actions, assets, meta, brand }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -92,10 +99,30 @@ function EditorContent({ projectId }: { projectId: string }) {
         slug={slug}
         version={version}
       />
-      <div className="flex-1 overflow-y-auto bg-gray-100">
-        <div className="mx-auto" style={{ maxWidth: "1400px" }}>
-          <EditorCanvas />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left sidebar — Section list */}
+        {!isPreview && (
+          <div className="w-56 flex-shrink-0 overflow-y-auto">
+            <SectionListPanel />
+          </div>
+        )}
+
+        {/* Center — Canvas */}
+        <div className="flex-1 overflow-y-auto bg-gray-100">
+          <div
+            className="mx-auto transition-all duration-300"
+            style={{ maxWidth: previewWidth }}
+          >
+            <EditorCanvas />
+          </div>
         </div>
+
+        {/* Right sidebar — Inspector */}
+        {!isPreview && (
+          <div className="w-72 flex-shrink-0 overflow-y-auto">
+            <SectionInspector />
+          </div>
+        )}
       </div>
     </div>
   );

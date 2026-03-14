@@ -3,6 +3,8 @@ import type {
   Section,
   Brand,
   Asset,
+  Action,
+  ButtonRef,
   HeroContent,
   TrustBarContent,
   FeaturesContent,
@@ -17,8 +19,13 @@ import type {
   CtaBandContent,
   ContactContent,
   FooterContent,
+  GalleryContent,
+  ServiceAreaContent,
+  AboutTeamContent,
 } from "./schema";
 import { getPlaceholderUrl } from "@/lib/assets/placeholders";
+import { resolveAction, getActionHref } from "@/lib/actions/resolver";
+import { resolveIcon } from "./icons";
 
 // ---- Main Render Function ----
 
@@ -28,7 +35,7 @@ export function renderPageFromDocument(doc: PageDocument): string {
     .sort((a, b) => a.order - b.order);
 
   const sectionsHtml = visibleSections
-    .map((s) => renderSection(s, doc.brand, doc.assets))
+    .map((s) => renderSection(s, doc.brand, doc.assets, doc.actions))
     .join("\n");
 
   const fontFamilies = [doc.brand.fontHeading];
@@ -39,13 +46,29 @@ export function renderPageFromDocument(doc: PageDocument): string {
     .map((f) => `family=${encodeURIComponent(f)}:wght@400;500;600;700;800`)
     .join("&");
 
+  // Build structured data (LocalBusiness / Organization)
+  const structuredData = buildStructuredData(doc);
+  const ogType = doc.meta.pageType === "local-business" ? "business.business" : "website";
+  const heroSection = visibleSections.find((s) => s.type === "hero");
+  const heroContent = heroSection?.content as Record<string, unknown> | undefined;
+  const ogDescription = doc.meta.description || (heroContent?.subheading as string) || "";
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="${esc(doc.meta.description)}">
+  <meta name="description" content="${esc(ogDescription)}">
   <title>${esc(doc.meta.title)}</title>
+  <!-- Open Graph -->
+  <meta property="og:title" content="${esc(doc.meta.title)}">
+  <meta property="og:description" content="${esc(ogDescription)}">
+  <meta property="og:type" content="${ogType}">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="${esc(doc.meta.title)}">
+  <meta name="twitter:description" content="${esc(ogDescription)}">
+  ${structuredData ? `<script type="application/ld+json">${structuredData}</script>` : ""}
   <link href="https://fonts.googleapis.com/css2?${fontsParam}&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,6 +81,8 @@ export function renderPageFromDocument(doc: PageDocument): string {
     .btn-primary { background-color: ${doc.brand.primaryColor}; color: #ffffff; }
     .btn-secondary { background-color: transparent; color: ${doc.brand.primaryColor}; border: 2px solid ${doc.brand.primaryColor}; }
     .btn-white { background: #ffffff; color: ${doc.brand.primaryColor}; }
+    .btn-outline { background: transparent; color: inherit; border: 2px solid rgba(255,255,255,0.3); }
+    .btn-ghost { background: rgba(255,255,255,0.15); color: inherit; }
     .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
@@ -68,6 +93,7 @@ export function renderPageFromDocument(doc: PageDocument): string {
     h3 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
     p { line-height: 1.7; }
     img { max-width: 100%; height: auto; }
+    html { scroll-behavior: smooth; }
     @media (max-width: 768px) {
       h1 { font-size: 36px; }
       h2 { font-size: 30px; }
@@ -86,15 +112,16 @@ ${sectionsHtml}
 
 // ---- Section Dispatcher ----
 
-function renderSection(section: Section, brand: Brand, assets: Asset[]): string {
-  const resolveAsset = (id?: string) => assets.find((a) => a.id === id);
+function renderSection(section: Section, brand: Brand, assets: Asset[], actions: Action[]): string {
+  const resolveAssetFn = (id?: string) => assets.find((a) => a.id === id);
   const bgColor = section.style.backgroundColor;
   const textColor = section.style.textColor;
   const padding = section.style.padding;
   const sectionStyle = `background-color: ${bgColor}; color: ${textColor}; padding: ${padding};`;
+  const sectionId = section.type === "footer" ? "" : ` id="${section.type}"`;
 
   const renderers: Record<string, () => string> = {
-    hero: () => renderHero(section, sectionStyle, brand, resolveAsset),
+    hero: () => renderHero(section, sectionStyle, brand, resolveAssetFn, actions),
     "trust-bar": () => renderTrustBar(section, sectionStyle, brand),
     features: () => renderFeatures(section, sectionStyle, brand),
     benefits: () => renderBenefits(section, sectionStyle, brand),
@@ -103,16 +130,50 @@ function renderSection(section: Section, brand: Brand, assets: Asset[]): string 
     services: () => renderServices(section, sectionStyle, brand),
     testimonials: () => renderTestimonials(section, sectionStyle),
     results: () => renderResults(section, sectionStyle),
-    pricing: () => renderPricing(section, sectionStyle, brand),
+    pricing: () => renderPricing(section, sectionStyle, brand, actions),
     faq: () => renderFaq(section, sectionStyle),
-    "cta-band": () => renderCtaBand(section, sectionStyle),
-    contact: () => renderContact(section, sectionStyle, brand),
+    "cta-band": () => renderCtaBand(section, sectionStyle, actions),
+    contact: () => renderContact(section, sectionStyle, brand, actions),
     footer: () => renderFooter(section, sectionStyle, brand),
+    gallery: () => renderGallery(section, sectionStyle, assets),
+    "service-area": () => renderServiceArea(section, sectionStyle),
+    "about-team": () => renderAboutTeam(section, sectionStyle, brand),
   };
 
   const render = renderers[section.type];
   if (render) return render();
-  return `<section data-section-id="${section.id}" style="${sectionStyle}"><div class="container text-center"><p>Unknown section: ${section.type}</p></div></section>`;
+  return `<section data-section-id="${section.id}"${sectionId} style="${sectionStyle}"><div class="container text-center"><p>Unknown section: ${section.type}</p></div></section>`;
+}
+
+// ---- Button Rendering ----
+
+function renderButtons(
+  buttons: ButtonRef[] | undefined,
+  actions: Action[],
+  brand: Brand,
+  fallbackText?: string,
+  fallbackHref?: string
+): string {
+  // V2: render from buttons array with action references
+  if (buttons && buttons.length > 0) {
+    return buttons.map((btn) => {
+      const action = resolveAction(btn.actionId, actions);
+      const href = action ? getActionHref(action) : "#";
+      const style = btn.style || "primary";
+      const btnClass = style === "primary" ? "btn btn-white" :
+                       style === "outline" ? "btn btn-outline" :
+                       style === "ghost" ? "btn btn-ghost" :
+                       "btn btn-secondary";
+      return `<a href="${esc(href)}" class="${btnClass}">${esc(btn.text)}</a>`;
+    }).join("\n          ");
+  }
+
+  // Legacy fallback: render from raw text/href fields
+  if (fallbackText) {
+    return `<a href="${esc(fallbackHref || "#")}" class="btn btn-white">${esc(fallbackText)}</a>`;
+  }
+
+  return "";
 }
 
 // ---- Individual Section Renderers ----
@@ -121,15 +182,29 @@ function renderHero(
   section: Section,
   sectionStyle: string,
   brand: Brand,
-  resolveAsset: (id?: string) => Asset | undefined
+  resolveAsset: (id?: string) => Asset | undefined,
+  actions: Action[]
 ): string {
   const c = section.content as unknown as HeroContent;
   const heroAsset = resolveAsset(c.heroImageId);
   const heroImgUrl = heroAsset?.url || (section.variant === "split-image" ? getPlaceholderUrl("hero", 600, 500) : "");
   const hasSplitImage = section.variant === "split-image" && heroImgUrl;
 
+  const buttonsHtml = renderButtons(
+    c.buttons, actions, brand,
+    c.primaryCtaText, c.primaryCtaHref
+  );
+
+  const secondaryLegacy = c.secondaryCtaText && !c.buttons?.length
+    ? `<a href="${esc(c.secondaryCtaHref || "#")}" class="btn btn-ghost">${esc(c.secondaryCtaText)}</a>`
+    : "";
+
+  const trustHtml = c.trustPoints?.length
+    ? `<div style="margin-top: 24px; display: flex; gap: 16px; flex-wrap: wrap;${hasSplitImage ? "" : " justify-content: center;"} font-size: 14px; opacity: 0.8;">${c.trustPoints.map((t) => `<span>&#10003; ${esc(t)}</span>`).join("")}</div>`
+    : "";
+
   if (hasSplitImage) {
-    return `<section data-section-id="${section.id}" data-section-type="hero" class="section" style="${sectionStyle}">
+    return `<section data-section-id="${section.id}" data-section-type="hero" id="hero" class="section" style="${sectionStyle}">
   <div class="container">
     <div class="hero-split" style="display: flex; align-items: center; gap: 48px;">
       <div style="flex: 1;">
@@ -137,30 +212,42 @@ function renderHero(
         <h1>${esc(c.heading)}</h1>
         <p style="font-size: 20px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>
         <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-          <a href="${esc(c.primaryCtaHref)}" class="btn btn-white">${esc(c.primaryCtaText)}</a>
-          ${c.secondaryCtaText ? `<a href="${esc(c.secondaryCtaHref || "#")}" class="btn" style="background: rgba(255,255,255,0.15); color: inherit; border: 2px solid rgba(255,255,255,0.3);">${esc(c.secondaryCtaText)}</a>` : ""}
+          ${buttonsHtml}${secondaryLegacy}
         </div>
-        ${c.trustPoints?.length ? `<div style="margin-top: 24px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; opacity: 0.8;">${c.trustPoints.map((t) => `<span>&#10003; ${esc(t)}</span>`).join("")}</div>` : ""}
+        ${trustHtml}
       </div>
       <div style="flex: 1;">
-        <img src="${esc(heroImgUrl)}" alt="${esc(heroAsset?.alt || "Hero image")}" style="width: 100%; border-radius: 12px; object-fit: cover;" />
+        <img src="${esc(heroImgUrl)}" alt="${esc(heroAsset?.alt || "Hero image")}" style="width: 100%; border-radius: 12px; object-fit: cover;" loading="lazy" />
       </div>
     </div>
   </div>
 </section>`;
   }
 
-  // Centered variant (default)
-  return `<section data-section-id="${section.id}" data-section-type="hero" class="section" style="${sectionStyle}">
+  if (section.variant === "background-image" && heroImgUrl) {
+    return `<section data-section-id="${section.id}" data-section-type="hero" id="hero" class="section" style="${sectionStyle} background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${esc(heroImgUrl)}'); background-size: cover; background-position: center;">
   <div class="container text-center" style="max-width: 800px;">
     ${c.eyebrow ? `<p style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 12px;">${esc(c.eyebrow)}</p>` : ""}
     <h1>${esc(c.heading)}</h1>
     <p style="font-size: 20px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>
     <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-      <a href="${esc(c.primaryCtaHref)}" class="btn btn-white">${esc(c.primaryCtaText)}</a>
-      ${c.secondaryCtaText ? `<a href="${esc(c.secondaryCtaHref || "#")}" class="btn" style="background: rgba(255,255,255,0.15); color: inherit; border: 2px solid rgba(255,255,255,0.3);">${esc(c.secondaryCtaText)}</a>` : ""}
+      ${buttonsHtml}${secondaryLegacy}
     </div>
-    ${c.trustPoints?.length ? `<div style="margin-top: 24px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; font-size: 14px; opacity: 0.8;">${c.trustPoints.map((t) => `<span>&#10003; ${esc(t)}</span>`).join("")}</div>` : ""}
+    ${trustHtml}
+  </div>
+</section>`;
+  }
+
+  // Centered variant (default)
+  return `<section data-section-id="${section.id}" data-section-type="hero" id="hero" class="section" style="${sectionStyle}">
+  <div class="container text-center" style="max-width: 800px;">
+    ${c.eyebrow ? `<p style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 12px;">${esc(c.eyebrow)}</p>` : ""}
+    <h1>${esc(c.heading)}</h1>
+    <p style="font-size: 20px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      ${buttonsHtml}${secondaryLegacy}
+    </div>
+    ${trustHtml}
   </div>
 </section>`;
 }
@@ -170,10 +257,17 @@ function renderTrustBar(section: Section, sectionStyle: string, brand: Brand): s
   return `<section data-section-id="${section.id}" data-section-type="trust-bar" style="${sectionStyle}">
   <div class="container">
     <div style="display: flex; justify-content: center; align-items: center; gap: 32px; flex-wrap: wrap;">
-      ${c.items.map((item) => `<div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px;">
-        <span style="color: ${brand.primaryColor}; font-size: 20px;">${getSimpleIcon(item.icon)}</span>
+      ${c.items.map((item) => {
+        const iconHtml = item.iconIntent
+          ? `<span style="color: ${brand.primaryColor}; display: flex; align-items: center;">${resolveIcon(item.iconIntent)}</span>`
+          : item.icon
+            ? `<span style="color: ${brand.primaryColor}; font-size: 20px;">${getSimpleIcon(item.icon)}</span>`
+            : "";
+        return `<div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px;">
+        ${iconHtml}
         <span>${esc(item.text)}</span>
-      </div>`).join("\n      ")}
+      </div>`;
+      }).join("\n      ")}
     </div>
   </div>
 </section>`;
@@ -181,20 +275,44 @@ function renderTrustBar(section: Section, sectionStyle: string, brand: Brand): s
 
 function renderFeatures(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as FeaturesContent;
-  const gridClass = section.variant === "grid-2" ? "grid-2" : "grid-3";
+  const gridClass = section.variant === "list-with-icons" ? "" : c.items.length <= 2 ? "grid-2" : "grid-3";
 
-  return `<section data-section-id="${section.id}" data-section-type="features" class="section" style="${sectionStyle}">
+  if (section.variant === "list-with-icons") {
+    return `<section data-section-id="${section.id}" data-section-type="features" id="features" class="section" style="${sectionStyle}">
+  <div class="container" style="max-width: 800px;">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    ${c.items.map((item) => {
+      const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
+      return `<div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 32px;">
+      <div style="flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center;">${iconHtml}</div>
+      <div>
+        <h3>${esc(item.title)}</h3>
+        <p style="opacity: 0.7;">${esc(item.description)}</p>
+      </div>
+    </div>`;
+    }).join("\n    ")}
+  </div>
+</section>`;
+  }
+
+  return `<section data-section-id="${section.id}" data-section-type="features" id="features" class="section" style="${sectionStyle}">
   <div class="container">
     <div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
     </div>
     <div class="${gridClass}">
-      ${c.items.map((item) => `<div class="card text-center">
-        <div style="width: 56px; height: 56px; border-radius: 12px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">${getSimpleIcon(item.icon)}</div>
+      ${c.items.map((item) => {
+        const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
+        return `<div class="card text-center">
+        <div style="width: 56px; height: 56px; border-radius: 12px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">${iconHtml}</div>
         <h3>${esc(item.title)}</h3>
         <p style="opacity: 0.7;">${esc(item.description)}</p>
-      </div>`).join("\n      ")}
+      </div>`;
+      }).join("\n      ")}
     </div>
   </div>
 </section>`;
@@ -202,20 +320,23 @@ function renderFeatures(section: Section, sectionStyle: string, brand: Brand): s
 
 function renderBenefits(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as BenefitsContent;
-  return `<section data-section-id="${section.id}" data-section-type="benefits" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="benefits" id="benefits" class="section" style="${sectionStyle}">
   <div class="container">
     <div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
     </div>
     <div class="grid-2" style="max-width: 900px; margin: 0 auto;">
-      ${c.items.map((item) => `<div style="display: flex; gap: 16px; align-items: flex-start;">
-        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px;">&#10003;</div>
+      ${c.items.map((item) => {
+        const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : `&#10003;`;
+        return `<div style="display: flex; gap: 16px; align-items: flex-start;">
+        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px;">${iconHtml}</div>
         <div>
           <h3 style="margin-bottom: 4px;">${esc(item.title)}</h3>
           <p style="opacity: 0.7;">${esc(item.description)}</p>
         </div>
-      </div>`).join("\n      ")}
+      </div>`;
+      }).join("\n      ")}
     </div>
   </div>
 </section>`;
@@ -223,7 +344,7 @@ function renderBenefits(section: Section, sectionStyle: string, brand: Brand): s
 
 function renderProblemSolution(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as ProblemSolutionContent;
-  return `<section data-section-id="${section.id}" data-section-type="problem-solution" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="problem-solution" id="problem-solution" class="section" style="${sectionStyle}">
   <div class="container">
     <h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>
     <div class="grid-2">
@@ -248,16 +369,15 @@ function renderProblemSolution(section: Section, sectionStyle: string, brand: Br
 
 function renderHowItWorks(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as HowItWorksContent;
-  return `<section data-section-id="${section.id}" data-section-type="how-it-works" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="how-it-works" id="how-it-works" class="section" style="${sectionStyle}">
   <div class="container">
     <div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
     </div>
     <div class="grid-3" style="max-width: 900px; margin: 0 auto;">
-      ${c.steps.map((step, i) => `<div class="text-center">
+      ${c.steps.map((step) => `<div class="text-center">
         <div style="width: 64px; height: 64px; border-radius: 50%; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; margin: 0 auto 16px;">${esc(step.step)}</div>
-        ${i < c.steps.length - 1 ? "" : ""}
         <h3>${esc(step.title)}</h3>
         <p style="opacity: 0.7;">${esc(step.description)}</p>
       </div>`).join("\n      ")}
@@ -268,18 +388,21 @@ function renderHowItWorks(section: Section, sectionStyle: string, brand: Brand):
 
 function renderServices(section: Section, sectionStyle: string, brand: Brand): string {
   const c = section.content as unknown as ServicesContent;
-  return `<section data-section-id="${section.id}" data-section-type="services" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="services" id="services" class="section" style="${sectionStyle}">
   <div class="container">
     <div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
     </div>
     <div class="grid-3">
-      ${c.items.map((item) => `<div class="card">
-        <div style="width: 48px; height: 48px; border-radius: 10px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 22px;">${getSimpleIcon(item.icon)}</div>
+      ${c.items.map((item) => {
+        const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
+        return `<div class="card">
+        <div style="width: 48px; height: 48px; border-radius: 10px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">${iconHtml}</div>
         <h3>${esc(item.title)}</h3>
         <p style="opacity: 0.7;">${esc(item.description)}</p>
-      </div>`).join("\n      ")}
+      </div>`;
+      }).join("\n      ")}
     </div>
   </div>
 </section>`;
@@ -287,7 +410,7 @@ function renderServices(section: Section, sectionStyle: string, brand: Brand): s
 
 function renderTestimonials(section: Section, sectionStyle: string): string {
   const c = section.content as unknown as TestimonialsContent;
-  return `<section data-section-id="${section.id}" data-section-type="testimonials" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="testimonials" id="testimonials" class="section" style="${sectionStyle}">
   <div class="container">
     <h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>
     <div class="grid-${Math.min(c.items.length, 3)}">
@@ -308,7 +431,7 @@ function renderTestimonials(section: Section, sectionStyle: string): string {
 
 function renderResults(section: Section, sectionStyle: string): string {
   const c = section.content as unknown as ResultsContent;
-  return `<section data-section-id="${section.id}" data-section-type="results" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="results" id="results" class="section" style="${sectionStyle}">
   <div class="container text-center">
     <h2 style="margin-bottom: 12px;">${esc(c.heading)}</h2>
     ${c.subheading ? `<p style="font-size: 18px; opacity: 0.8; margin-bottom: 48px;">${esc(c.subheading)}</p>` : ""}
@@ -323,16 +446,20 @@ function renderResults(section: Section, sectionStyle: string): string {
 </section>`;
 }
 
-function renderPricing(section: Section, sectionStyle: string, brand: Brand): string {
+function renderPricing(section: Section, sectionStyle: string, brand: Brand, actions: Action[]): string {
   const c = section.content as unknown as PricingContent;
-  return `<section data-section-id="${section.id}" data-section-type="pricing" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="pricing" id="pricing" class="section" style="${sectionStyle}">
   <div class="container">
     <div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7;">${esc(c.subheading)}</p>` : ""}
     </div>
     <div class="grid-${Math.min(c.plans.length, 3)}" style="max-width: 900px; margin: 0 auto;">
-      ${c.plans.map((plan) => `<div class="card text-center" style="${plan.highlighted ? `border: 2px solid ${brand.primaryColor}; transform: scale(1.03); position: relative;` : "border: 1px solid #e5e7eb;"}">
+      ${c.plans.map((plan) => {
+        const btnText = plan.buttons?.[0]?.text || plan.ctaText || "Get Started";
+        const btnAction = plan.buttons?.[0]?.actionId ? resolveAction(plan.buttons[0].actionId, actions) : undefined;
+        const btnHref = btnAction ? getActionHref(btnAction) : "#contact";
+        return `<div class="card text-center" style="${plan.highlighted ? `border: 2px solid ${brand.primaryColor}; transform: scale(1.03); position: relative;` : "border: 1px solid #e5e7eb;"}">
         ${plan.highlighted ? `<div style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: ${brand.primaryColor}; color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;">POPULAR</div>` : ""}
         <h3>${esc(plan.name)}</h3>
         ${plan.description ? `<p style="opacity: 0.6; font-size: 14px; margin-bottom: 8px;">${esc(plan.description)}</p>` : ""}
@@ -340,8 +467,9 @@ function renderPricing(section: Section, sectionStyle: string, brand: Brand): st
         <ul style="list-style: none; margin-bottom: 24px; text-align: left;">
           ${plan.features.map((f) => `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">&#10003; ${esc(f)}</li>`).join("\n          ")}
         </ul>
-        <a href="#contact" class="btn ${plan.highlighted ? "btn-primary" : "btn-secondary"}" style="width: 100%;">${esc(plan.ctaText)}</a>
-      </div>`).join("\n      ")}
+        <a href="${esc(btnHref)}" class="btn ${plan.highlighted ? "btn-primary" : "btn-secondary"}" style="width: 100%;">${esc(btnText)}</a>
+      </div>`;
+      }).join("\n      ")}
     </div>
   </div>
 </section>`;
@@ -349,7 +477,7 @@ function renderPricing(section: Section, sectionStyle: string, brand: Brand): st
 
 function renderFaq(section: Section, sectionStyle: string): string {
   const c = section.content as unknown as FaqContent;
-  return `<section data-section-id="${section.id}" data-section-type="faq" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="faq" id="faq" class="section" style="${sectionStyle}">
   <div class="container" style="max-width: 800px;">
     <h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>
     ${c.subheading ? `<p class="text-center" style="font-size: 18px; opacity: 0.7; margin-top: -36px; margin-bottom: 48px;">${esc(c.subheading)}</p>` : ""}
@@ -361,26 +489,34 @@ function renderFaq(section: Section, sectionStyle: string): string {
 </section>`;
 }
 
-function renderCtaBand(section: Section, sectionStyle: string): string {
+function renderCtaBand(section: Section, sectionStyle: string, actions: Action[]): string {
   const c = section.content as unknown as CtaBandContent;
-  return `<section data-section-id="${section.id}" data-section-type="cta-band" class="section" style="${sectionStyle}">
+  const buttonsHtml = renderButtons(
+    c.buttons, actions, {} as Brand,
+    c.buttonText, c.buttonHref
+  );
+  const secondaryLegacy = c.secondaryButtonText && !c.buttons?.length
+    ? `<a href="${esc(c.secondaryButtonHref || "#")}" class="btn btn-ghost" style="padding: 16px 40px;">${esc(c.secondaryButtonText)}</a>`
+    : "";
+
+  return `<section data-section-id="${section.id}" data-section-type="cta-band" id="cta-band" class="section" style="${sectionStyle}">
   <div class="container text-center" style="max-width: 700px;">
     <h2>${esc(c.heading)}</h2>
     ${c.subheading ? `<p style="font-size: 18px; opacity: 0.9; margin-bottom: 32px;">${esc(c.subheading)}</p>` : ""}
     <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-      <a href="${esc(c.buttonHref)}" class="btn btn-white" style="font-weight: 700; padding: 16px 40px;">${esc(c.buttonText)}</a>
-      ${c.secondaryButtonText ? `<a href="${esc(c.secondaryButtonHref || "#")}" class="btn" style="background: rgba(255,255,255,0.15); color: inherit; border: 2px solid rgba(255,255,255,0.3); padding: 16px 40px;">${esc(c.secondaryButtonText)}</a>` : ""}
+      ${buttonsHtml}${secondaryLegacy}
     </div>
   </div>
 </section>`;
 }
 
-function renderContact(section: Section, sectionStyle: string, brand: Brand): string {
+function renderContact(section: Section, sectionStyle: string, brand: Brand, actions: Action[]): string {
   const c = section.content as unknown as ContactContent;
   const hasContactInfo = c.email || c.phone || c.address;
+  const btnText = c.buttons?.[0]?.text || c.buttonText || "Send Message";
 
   if (section.variant === "form-with-info" && hasContactInfo) {
-    return `<section data-section-id="${section.id}" data-section-type="contact" class="section" style="${sectionStyle}">
+    return `<section data-section-id="${section.id}" data-section-type="contact" id="contact" class="section" style="${sectionStyle}">
   <div class="container">
     <h2 class="text-center" style="margin-bottom: 8px;">${esc(c.heading)}</h2>
     ${c.subheading ? `<p class="text-center" style="font-size: 18px; opacity: 0.7; margin-bottom: 48px;">${esc(c.subheading)}</p>` : ""}
@@ -391,25 +527,25 @@ function renderContact(section: Section, sectionStyle: string, brand: Brand): st
         ${c.address ? `<div style="display: flex; gap: 12px; align-items: center;"><span style="font-size: 20px;">&#9873;</span><div><div style="font-weight: 600;">Address</div><div style="opacity: 0.7;">${esc(c.address)}</div></div></div>` : ""}
       </div>
       <div>
-        ${renderContactForm(c, brand)}
+        ${renderContactForm(c, brand, btnText)}
       </div>
     </div>
   </div>
 </section>`;
   }
 
-  return `<section data-section-id="${section.id}" data-section-type="contact" class="section" style="${sectionStyle}">
+  return `<section data-section-id="${section.id}" data-section-type="contact" id="contact" class="section" style="${sectionStyle}">
   <div class="container" style="max-width: 600px;">
     <div class="text-center" style="margin-bottom: 32px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7;">${esc(c.subheading)}</p>` : ""}
     </div>
-    ${renderContactForm(c, brand)}
+    ${renderContactForm(c, brand, btnText)}
   </div>
 </section>`;
 }
 
-function renderContactForm(c: ContactContent, brand: Brand): string {
+function renderContactForm(c: ContactContent, brand: Brand, btnText: string): string {
   const fields = c.fields || ["name", "email", "message"];
   return `<form style="display: flex; flex-direction: column; gap: 16px;">
     ${fields.map((field) => {
@@ -418,7 +554,7 @@ function renderContactForm(c: ContactContent, brand: Brand): string {
       }
       return `<input type="${field === "email" ? "email" : field === "phone" ? "tel" : "text"}" placeholder="${esc(field.charAt(0).toUpperCase() + field.slice(1))}" style="width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; font-family: inherit;">`;
     }).join("\n    ")}
-    <button type="submit" class="btn btn-primary" style="width: 100%; background-color: ${brand.primaryColor};">${esc(c.buttonText)}</button>
+    <button type="submit" class="btn btn-primary" style="width: 100%; background-color: ${brand.primaryColor};">${esc(btnText)}</button>
   </form>`;
 }
 
@@ -437,16 +573,90 @@ function renderFooter(section: Section, sectionStyle: string, brand: Brand): str
       ${c.columns.map((col) => `<div style="min-width: 140px;">
         <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 16px;">${esc(col.title)}</h4>
         <ul style="list-style: none;">
-          ${col.links.map((link) => `<li style="margin-bottom: 8px;"><a href="${esc(link.href)}" style="color: inherit; text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">${esc(link.text)}</a></li>`).join("\n          ")}
+          ${col.links.map((link) => `<li style="margin-bottom: 8px;"><a href="${esc(link.href || "#")}" style="color: inherit; text-decoration: none; opacity: 0.7; transition: opacity 0.2s;">${esc(link.text)}</a></li>`).join("\n          ")}
         </ul>
       </div>`).join("\n      ")}
     </div>
     <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 14px; opacity: 0.6;">
       <p>&copy; ${esc(c.copyrightYear)} ${esc(c.companyName)}. All rights reserved.</p>
-      ${c.legalLinks?.length ? `<div style="display: flex; gap: 24px;">${c.legalLinks.map((l) => `<a href="${esc(l.href)}" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("")}</div>` : ""}
+      ${c.legalLinks?.length ? `<div style="display: flex; gap: 24px;">${c.legalLinks.map((l) => `<a href="${esc(l.href || "#")}" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("")}</div>` : ""}
     </div>
   </div>
 </footer>`;
+}
+
+// ---- V2 New Section Renderers ----
+
+function renderGallery(section: Section, sectionStyle: string, assets: Asset[]): string {
+  const c = section.content as unknown as GalleryContent;
+  return `<section data-section-id="${section.id}" data-section-type="gallery" id="gallery" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    <div class="grid-3">
+      ${c.images.map((img) => {
+        const asset = assets.find((a) => a.id === img.imageId);
+        const url = asset?.url || getPlaceholderUrl("general", 400, 300);
+        const alt = img.alt || asset?.alt || "Gallery image";
+        return `<div style="border-radius: 12px; overflow: hidden;">
+        <img src="${esc(url)}" alt="${esc(alt)}" style="width: 100%; height: 250px; object-fit: cover;" loading="lazy" />
+        ${img.caption ? `<p style="padding: 12px; font-size: 14px; opacity: 0.7;">${esc(img.caption)}</p>` : ""}
+      </div>`;
+      }).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderServiceArea(section: Section, sectionStyle: string): string {
+  const c = section.content as unknown as ServiceAreaContent;
+  return `<section data-section-id="${section.id}" data-section-type="service-area" id="service-area" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    <div class="grid-3">
+      ${c.areas.map((area) => `<div class="card">
+        <h3>${esc(area.name)}</h3>
+        ${area.description ? `<p style="opacity: 0.7;">${esc(area.description)}</p>` : ""}
+      </div>`).join("\n      ")}
+    </div>
+    ${c.mapNote ? `<p class="text-center" style="margin-top: 32px; opacity: 0.6; font-size: 14px;">${esc(c.mapNote)}</p>` : ""}
+  </div>
+</section>`;
+}
+
+function renderAboutTeam(section: Section, sectionStyle: string, brand: Brand): string {
+  const c = section.content as unknown as AboutTeamContent;
+  return `<section data-section-id="${section.id}" data-section-type="about-team" id="about" class="section" style="${sectionStyle}">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>
+    ${c.description ? `<p style="max-width: 700px; margin: 0 auto 48px; text-align: center; font-size: 18px; opacity: 0.8;">${esc(c.description)}</p>` : ""}
+    ${c.values?.length ? `<div class="grid-3">
+      ${c.values.map((v) => {
+        const iconHtml = v.iconIntent ? resolveIcon(v.iconIntent) : "&#9733;";
+        return `<div class="card text-center">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">${iconHtml}</div>
+        <h3>${esc(v.title)}</h3>
+        <p style="opacity: 0.7;">${esc(v.description)}</p>
+      </div>`;
+      }).join("\n      ")}
+    </div>` : ""}
+    ${c.members?.length ? `<div class="grid-4" style="margin-top: 48px;">
+      ${c.members.map((m) => `<div class="text-center">
+        <div style="width: 100px; height: 100px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 36px; font-weight: 700; color: #6b7280;">${esc(m.name.charAt(0))}</div>
+        <h3 style="font-size: 18px;">${esc(m.name)}</h3>
+        <p style="opacity: 0.6; font-size: 14px;">${esc(m.role)}</p>
+      </div>`).join("\n      ")}
+    </div>` : ""}
+  </div>
+</section>`;
 }
 
 // ---- Utilities ----
@@ -458,6 +668,52 @@ function esc(str: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function buildStructuredData(doc: PageDocument): string | null {
+  const heroSection = doc.sections.find((s) => s.type === "hero" && s.visible);
+  const contactSection = doc.sections.find((s) => s.type === "contact" && s.visible);
+  const faqSection = doc.sections.find((s) => s.type === "faq" && s.visible);
+
+  const data: Record<string, unknown>[] = [];
+
+  // Organization / LocalBusiness
+  const org: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": doc.meta.pageType === "local-business" ? "LocalBusiness" : "Organization",
+    name: doc.meta.title,
+    description: doc.meta.description,
+  };
+  if (contactSection) {
+    const cc = contactSection.content as Record<string, unknown>;
+    if (cc.email) org.email = cc.email;
+    if (cc.phone) org.telephone = cc.phone;
+    if (cc.address) org.address = { "@type": "PostalAddress", streetAddress: cc.address };
+  }
+  data.push(org);
+
+  // FAQ structured data
+  if (faqSection) {
+    const fc = faqSection.content as { items?: Array<{ question: string; answer: string }> };
+    if (fc.items && fc.items.length > 0) {
+      data.push({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: fc.items.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      });
+    }
+  }
+
+  if (data.length === 0) return null;
+  if (data.length === 1) return JSON.stringify(data[0]);
+  return JSON.stringify(data);
 }
 
 function getSimpleIcon(name?: string): string {

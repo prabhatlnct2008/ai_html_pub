@@ -1,26 +1,29 @@
-import { SECTION_TYPES, type Section, type SectionType, type Brand } from "./schema";
+import { SECTION_TYPES, type Section, type SectionType, type BrandSettings } from "./schema";
 
-// ---- Section Variants ----
+// ---- Section Variants (V2 spec) ----
 
 export const SECTION_VARIANTS: Record<SectionType, string[]> = {
-  hero: ["centered", "split-image", "full-bleed"],
+  hero: ["centered", "split-image", "background-image", "offer-focused"],
   "trust-bar": ["simple", "with-icons"],
-  features: ["grid-3", "grid-2", "alternating"],
+  features: ["icon-grid", "image-cards", "list-with-icons"],
   benefits: ["icon-list", "cards"],
   "problem-solution": ["two-column", "stacked"],
   "how-it-works": ["numbered-steps", "timeline"],
-  services: ["card-grid", "list"],
-  testimonials: ["cards", "single-spotlight", "minimal"],
+  services: ["cards", "image-cards", "alternating-rows"],
+  testimonials: ["cards", "avatars", "single-highlight"],
   results: ["stat-bar", "full-section"],
   pricing: ["side-by-side", "single-featured"],
   faq: ["accordion", "two-column"],
-  "cta-band": ["centered", "split"],
+  "cta-band": ["centered", "dual", "contact-strip", "whatsapp-focused"],
   contact: ["form-only", "form-with-info"],
-  footer: ["multi-column", "simple"],
+  footer: ["simple", "multi-column", "legal-heavy"],
+  gallery: ["grid", "masonry", "carousel"],
+  "service-area": ["list", "grid", "map-note"],
+  "about-team": ["story", "team-grid", "values"],
 };
 
 export function getDefaultVariant(type: SectionType): string {
-  return SECTION_VARIANTS[type][0];
+  return SECTION_VARIANTS[type]?.[0] || "default";
 }
 
 // ---- Section Metadata (for UI) ----
@@ -47,6 +50,9 @@ export const SECTION_CATALOG: SectionMeta[] = [
   { type: "cta-band", label: "CTA Band", description: "Call-to-action banner section", icon: "megaphone" },
   { type: "contact", label: "Contact", description: "Contact form and information", icon: "mail" },
   { type: "footer", label: "Footer", description: "Site footer with links and legal", icon: "minus" },
+  { type: "gallery", label: "Gallery", description: "Image gallery showcase", icon: "image" },
+  { type: "service-area", label: "Service Area", description: "Areas and locations served", icon: "map-pin" },
+  { type: "about-team", label: "About / Team", description: "Company story and team members", icon: "users" },
 ];
 
 // ---- Default Section Templates ----
@@ -54,7 +60,7 @@ export const SECTION_CATALOG: SectionMeta[] = [
 export function createDefaultSection(
   type: SectionType,
   variant?: string,
-  brand?: Partial<Brand>
+  brand?: Partial<BrandSettings>
 ): Section {
   const id = `section-${type}-${Math.random().toString(36).substring(2, 8)}`;
   const v = variant || getDefaultVariant(type);
@@ -65,20 +71,20 @@ export function createDefaultSection(
       content: {
         heading: "Your Headline Here",
         subheading: "A compelling subheadline that explains your value proposition",
-        primaryCtaText: "Get Started",
-        primaryCtaHref: "#contact",
-        secondaryCtaText: "Learn More",
-        secondaryCtaHref: "#features",
+        buttons: [
+          { text: "Get Started", actionId: "", style: "primary" },
+          { text: "Learn More", actionId: "", style: "secondary" },
+        ],
       },
       style: { backgroundColor: primary, textColor: "#ffffff", padding: "80px 0" },
     },
     "trust-bar": {
       content: {
         items: [
-          { text: "500+ Happy Clients", icon: "users" },
-          { text: "10+ Years Experience", icon: "clock" },
-          { text: "4.9 Star Rating", icon: "star" },
-          { text: "24/7 Support", icon: "phone" },
+          { text: "500+ Happy Clients", iconIntent: "people" },
+          { text: "10+ Years Experience", iconIntent: "experience" },
+          { text: "4.9 Star Rating", iconIntent: "quality" },
+          { text: "24/7 Support", iconIntent: "support" },
         ],
       },
       style: { backgroundColor: "#f8f9fa", textColor: "#374151", padding: "24px 0" },
@@ -88,9 +94,9 @@ export function createDefaultSection(
         heading: "Our Features",
         subheading: "What makes us different",
         items: [
-          { title: "Feature 1", description: "Description here", icon: "star" },
-          { title: "Feature 2", description: "Description here", icon: "zap" },
-          { title: "Feature 3", description: "Description here", icon: "shield" },
+          { title: "Feature 1", description: "Description here", iconIntent: "quality" },
+          { title: "Feature 2", description: "Description here", iconIntent: "speed" },
+          { title: "Feature 3", description: "Description here", iconIntent: "safety" },
         ],
       },
       style: { backgroundColor: "#ffffff", textColor: "#1a1a1a", padding: "80px 0" },
@@ -100,9 +106,9 @@ export function createDefaultSection(
         heading: "Why Choose Us",
         subheading: "The advantages of working with us",
         items: [
-          { title: "Benefit 1", description: "Description here", icon: "check" },
-          { title: "Benefit 2", description: "Description here", icon: "check" },
-          { title: "Benefit 3", description: "Description here", icon: "check" },
+          { title: "Benefit 1", description: "Description here", iconIntent: "trust" },
+          { title: "Benefit 2", description: "Description here", iconIntent: "results" },
+          { title: "Benefit 3", description: "Description here", iconIntent: "support" },
         ],
       },
       style: { backgroundColor: "#f8f9fa", textColor: "#1a1a1a", padding: "80px 0" },
@@ -140,9 +146,9 @@ export function createDefaultSection(
         heading: "Our Services",
         subheading: "What we offer",
         items: [
-          { title: "Service 1", description: "Description here", icon: "briefcase" },
-          { title: "Service 2", description: "Description here", icon: "briefcase" },
-          { title: "Service 3", description: "Description here", icon: "briefcase" },
+          { title: "Service 1", description: "Description here", iconIntent: "business" },
+          { title: "Service 2", description: "Description here", iconIntent: "professional" },
+          { title: "Service 3", description: "Description here", iconIntent: "innovation" },
         ],
       },
       style: { backgroundColor: "#ffffff", textColor: "#1a1a1a", padding: "80px 0" },
@@ -174,8 +180,18 @@ export function createDefaultSection(
         heading: "Pricing",
         subheading: "Choose the right plan",
         plans: [
-          { name: "Basic", price: "$29", period: "/month", features: ["Feature 1", "Feature 2"], ctaText: "Get Started", highlighted: false },
-          { name: "Pro", price: "$59", period: "/month", features: ["All Basic", "Feature 3"], ctaText: "Get Started", highlighted: true },
+          {
+            name: "Basic", price: "$29", period: "/month",
+            features: ["Feature 1", "Feature 2"],
+            buttons: [{ text: "Get Started", actionId: "", style: "secondary" }],
+            highlighted: false,
+          },
+          {
+            name: "Pro", price: "$59", period: "/month",
+            features: ["All Basic", "Feature 3"],
+            buttons: [{ text: "Get Started", actionId: "", style: "primary" }],
+            highlighted: true,
+          },
         ],
       },
       style: { backgroundColor: "#ffffff", textColor: "#1a1a1a", padding: "80px 0" },
@@ -194,8 +210,7 @@ export function createDefaultSection(
       content: {
         heading: "Ready to Get Started?",
         subheading: "Join us today",
-        buttonText: "Get Started",
-        buttonHref: "#contact",
+        buttons: [{ text: "Get Started", actionId: "", style: "primary" }],
       },
       style: { backgroundColor: primary, textColor: "#ffffff", padding: "60px 0" },
     },
@@ -204,7 +219,7 @@ export function createDefaultSection(
         heading: "Get In Touch",
         subheading: "We'd love to hear from you",
         fields: ["name", "email", "message"],
-        buttonText: "Send Message",
+        buttons: [{ text: "Send Message", actionId: "", style: "primary" }],
       },
       style: { backgroundColor: "#f8f9fa", textColor: "#1a1a1a", padding: "80px 0" },
     },
@@ -235,6 +250,38 @@ export function createDefaultSection(
         ],
       },
       style: { backgroundColor: "#111827", textColor: "#d1d5db", padding: "60px 0" },
+    },
+    gallery: {
+      content: {
+        heading: "Gallery",
+        subheading: "See our work",
+        images: [],
+      },
+      style: { backgroundColor: "#ffffff", textColor: "#1a1a1a", padding: "80px 0" },
+    },
+    "service-area": {
+      content: {
+        heading: "Areas We Serve",
+        subheading: "Proudly serving these locations",
+        areas: [
+          { name: "Area 1", description: "Serving this community" },
+          { name: "Area 2", description: "Serving this community" },
+        ],
+      },
+      style: { backgroundColor: "#f8f9fa", textColor: "#1a1a1a", padding: "80px 0" },
+    },
+    "about-team": {
+      content: {
+        heading: "About Us",
+        subheading: "Our story and team",
+        description: "We are passionate about delivering excellence.",
+        members: [],
+        values: [
+          { title: "Quality", description: "We never compromise on quality", iconIntent: "quality" },
+          { title: "Trust", description: "Building lasting relationships", iconIntent: "trust" },
+        ],
+      },
+      style: { backgroundColor: "#ffffff", textColor: "#1a1a1a", padding: "80px 0" },
     },
   };
 
@@ -271,17 +318,16 @@ export function convertLegacySection(legacy: {
     order: legacy.order,
     content,
     style: {
-      backgroundColor: legacy.style.background_color || "#ffffff",
-      textColor: legacy.style.text_color || "#1a1a1a",
+      backgroundColor: legacy.style.background_color || legacy.style.backgroundColor || "#ffffff",
+      textColor: legacy.style.text_color || legacy.style.textColor || "#1a1a1a",
       padding: legacy.style.padding || "80px 0",
     },
   };
 }
 
 function mapLegacyType(type: string): SectionType {
-  // Old "cta" maps to new "cta-band"
   if (type === "cta") return "cta-band";
-  if (SECTION_TYPES.includes(type as SectionType)) return type as SectionType;
+  if ((SECTION_TYPES as readonly string[]).includes(type)) return type as SectionType;
   return "cta-band"; // fallback
 }
 
@@ -298,6 +344,7 @@ function mapLegacyContent(
         primaryCtaHref: content.cta_link,
         secondaryCtaText: content.secondary_cta_text,
         secondaryCtaHref: content.secondary_cta_link,
+        trustPoints: content.trust_points,
       };
     case "pricing": {
       const plans = (content.plans as Array<Record<string, unknown>>) || [];
@@ -309,7 +356,7 @@ function mapLegacyContent(
           price: p.price,
           period: p.period,
           features: p.features,
-          ctaText: p.cta_text,
+          ctaText: p.cta_text || p.ctaText,
           highlighted: p.highlighted,
         })),
       };
@@ -326,10 +373,12 @@ function mapLegacyContent(
         heading: content.heading,
         subheading: content.subheading,
         fields: content.fields,
-        buttonText: content.button_text,
+        buttonText: content.button_text || content.buttonText,
+        email: content.email,
+        phone: content.phone,
+        address: content.address,
       };
     default:
-      // features, testimonials, faq have compatible shapes
       return content;
   }
 }
