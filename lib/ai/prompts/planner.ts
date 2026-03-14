@@ -35,12 +35,16 @@ Create a landing page plan. Respond with valid JSON:
 }
 
 RULES:
-- Include 5-8 sections for a complete landing page
+- Include 8-12 sections for a complete landing page
 - Always start with a hero section
-- Always include at least one CTA section
+- Always end with a footer section
+- Include at least one cta-band section between content sections
 - Choose colors that match the business tone
-- Section types must be one of: hero, features, testimonials, pricing, faq, cta, contact
-- Make descriptions specific to THIS business, not generic`;
+- Section types must be one of: hero, trust-bar, features, benefits, problem-solution, how-it-works, services, testimonials, results, pricing, faq, cta-band, contact, footer
+- Make descriptions specific to THIS business, not generic
+- For local/service businesses: include services, how-it-works, testimonials
+- For SaaS: include features, pricing, how-it-works
+- Good default sequence: hero, trust-bar, services/features, problem-solution, how-it-works, results, testimonials, faq, cta-band, contact, footer`;
 }
 
 export function buildPlanModificationPrompt(

@@ -216,9 +216,13 @@ function getStepMessage(state: WorkflowState): string {
     intake_complete: "Business info collected",
     competitor_analysis_running: "Analyzing competitor website...",
     competitor_analysis_complete: "Competitor analysis done",
+    strategy_generation: "Determining page strategy...",
+    theme_generation: "Generating theme & branding...",
+    asset_planning: "Planning images & assets...",
     plan_generation_running: "Building your page plan...",
     plan_review: "Review your page plan",
     generation_running: "Generating page sections...",
+    document_assembly: "Assembling page document...",
     rendering: "Rendering your landing page...",
     saving: "Saving your project...",
     complete: "Your page is ready!",
@@ -232,11 +236,15 @@ function getProgressMessage(state: WorkflowState): string {
     intake: "Tell us about your business to get started",
     intake_complete: "Processing your information...",
     competitor_analysis_running: "Analyzing the competitor website for design patterns...",
-    competitor_analysis_complete: "Moving to plan generation...",
-    plan_generation_running: "AI is creating your page structure and branding...",
+    competitor_analysis_complete: "Moving to strategy generation...",
+    strategy_generation: "AI is determining the best page type and section layout...",
+    theme_generation: "AI is creating your brand colors, fonts, and design theme...",
+    asset_planning: "Planning image placeholders for each section...",
+    plan_generation_running: "AI is creating your page structure...",
     plan_review: "Review the plan below and approve or request changes",
     generation_running: "AI is writing content for each section of your page...",
-    rendering: "Assembling your landing page HTML...",
+    document_assembly: "Assembling your full page document...",
+    rendering: "Rendering your landing page HTML...",
     saving: "Saving everything...",
     complete: "Your landing page is ready! Redirecting to editor...",
     failed: "An error occurred. You can retry.",
@@ -246,14 +254,17 @@ function getProgressMessage(state: WorkflowState): string {
 
 /**
  * Get a chat message to show the user when a step starts executing.
- * These appear in the chat panel so the user understands what's happening.
  */
 function getProgressChatMessage(state: WorkflowState): string | null {
   const messages: Partial<Record<WorkflowState, string>> = {
     competitor_analysis_running: "Analyzing the competitor website for design insights...",
-    plan_generation_running: "Creating your page plan with sections, branding, and layout...",
+    strategy_generation: "Determining the best page type and section layout for your business...",
+    theme_generation: "Creating your brand theme with colors, fonts, and design style...",
+    asset_planning: "Planning image slots for your page sections...",
+    plan_generation_running: "Creating your page plan with sections and layout...",
     generation_running: "Writing content for each section of your page. This may take a moment...",
-    rendering: "Assembling your landing page HTML...",
+    document_assembly: "Assembling your complete page document...",
+    rendering: "Rendering your landing page HTML...",
     saving: "Saving your project...",
   };
   return messages[state] || null;
