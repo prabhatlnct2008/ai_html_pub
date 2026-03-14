@@ -5,6 +5,7 @@
 Build a real landing page product, not just a text-section generator with light editing.
 
 V2 should produce pages that feel publishable by default and editable in a deliberate, low-friction way. The system should support:
+
 - complete page generation
 - strong visual output
 - structured editing
@@ -22,6 +23,7 @@ This spec is intentionally detailed so implementation does not drift into partia
 The current system has improved generation workflow, but it is still incomplete as a practical landing page builder.
 
 Current gaps:
+
 - call, WhatsApp, email, and CTA links are not modeled cleanly
 - buttons are not first-class editable elements
 - media is too placeholder-heavy
@@ -67,6 +69,7 @@ V2 is successful if a user can:
 7. save and publish a usable page without manual code edits
 
 A generated page should usually include:
+
 - hero
 - trust bar or social proof
 - services/features
@@ -87,6 +90,7 @@ A generated page should usually include:
 The canonical source of truth must be a structured page document, not raw HTML.
 
 AI should generate:
+
 - structured content
 - strategy
 - semantic visual intent
@@ -94,6 +98,7 @@ AI should generate:
 - CTA intent
 
 Code should handle:
+
 - validation
 - document assembly
 - rendering
@@ -103,6 +108,7 @@ Code should handle:
 ### 2. Reusable Actions
 
 Buttons and interactive CTAs must not store arbitrary raw href strings everywhere.
+
 Use reusable action objects with typed behavior.
 
 ### 3. Asset-Based Media
@@ -116,6 +122,7 @@ The renderer should convert structured sections to page HTML/components in a pre
 ### 5. Graceful Fallbacks
 
 Preferred order for media:
+
 1. user-uploaded assets
 2. AI-generated assets
 3. placeholders
@@ -157,6 +164,7 @@ These can come later.
 ## 1. Page Types
 
 Support at least:
+
 - local-business
 - service-business
 - saas
@@ -168,12 +176,14 @@ The generator should choose one or allow the user to guide it.
 ## 2. Theme Variants
 
 Support at least:
+
 - clean
 - bold
 - premium
 - playful
 
 Each theme should influence:
+
 - typography
 - colors
 - section spacing
@@ -184,6 +194,7 @@ Each theme should influence:
 ## 3. Section Library
 
 Support these section types:
+
 - hero
 - trust-bar
 - features
@@ -203,6 +214,7 @@ Support these section types:
 - about/team when relevant
 
 Each section type must define:
+
 - content schema
 - supported variants
 - supported asset slots
@@ -215,6 +227,7 @@ Each section type must define:
 This is mandatory for V2.
 
 Supported action types:
+
 - url
 - phone
 - email
@@ -223,6 +236,7 @@ Supported action types:
 - form
 
 Examples:
+
 - phone => `tel:+918882567801`
 - email => `mailto:prabhatlnct2008@gmail.com`
 - whatsapp => `https://wa.me/918882567801?text=Hi%20I%20want%20to%20know%20more`
@@ -233,6 +247,7 @@ The editor must allow users to configure these without writing raw URLs manually
 ## 5. Media / Asset System
 
 Support:
+
 - hero image
 - card images
 - testimonial avatars
@@ -241,6 +256,7 @@ Support:
 - logo image
 
 Asset operations:
+
 - upload
 - replace
 - remove
@@ -250,6 +266,7 @@ Asset operations:
 ## 6. Editor Upgrades
 
 The editor must support:
+
 - add section
 - choose section variant
 - change section variant later
@@ -266,6 +283,7 @@ The editor must support:
 ## 7. Preview / Settings
 
 Support:
+
 - desktop preview
 - tablet preview
 - mobile preview
@@ -281,6 +299,7 @@ Support:
 ## PageDocument
 
 Suggested shape:
+
 ```ts
 type PageDocument = {
   meta: MetaSettings
@@ -373,9 +392,11 @@ type Section = {
 These rules are critical.
 
 ### Rule 1
+
 Buttons should not store direct final URLs in content fields when an action can be referenced by ID.
 
 Preferred:
+
 ```ts
 {
   text: "Chat on WhatsApp",
@@ -384,6 +405,7 @@ Preferred:
 ```
 
 Not preferred:
+
 ```ts
 {
   text: "Chat on WhatsApp",
@@ -392,12 +414,15 @@ Not preferred:
 ```
 
 ### Rule 2
+
 Sections should be able to reuse actions across the page.
 
 ### Rule 3
+
 WhatsApp actions should support an optional prefilled message.
 
 ### Rule 4
+
 Phone and email actions should be typed and normalized.
 
 ---
@@ -417,12 +442,14 @@ Icons should be semantically relevant.
 ### Hero
 
 Every generated page should explicitly choose one hero visual mode:
+
 - split-image
 - background-image
 - centered-minimal
 - product-showcase
 
 For local-business and service-business, default to:
+
 - split-image
 - or background-image
 
@@ -431,6 +458,7 @@ Do not default to empty text-only hero unless intentionally chosen.
 ### Images
 
 For each page, asset planning should decide:
+
 - which sections require images
 - what type of images are needed
 - whether to generate or use upload/placeholder
@@ -440,10 +468,12 @@ For each page, asset planning should decide:
 Do not use generic final icon tokens like `briefcase` as the visible UX choice.
 
 Instead:
+
 - let AI generate semantic icon intent
 - map icon intent to a curated icon set in code
 
 Example:
+
 ```ts
 iconIntent: "training"
 iconIntent: "trust"
@@ -461,6 +491,7 @@ Then renderer maps those to proper SVG/icon components.
 V2 should add a proper image generation stage.
 
 Suggested pipeline:
+
 1. asset_planning
 2. image_prompt_generation
 3. image_generation
@@ -484,12 +515,14 @@ Suggested pipeline:
 ### Hero Image Prompt Example
 
 For dog training:
+
 - warm, trustworthy, premium local business aesthetic
 - trainer interacting with dog
 - family-friendly and believable visual
 - avoid surreal or stock-looking results
 
 The prompt generator should use:
+
 - business type
 - target audience
 - tone
@@ -502,6 +535,7 @@ The prompt generator should use:
 ## Generation Workflow for V2
 
 Recommended workflow states:
+
 - intake
 - strategy_generation
 - theme_generation
@@ -556,6 +590,7 @@ Recommended workflow states:
 The editor should move to a clear three-pane model.
 
 ## Left Sidebar
+
 - section list
 - add section
 - reorder sections
@@ -565,12 +600,14 @@ The editor should move to a clear three-pane model.
 - actions tab
 
 ## Center Canvas
+
 - live rendered page
 - section hover controls
 - inline text editing where practical
 - click-to-select element
 
 ## Right Inspector
+
 - selected section settings
 - selected element settings
 - style controls
@@ -578,6 +615,7 @@ The editor should move to a clear three-pane model.
 - image assignment controls
 
 ## Top Toolbar
+
 - save
 - publish state
 - desktop/tablet/mobile preview toggle
@@ -589,6 +627,7 @@ The editor should move to a clear three-pane model.
 ## Editor V2 Functional Requirements
 
 ## Section-Level Controls
+
 - add section
 - duplicate section
 - delete section
@@ -599,12 +638,14 @@ The editor should move to a clear three-pane model.
 ## Item-Level Controls
 
 For repeatable lists:
+
 - add feature
 - remove feature
 - reorder feature
 - duplicate feature
 
 Same for:
+
 - services
 - testimonials
 - pricing plans
@@ -615,6 +656,7 @@ Same for:
 ## Button-Level Controls
 
 Users must be able to:
+
 - add button
 - remove button
 - edit button label
@@ -624,6 +666,7 @@ Users must be able to:
 ## Image Controls
 
 Users must be able to:
+
 - upload image
 - replace image
 - remove image
@@ -633,6 +676,7 @@ Users must be able to:
 ## Brand Controls
 
 Users must be able to:
+
 - upload logo
 - set primary color
 - set secondary color
@@ -645,33 +689,39 @@ Users must be able to:
 ## Required Section Variants
 
 ## Hero
+
 - centered
 - split-image
 - background-image
 - offer-focused
 
 ## Features
+
 - icon-grid
 - image-cards
 - list-with-icons
 
 ## Services
+
 - cards
 - image-cards
 - alternating rows
 
 ## Testimonials
+
 - cards
 - avatars
 - single-highlight + quotes
 
 ## CTA
+
 - centered single CTA
 - dual CTA
 - contact strip
 - WhatsApp-focused CTA
 
 ## Footer
+
 - simple footer
 - multi-column footer
 - legal-heavy footer
@@ -683,6 +733,7 @@ Users must be able to:
 The current plan explicitly excludes several items. V2 should include these if the goal is a serious builder.
 
 ### Must-Have for V2
+
 - mobile preview toggle
 - logo upload
 - stronger image handling
@@ -692,6 +743,7 @@ The current plan explicitly excludes several items. V2 should include these if t
 - better hero visuals
 
 ### Should-Have for V2
+
 - theme switcher or at least theme variant controls
 - gallery section
 - service area/map section
@@ -699,6 +751,7 @@ The current plan explicitly excludes several items. V2 should include these if t
 - form submission configuration
 
 ### Later
+
 - undo/redo
 - stock image API integration
 - custom domains
@@ -711,12 +764,14 @@ The current plan explicitly excludes several items. V2 should include these if t
 Do not build a swarm of autonomous agents.
 
 Use:
+
 - one workflow orchestrator
 - multiple specialized generation modules
 - structured state transitions
 - validated structured outputs
 
 Suggested folder structure:
+
 ```text
 lib/
   workflow/
@@ -753,16 +808,21 @@ lib/
 If the current DB does not yet capture everything below, add it.
 
 ### Asset
+
 Keep and expand Asset support as needed.
 
 ### Page / PageVersion
+
 Persist the full canonical page document.
 
 ### Optional: PageAction Table
+
 If actions should be normalized in DB instead of only embedded in `documentJson`, introduce one. If not, keep actions inside the page document and version the whole document.
 
 ### Optional: Publish Settings
+
 If publish settings expand, either:
+
 - keep them in document meta
 - or introduce a separate settings object/table
 
@@ -771,6 +831,7 @@ If publish settings expand, either:
 ## Renderer Rules
 
 The renderer must:
+
 - render from structured document
 - resolve asset references
 - resolve action references
@@ -784,6 +845,7 @@ The renderer must not depend on AI to provide raw layout HTML as the source of t
 ## Quality Rules
 
 Claude should implement a post-generation quality pass that validates:
+
 - hero exists
 - footer exists
 - at least one CTA appears above the fold
@@ -795,6 +857,7 @@ Claude should implement a post-generation quality pass that validates:
 - images and alt text are attached where expected
 
 If validation fails:
+
 - repair the document
 - or rerun the relevant generation stage
 
@@ -803,6 +866,7 @@ If validation fails:
 ## Priority Order for Implementation
 
 ## Phase A
+
 - action system
 - button editing
 - hero image support improvements
@@ -810,12 +874,14 @@ If validation fails:
 - image upload and assignment
 
 ## Phase B
+
 - section variants
 - richer editor inspector
 - mobile preview
 - page settings
 
 ## Phase C
+
 - AI image generation
 - semantic icon system
 - gallery and service area sections
@@ -843,6 +909,7 @@ If Claude is implementing this, the following must be treated as hard requiremen
 ## Non-Negotiable Outcomes
 
 When V2 is done, the user must be able to:
+
 - generate a visually credible landing page
 - configure call and WhatsApp buttons cleanly
 - replace hero images and section images
