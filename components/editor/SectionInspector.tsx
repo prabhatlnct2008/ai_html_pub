@@ -194,8 +194,14 @@ function ContentFields({ section }: { section: SectionData }) {
   );
 }
 
+// Image-capable fields per section type
+const IMAGE_FIELDS: Record<string, string> = {
+  imageId: "Image",
+  avatarImageId: "Avatar",
+};
+
 function RepeatableItemsEditor({ section }: { section: SectionData }) {
-  const { updateContent } = useEditor();
+  const { updateContent, assets } = useEditor();
   const content = section.content;
   const [expandedItem, setExpandedItem] = useState<number | null>(null);
 
@@ -214,6 +220,14 @@ function RepeatableItemsEditor({ section }: { section: SectionData }) {
   const editableFields = Object.keys(sampleItem).filter(
     (k) => typeof sampleItem[k] === "string" || typeof sampleItem[k] === "number"
   );
+
+  // Detect image-assignable fields on items
+  const imageFieldKeys = Object.keys(IMAGE_FIELDS).filter((k) =>
+    items!.some((item) => k in item) ||
+    (k === "imageId" && ["features", "services", "about-team"].includes(section.type)) ||
+    (k === "avatarImageId" && section.type === "testimonials")
+  );
+  const imageAssets = assets.filter((a) => a.kind === "image");
 
   const addItem = () => {
     const newItem: Record<string, unknown> = {};
@@ -260,6 +274,28 @@ function RepeatableItemsEditor({ section }: { section: SectionData }) {
                       )}
                     </div>
                   ))}
+                  {imageFieldKeys.map((imgField) => {
+                    const currentId = item[imgField] as string | undefined;
+                    const currentAsset = currentId ? imageAssets.find((a) => a.id === currentId) : undefined;
+                    return (
+                      <div key={imgField}>
+                        <label className="mb-0.5 block text-[10px] text-gray-500">{IMAGE_FIELDS[imgField]}</label>
+                        <select
+                          value={currentId || ""}
+                          onChange={(e) => updateContent(section.id, `${itemsKey}.${i}.${imgField}`, e.target.value || undefined)}
+                          className="w-full rounded border border-gray-200 px-2 py-1 text-xs"
+                        >
+                          <option value="">No image</option>
+                          {imageAssets.map((a) => (
+                            <option key={a.id} value={a.id}>{a.alt || a.id} ({a.source})</option>
+                          ))}
+                        </select>
+                        {currentAsset && (
+                          <img src={currentAsset.url} alt={currentAsset.alt || ""} className="mt-1 h-16 w-full rounded border object-cover" />
+                        )}
+                      </div>
+                    );
+                  })}
                   <button onClick={() => removeItem(i)} className="mt-1 text-[10px] text-red-500 hover:text-red-700">Remove item</button>
                 </div>
               )}
@@ -504,7 +540,13 @@ function AssetsPanel() {
 
       <div className="space-y-2">
         {assets.map((asset) => (
-          <AssetCard key={asset.id} asset={asset} onDelete={() => { if (confirm("Remove this asset?")) deleteAsset(asset.id); }} />
+          <AssetCard key={asset.id} asset={asset} onDelete={async () => {
+            if (!confirm("Remove this asset?")) return;
+            deleteAsset(asset.id);
+            try {
+              await fetch(`/api/projects/${projectId}/assets/${asset.id}`, { method: "DELETE" });
+            } catch { /* best effort */ }
+          }} />
         ))}
       </div>
     </div>
@@ -512,13 +554,21 @@ function AssetsPanel() {
 }
 
 function AssetCard({ asset, onDelete }: { asset: Asset; onDelete: () => void }) {
-  const { updateAsset } = useEditor();
+  const { updateAsset, projectId } = useEditor();
   const [editingAlt, setEditingAlt] = useState(false);
   const [altText, setAltText] = useState(asset.alt || "");
 
-  const saveAlt = () => {
+  const saveAlt = async () => {
     updateAsset(asset.id, { alt: altText });
     setEditingAlt(false);
+    // Persist to server
+    try {
+      await fetch(`/api/projects/${projectId}/assets/${asset.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ altText }),
+      });
+    } catch { /* best effort */ }
   };
 
   return (
