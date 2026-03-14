@@ -119,6 +119,25 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 
 ---
 
+## Post-Review Fixes (Round 4) — Editor/Live Parity
+
+Fixes for editor/live mismatch around CTA actions, hero rendering, and image behavior.
+
+| Fix | Description | Status |
+|-----|-------------|--------|
+| 1 | Editor hero preview matches live renderer — no fake/default CTA buttons; only shows buttons[] or legacy text | DONE |
+| 2 | Editor CTA band preview matches live renderer — same button rendering rules | DONE |
+| 3 | Actions tab explanatory copy — clarifies actions are reusable definitions, not auto-rendered buttons | DONE |
+| 4 | Action usage indicators — each action shows "Used in: hero, cta-band" or "Unused" | DONE |
+| 5 | Hero button management — ButtonsEditor supports adding/editing/removing buttons[] for hero, cta-band, contact, pricing; shows action picker and action status per button | DONE |
+| 6 | Empty-state UX — button-capable sections with no buttons show helper message, not fake buttons | DONE |
+| 7 | Hero image variant alignment — image picker only shown for split-image/background-image variants; centered/offer-focused show explanation text | DONE |
+| 8 | Legacy button indicator — legacy buttons (primaryCtaText etc.) shown with amber highlight and migration hint | DONE |
+
+**All 8 fixes verified with `next build`.**
+
+---
+
 ## Implementation Notes
 
 - Phases are sequential: A → B → C → D
