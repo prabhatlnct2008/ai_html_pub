@@ -1,4 +1,4 @@
-// ---- Core Page Document Schema ----
+// ---- Core Page Document Schema (V2) ----
 // This is the canonical source of truth for all page data.
 // HTML is always rendered FROM this document, never stored as the source.
 
@@ -19,29 +19,64 @@ export const THEME_VARIANTS = [
 ] as const;
 export type ThemeVariant = (typeof THEME_VARIANTS)[number];
 
+// ---- V2 Action System ----
+
+export const ACTION_TYPES = [
+  "url",
+  "phone",
+  "email",
+  "whatsapp",
+  "scroll",
+  "form",
+] as const;
+export type ActionType = (typeof ACTION_TYPES)[number];
+
+export interface Action {
+  id: string;
+  label: string;
+  type: ActionType;
+  value: string;
+  style?: "primary" | "secondary" | "outline" | "ghost";
+  openInNewTab?: boolean;
+  metadata?: {
+    whatsappMessage?: string;
+    scrollTargetId?: string;
+    formId?: string;
+  };
+}
+
+// ---- Page Document ----
+
 export interface PageDocument {
-  meta: PageMeta;
-  brand: Brand;
+  meta: MetaSettings;
+  brand: BrandSettings;
   assets: Asset[];
+  actions: Action[];
   sections: Section[];
 }
 
-export interface PageMeta {
+export interface MetaSettings {
   title: string;
   description: string;
   pageType: PageType;
   themeVariant: ThemeVariant;
+  slug?: string;
+  publishStatus?: "draft" | "published";
 }
 
-export interface Brand {
+export interface BrandSettings {
   tone: string;
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
   fontHeading: string;
   fontBody: string;
-  logoUrl?: string;
+  logoAssetId?: string;
 }
+
+// Legacy aliases for backward compatibility
+export type PageMeta = MetaSettings;
+export type Brand = BrandSettings;
 
 export interface Asset {
   id: string;
@@ -68,6 +103,9 @@ export const SECTION_TYPES = [
   "cta-band",
   "contact",
   "footer",
+  "gallery",
+  "service-area",
+  "about-team",
 ] as const;
 export type SectionType = (typeof SECTION_TYPES)[number];
 
@@ -95,22 +133,34 @@ export interface SectionAssets {
   iconIds?: string[];
 }
 
+// ---- Button Reference (used inside section content) ----
+// Buttons reference actions by ID, NOT raw hrefs (spec Rule 1)
+
+export interface ButtonRef {
+  text: string;
+  actionId: string;
+  style?: "primary" | "secondary" | "outline" | "ghost";
+}
+
 // ---- Typed Section Content Interfaces ----
 
 export interface HeroContent {
   eyebrow?: string;
   heading: string;
   subheading: string;
-  primaryCtaText: string;
-  primaryCtaHref: string;
-  secondaryCtaText?: string;
-  secondaryCtaHref?: string;
+  // V2: action references
+  buttons?: ButtonRef[];
   trustPoints?: string[];
   heroImageId?: string;
+  // Legacy fields (V1 compat — migrated to buttons[] on load)
+  primaryCtaText?: string;
+  primaryCtaHref?: string;
+  secondaryCtaText?: string;
+  secondaryCtaHref?: string;
 }
 
 export interface TrustBarContent {
-  items: Array<{ text: string; icon?: string }>;
+  items: Array<{ text: string; icon?: string; iconIntent?: string }>;
 }
 
 export interface FeaturesContent {
@@ -119,7 +169,8 @@ export interface FeaturesContent {
   items: Array<{
     title: string;
     description: string;
-    icon: string;
+    icon?: string;
+    iconIntent?: string;
     imageId?: string;
   }>;
 }
@@ -130,7 +181,8 @@ export interface BenefitsContent {
   items: Array<{
     title: string;
     description: string;
-    icon: string;
+    icon?: string;
+    iconIntent?: string;
   }>;
 }
 
@@ -155,6 +207,7 @@ export interface HowItWorksContent {
     step: string;
     title: string;
     description: string;
+    iconIntent?: string;
   }>;
 }
 
@@ -164,8 +217,10 @@ export interface ServicesContent {
   items: Array<{
     title: string;
     description: string;
-    icon: string;
+    icon?: string;
+    iconIntent?: string;
     imageId?: string;
+    buttons?: ButtonRef[];
   }>;
 }
 
@@ -185,6 +240,7 @@ export interface ResultsContent {
   stats: Array<{
     value: string;
     label: string;
+    iconIntent?: string;
   }>;
   description?: string;
 }
@@ -198,8 +254,10 @@ export interface PricingContent {
     period: string;
     description?: string;
     features: string[];
-    ctaText: string;
+    buttons?: ButtonRef[];
     highlighted: boolean;
+    // Legacy
+    ctaText?: string;
   }>;
 }
 
@@ -215,8 +273,10 @@ export interface FaqContent {
 export interface CtaBandContent {
   heading: string;
   subheading?: string;
-  buttonText: string;
-  buttonHref: string;
+  buttons?: ButtonRef[];
+  // Legacy
+  buttonText?: string;
+  buttonHref?: string;
   secondaryButtonText?: string;
   secondaryButtonHref?: string;
 }
@@ -225,25 +285,67 @@ export interface ContactContent {
   heading: string;
   subheading?: string;
   fields: string[];
-  buttonText: string;
+  buttons?: ButtonRef[];
   email?: string;
   phone?: string;
   address?: string;
+  // Legacy
+  buttonText?: string;
 }
 
 export interface FooterContent {
   companyName: string;
   tagline?: string;
+  logoAssetId?: string;
   columns: Array<{
     title: string;
-    links: Array<{ text: string; href: string }>;
+    links: Array<{ text: string; href?: string; actionId?: string }>;
   }>;
   socialLinks?: Array<{
     platform: string;
     url: string;
   }>;
   copyrightYear: string;
-  legalLinks?: Array<{ text: string; href: string }>;
+  legalLinks?: Array<{ text: string; href?: string; actionId?: string }>;
+}
+
+// ---- V2 New Section Types ----
+
+export interface GalleryContent {
+  heading: string;
+  subheading?: string;
+  images: Array<{
+    imageId: string;
+    caption?: string;
+    alt?: string;
+  }>;
+}
+
+export interface ServiceAreaContent {
+  heading: string;
+  subheading?: string;
+  areas: Array<{
+    name: string;
+    description?: string;
+  }>;
+  mapNote?: string;
+}
+
+export interface AboutTeamContent {
+  heading: string;
+  subheading?: string;
+  description?: string;
+  members?: Array<{
+    name: string;
+    role: string;
+    bio?: string;
+    imageId?: string;
+  }>;
+  values?: Array<{
+    title: string;
+    description: string;
+    iconIntent?: string;
+  }>;
 }
 
 // ---- Content type map for type-safe access ----
@@ -262,4 +364,7 @@ export type SectionContentMap = {
   "cta-band": CtaBandContent;
   contact: ContactContent;
   footer: FooterContent;
+  gallery: GalleryContent;
+  "service-area": ServiceAreaContent;
+  "about-team": AboutTeamContent;
 };

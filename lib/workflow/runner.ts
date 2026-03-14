@@ -382,6 +382,7 @@ async function executeDocumentAssembly(
       url: a.url,
       alt: a.altText || undefined,
     })),
+    actions: [],
     sections,
   };
 
