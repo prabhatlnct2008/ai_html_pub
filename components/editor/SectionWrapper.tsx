@@ -98,35 +98,90 @@ function renderHero(
   const c = section.content as Record<string, unknown>;
   const heading = (c.heading as string) || "";
   const subheading = (c.subheading as string) || "";
-  const ctaText = (c.primaryCtaText || c.cta_text) as string || "Get Started";
+  const buttons = c.buttons as Array<{ text: string; actionId: string; style?: string }> | undefined;
+  const legacyCtaText = (c.primaryCtaText || c.cta_text) as string | undefined;
   const trustPoints = c.trustPoints as string[] | undefined;
+  const variant = section.variant || "centered";
+  const heroImageId = c.heroImageId as string | undefined;
 
-  return (
-    <div style={{ textAlign: "center", maxWidth: "800px", margin: "0 auto" }}>
+  // Match live renderer: only show image for split-image and background-image variants
+  const showsImage = (variant === "split-image" || variant === "background-image") && heroImageId;
+
+  // Render buttons matching live renderer logic: buttons[] first, then legacy fallback, then nothing
+  const renderCtaButtons = () => {
+    if (buttons && buttons.length > 0) {
+      return buttons.map((btn, i) => (
+        <span key={i} style={{
+          display: "inline-block", padding: "14px 32px", borderRadius: "8px", fontWeight: 600,
+          backgroundColor: btn.style === "outline" ? "transparent" : btn.style === "ghost" ? "rgba(255,255,255,0.15)" : "#ffffff",
+          color: btn.style === "outline" || btn.style === "ghost" ? "inherit" : (section.style.background_color || section.style.backgroundColor || "#2563eb"),
+          border: btn.style === "outline" ? "2px solid rgba(255,255,255,0.3)" : "none",
+        }}>{btn.text}</span>
+      ));
+    }
+    if (legacyCtaText) {
+      return [
+        <span key="legacy" style={{
+          display: "inline-block", padding: "14px 32px", borderRadius: "8px", fontWeight: 600,
+          backgroundColor: "#ffffff",
+          color: section.style.background_color || section.style.backgroundColor || "#2563eb",
+        }}>{legacyCtaText}</span>
+      ];
+    }
+    return [];
+  };
+
+  const ctaElements = renderCtaButtons();
+
+  const textContent = (
+    <>
       {isPreview ? (
         <h1 style={{ fontSize: "48px", fontWeight: 800, lineHeight: 1.1, marginBottom: "16px" }}>{heading}</h1>
       ) : (
-        <InlineEditor value={heading} onChange={(v) => update(c.primaryCtaText ? "heading" : "heading", v)} tag="h1" style={{ fontSize: "48px", fontWeight: 800, lineHeight: 1.1, marginBottom: "16px" }} />
+        <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h1" style={{ fontSize: "48px", fontWeight: 800, lineHeight: 1.1, marginBottom: "16px" }} />
       )}
       {isPreview ? (
         <p style={{ fontSize: "20px", opacity: 0.9, marginBottom: "32px" }}>{subheading}</p>
       ) : (
         <InlineEditor value={subheading} onChange={(v) => update("subheading", v)} tag="p" style={{ fontSize: "20px", opacity: 0.9, marginBottom: "32px" }} />
       )}
-      <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
-        {isPreview ? (
-          <span style={{ display: "inline-block", padding: "14px 32px", borderRadius: "8px", fontWeight: 600, backgroundColor: "#ffffff", color: section.style.background_color || section.style.backgroundColor || "#2563eb" }}>{ctaText}</span>
-        ) : (
-          <InlineEditor value={ctaText} onChange={(v) => update(c.primaryCtaText !== undefined ? "primaryCtaText" : "cta_text", v)} tag="span" style={{ display: "inline-block", padding: "14px 32px", borderRadius: "8px", fontWeight: 600, backgroundColor: "#ffffff", color: section.style.background_color || section.style.backgroundColor || "#2563eb" }} />
-        )}
-      </div>
+      {ctaElements.length > 0 && (
+        <div style={{ display: "flex", gap: "16px", justifyContent: variant === "split-image" ? "flex-start" : "center", flexWrap: "wrap" }}>
+          {ctaElements}
+        </div>
+      )}
       {trustPoints && trustPoints.length > 0 && (
-        <div style={{ marginTop: "24px", display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap", fontSize: "14px", opacity: 0.8 }}>
+        <div style={{ marginTop: "24px", display: "flex", gap: "16px", justifyContent: variant === "split-image" ? "flex-start" : "center", flexWrap: "wrap", fontSize: "14px", opacity: 0.8 }}>
           {trustPoints.map((t, i) => (
             <span key={i}>{isPreview ? `\u2713 ${t}` : <InlineEditor value={t} onChange={(v) => update(`trustPoints.${i}`, v)} tag="span" />}</span>
           ))}
         </div>
       )}
+    </>
+  );
+
+  if (variant === "split-image") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "48px" }}>
+        <div style={{ flex: 1 }}>{textContent}</div>
+        <div style={{ flex: 1 }}>
+          {showsImage ? (
+            <div style={{ width: "100%", height: "300px", borderRadius: "12px", overflow: "hidden", background: "#f3f4f6" }}>
+              <div style={{ width: "100%", height: "100%", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#9ca3af" }}>Hero Image</div>
+            </div>
+          ) : (
+            <div style={{ width: "100%", height: "300px", borderRadius: "12px", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#9ca3af" }}>
+              Assign a hero image in the Section panel
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ textAlign: "center", maxWidth: "800px", margin: "0 auto" }}>
+      {textContent}
     </div>
   );
 }
@@ -510,7 +565,34 @@ function renderCtaBand(
   const c = section.content as Record<string, unknown>;
   const heading = (c.heading as string) || "";
   const subheading = (c.subheading as string) || "";
-  const buttonText = (c.buttonText || c.button_text) as string || "Get Started";
+  const buttons = c.buttons as Array<{ text: string; actionId: string; style?: string }> | undefined;
+  const legacyButtonText = (c.buttonText || c.button_text) as string | undefined;
+
+  // Match live renderer: buttons[] first, then legacy fallback, then nothing
+  const renderCtaButtons = () => {
+    if (buttons && buttons.length > 0) {
+      return buttons.map((btn, i) => (
+        <span key={i} style={{
+          display: "inline-block", padding: "16px 40px", borderRadius: "8px", fontWeight: 700,
+          background: btn.style === "outline" ? "transparent" : btn.style === "ghost" ? "rgba(255,255,255,0.15)" : "#ffffff",
+          color: btn.style === "outline" || btn.style === "ghost" ? "inherit" : (section.style.background_color || section.style.backgroundColor),
+          border: btn.style === "outline" ? "2px solid rgba(255,255,255,0.3)" : "none",
+        }}>{btn.text}</span>
+      ));
+    }
+    if (legacyButtonText) {
+      return [
+        <span key="legacy" style={{
+          display: "inline-block", padding: "16px 40px", background: "#ffffff",
+          color: section.style.background_color || section.style.backgroundColor,
+          borderRadius: "8px", fontWeight: 700,
+        }}>{legacyButtonText}</span>
+      ];
+    }
+    return [];
+  };
+
+  const ctaElements = renderCtaButtons();
 
   return (
     <div style={{ textAlign: "center", maxWidth: "700px", margin: "0 auto" }}>
@@ -526,10 +608,10 @@ function renderCtaBand(
           <InlineEditor value={subheading} onChange={(v) => update("subheading", v)} tag="p" style={{ fontSize: "18px", opacity: 0.9, marginBottom: "32px" }} />
         )
       )}
-      {isPreview ? (
-        <span style={{ display: "inline-block", padding: "16px 40px", background: "#ffffff", color: section.style.background_color || section.style.backgroundColor, borderRadius: "8px", fontWeight: 700 }}>{buttonText}</span>
-      ) : (
-        <InlineEditor value={buttonText} onChange={(v) => update(c.buttonText !== undefined ? "buttonText" : "button_text", v)} tag="span" style={{ display: "inline-block", padding: "16px 40px", background: "#ffffff", color: section.style.background_color || section.style.backgroundColor, borderRadius: "8px", fontWeight: 700 }} />
+      {ctaElements.length > 0 && (
+        <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+          {ctaElements}
+        </div>
       )}
     </div>
   );

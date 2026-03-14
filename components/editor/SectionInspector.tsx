@@ -92,8 +92,11 @@ function SectionPanel({ section }: { section: SectionData }) {
       )}
 
       {/* Image assignment for sections that support it */}
-      {(section.type === "hero" || section.type === "gallery") && (
+      {section.type === "gallery" && (
         <SectionImageAssignment section={section} assets={assets} />
+      )}
+      {section.type === "hero" && (
+        <HeroImageAssignment section={section} assets={assets} />
       )}
 
       {/* Style controls */}
@@ -134,6 +137,57 @@ function SectionImageAssignment({ section, assets }: { section: SectionData; ass
       <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
         {section.type === "hero" ? "Hero Image" : "Section Image"}
       </label>
+      <select
+        value={currentImageId || ""}
+        onChange={(e) => updateContent(section.id, "heroImageId", e.target.value || undefined)}
+        className="w-full rounded border border-gray-200 px-2 py-1.5 text-xs"
+      >
+        <option value="">No image</option>
+        {imageAssets.map((a) => (
+          <option key={a.id} value={a.id}>
+            {a.alt || a.id} ({a.source})
+          </option>
+        ))}
+      </select>
+      {currentImageId && (
+        <div className="mt-1.5">
+          {(() => {
+            const asset = assets.find((a) => a.id === currentImageId);
+            return asset ? (
+              <img src={asset.url} alt={asset.alt || ""} className="h-20 w-full rounded border object-cover" />
+            ) : null;
+          })()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Hero image picker — variant-aware
+const HERO_IMAGE_VARIANTS = ["split-image", "background-image"];
+
+function HeroImageAssignment({ section, assets }: { section: SectionData; assets: Asset[] }) {
+  const { updateContent } = useEditor();
+  const variant = section.variant || "centered";
+  const imageAssets = assets.filter((a) => a.kind === "image");
+  const currentImageId = section.content.heroImageId as string | undefined;
+  const showsPicker = HERO_IMAGE_VARIANTS.includes(variant);
+
+  if (!showsPicker) {
+    return (
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Hero Image</label>
+        <p className="text-[10px] text-gray-400">
+          The &ldquo;{variant.replace(/-/g, " ")}&rdquo; variant does not display a hero image on the live page.
+          Switch to &ldquo;split-image&rdquo; or &ldquo;background-image&rdquo; to use a hero image.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Hero Image</label>
       <select
         value={currentImageId || ""}
         onChange={(e) => updateContent(section.id, "heroImageId", e.target.value || undefined)}
@@ -307,27 +361,20 @@ function RepeatableItemsEditor({ section }: { section: SectionData }) {
   );
 }
 
-function ButtonsEditor({ section }: { section: SectionData }) {
-  const { updateContent, actions, addAction, updateAction, sections } = useEditor();
-  const buttons = section.content.buttons as ButtonRef[] | undefined;
+// Section types that support buttons
+const BUTTON_CAPABLE_SECTIONS = ["hero", "cta-band", "cta", "contact", "pricing"];
 
-  if (!buttons || buttons.length === 0) {
-    const hasLegacy = section.content.primaryCtaText || section.content.buttonText || section.content.cta_text;
-    if (!hasLegacy) return null;
-    return (
-      <div className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Buttons</p>
-        <div className="rounded border border-gray-100 p-2">
-          <label className="mb-0.5 block text-[10px] text-gray-500">Button Text</label>
-          <input type="text" value={(section.content.primaryCtaText || section.content.buttonText || section.content.cta_text || "") as string}
-            onChange={(e) => {
-              const key = section.content.primaryCtaText !== undefined ? "primaryCtaText" : section.content.buttonText !== undefined ? "buttonText" : "cta_text";
-              updateContent(section.id, key, e.target.value);
-            }} className="w-full rounded border border-gray-200 px-2 py-1 text-xs" />
-        </div>
-      </div>
-    );
-  }
+function ButtonsEditor({ section }: { section: SectionData }) {
+  const { updateContent, actions, addAction, sections } = useEditor();
+  const buttons = (section.content.buttons || []) as ButtonRef[];
+  const hasLegacy = !!(section.content.primaryCtaText || section.content.buttonText || section.content.cta_text);
+  const isButtonCapable = BUTTON_CAPABLE_SECTIONS.includes(section.type);
+
+  // If this section type doesn't support buttons at all, skip
+  if (!isButtonCapable && !hasLegacy && buttons.length === 0) return null;
+
+  // Collect visible section IDs for scroll target picker
+  const scrollTargets = sections.filter((s) => s.visible !== false).map((s) => ({ id: s.type, label: s.type.replace(/-/g, " ") }));
 
   const addButton = () => {
     const actionId = `action_${section.type}_${Math.random().toString(36).substring(2, 6)}`;
@@ -336,17 +383,36 @@ function ButtonsEditor({ section }: { section: SectionData }) {
     updateContent(section.id, "buttons", [...buttons, { text: "New Button", actionId, style: "primary" as const }]);
   };
 
-  // Collect visible section IDs for scroll target picker
-  const scrollTargets = sections.filter((s) => s.visible !== false).map((s) => ({ id: s.type, label: s.type.replace(/-/g, " ") }));
-
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Buttons</p>
-        <button onClick={addButton} className="rounded p-0.5 text-gray-400 hover:text-primary-600">
+        <button onClick={addButton} className="rounded p-0.5 text-gray-400 hover:text-primary-600" title="Add button">
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
         </button>
       </div>
+
+      {/* Legacy button (non-action-based) */}
+      {hasLegacy && buttons.length === 0 && (
+        <div className="rounded border border-amber-100 bg-amber-50 p-2 space-y-1.5">
+          <label className="mb-0.5 block text-[10px] text-amber-600">Legacy Button (not action-linked)</label>
+          <input type="text" value={(section.content.primaryCtaText || section.content.buttonText || section.content.cta_text || "") as string}
+            onChange={(e) => {
+              const key = section.content.primaryCtaText !== undefined ? "primaryCtaText" : section.content.buttonText !== undefined ? "buttonText" : "cta_text";
+              updateContent(section.id, key, e.target.value);
+            }} className="w-full rounded border border-gray-200 px-2 py-1 text-xs" />
+          <p className="text-[9px] text-amber-500">Add a button above to use action-linked buttons instead.</p>
+        </div>
+      )}
+
+      {/* Empty state for button-capable sections */}
+      {buttons.length === 0 && !hasLegacy && isButtonCapable && (
+        <p className="rounded border border-dashed border-gray-200 p-2 text-center text-[10px] text-gray-400">
+          No buttons added yet. Add a button and link it to an action.
+        </p>
+      )}
+
+      {/* V2 buttons with action references */}
       {buttons.map((btn, i) => {
         const action = actions.find((a) => a.id === btn.actionId);
         return (
@@ -363,6 +429,28 @@ function ButtonsEditor({ section }: { section: SectionData }) {
                 <option value="outline">Outline</option>
                 <option value="ghost">Ghost</option>
               </select>
+            </div>
+            <div>
+              <label className="mb-0.5 block text-[10px] text-gray-500">Linked Action</label>
+              <select
+                value={btn.actionId}
+                onChange={(e) => { const nb = [...buttons]; nb[i] = { ...nb[i], actionId: e.target.value }; updateContent(section.id, "buttons", nb); }}
+                className="w-full rounded border border-gray-200 px-2 py-1 text-xs"
+              >
+                {actions.map((a) => (
+                  <option key={a.id} value={a.id}>{a.label} ({a.type})</option>
+                ))}
+                {!actions.find((a) => a.id === btn.actionId) && (
+                  <option value={btn.actionId}>{btn.actionId} (missing)</option>
+                )}
+              </select>
+              {action ? (
+                <p className="mt-0.5 text-[9px] text-green-600">
+                  {action.type === "scroll" ? `Scrolls to ${action.value}` : action.type === "url" ? action.value : `${action.type}: ${action.value}`}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-[9px] text-red-500">Action not found — create it in the Actions tab</p>
+              )}
             </div>
             {action && <ActionFields action={action} scrollTargets={scrollTargets} />}
             <button onClick={() => updateContent(section.id, "buttons", buttons.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:text-red-700">Remove</button>
@@ -446,35 +534,60 @@ function ActionsPanel() {
     addAction({ id, label: "New Action", type: "url", value: "#", style: "primary" });
   };
 
+  // Find which sections reference each action
+  const getActionUsage = (actionId: string): string[] => {
+    const usedIn: string[] = [];
+    for (const s of sections) {
+      const buttons = s.content.buttons as Array<{ actionId: string }> | undefined;
+      if (buttons?.some((b) => b.actionId === actionId)) {
+        usedIn.push(s.type.replace(/-/g, " "));
+      }
+    }
+    return usedIn;
+  };
+
   return (
     <div className="p-3 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-gray-700">Page Actions ({actions.length})</p>
         <button onClick={handleAdd} className="rounded bg-primary-50 px-2 py-1 text-[10px] font-medium text-primary-700 hover:bg-primary-100">Add Action</button>
       </div>
-      {actions.length === 0 && <p className="py-4 text-center text-xs text-gray-400">No actions defined. Buttons reference actions by ID.</p>}
-      {actions.map((action) => (
-        <div key={action.id} className="rounded border border-gray-100 p-2 space-y-1.5">
-          <div>
-            <label className="mb-0.5 block text-[10px] text-gray-500">Label</label>
-            <input type="text" value={action.label} onChange={(e) => updateAction(action.id, { label: e.target.value })} className="w-full rounded border border-gray-200 px-2 py-1 text-xs" />
+      <p className="text-[10px] text-gray-400 leading-snug">
+        Actions are reusable destinations/behaviors. A button appears on the page only when a section references one of these actions.
+      </p>
+      {actions.length === 0 && <p className="py-4 text-center text-xs text-gray-400">No actions defined yet. Create an action, then add a button in a section to use it.</p>}
+      {actions.map((action) => {
+        const usedIn = getActionUsage(action.id);
+        return (
+          <div key={action.id} className="rounded border border-gray-100 p-2 space-y-1.5">
+            <div>
+              <label className="mb-0.5 block text-[10px] text-gray-500">Label</label>
+              <input type="text" value={action.label} onChange={(e) => updateAction(action.id, { label: e.target.value })} className="w-full rounded border border-gray-200 px-2 py-1 text-xs" />
+            </div>
+            <div>
+              <label className="mb-0.5 block text-[10px] text-gray-500">Style</label>
+              <select value={action.style || "primary"} onChange={(e) => updateAction(action.id, { style: e.target.value as Action["style"] })} className="w-full rounded border border-gray-200 px-2 py-1 text-xs">
+                <option value="primary">Primary</option>
+                <option value="secondary">Secondary</option>
+                <option value="outline">Outline</option>
+                <option value="ghost">Ghost</option>
+              </select>
+            </div>
+            <ActionFields action={action} scrollTargets={scrollTargets} />
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[10px] text-gray-400 font-mono">{action.id}</span>
+              <button onClick={() => { if (confirm("Delete this action?")) deleteAction(action.id); }} className="text-[10px] text-red-500 hover:text-red-700">Delete</button>
+            </div>
+            <div className="text-[10px] pt-0.5">
+              {usedIn.length > 0 ? (
+                <span className="text-green-600">Used in: {usedIn.join(", ")}</span>
+              ) : (
+                <span className="text-amber-500">Unused — add a button in a section to reference this action</span>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="mb-0.5 block text-[10px] text-gray-500">Style</label>
-            <select value={action.style || "primary"} onChange={(e) => updateAction(action.id, { style: e.target.value as Action["style"] })} className="w-full rounded border border-gray-200 px-2 py-1 text-xs">
-              <option value="primary">Primary</option>
-              <option value="secondary">Secondary</option>
-              <option value="outline">Outline</option>
-              <option value="ghost">Ghost</option>
-            </select>
-          </div>
-          <ActionFields action={action} scrollTargets={scrollTargets} />
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-[10px] text-gray-400 font-mono">{action.id}</span>
-            <button onClick={() => { if (confirm("Delete this action?")) deleteAction(action.id); }} className="text-[10px] text-red-500 hover:text-red-700">Delete</button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
