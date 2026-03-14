@@ -89,6 +89,23 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 
 ---
 
+## Post-Review Fixes (Round 2)
+> Fixes from the second V2 code review, addressing remaining product-completion gaps.
+
+| Fix | Description | Status |
+|-----|-------------|--------|
+| 1 | Real persistent asset uploads — editor calls `/api/projects/[id]/assets` POST, server-side file storage, DB asset record | DONE |
+| 2 | Align variant names between section-library and renderer (services: image-cards/alternating-rows, testimonials: avatars/single-highlight, cta: dual/contact-strip, footer: simple/legal-heavy) | DONE |
+| 3 | Enforce publish gating — `/p/[slug]` returns 404 for draft pages to non-owners | DONE |
+| 4 | Image-driven rendering — features/services image-cards variants render actual images, testimonials avatars variant renders avatar images | DONE |
+| 5 | Item-level asset binding — bindAssetsToSections now wires imageId per feature/service item, avatarImageId per testimonial, member imageId for about-team | DONE |
+| 6 | Backward-compat variant normalization — normalizeVariant() maps old names to canonical, applied on load and render | DONE |
+| 7 | UPDATE_ASSET reducer action — proper alt-text editing without delete+add hack | DONE |
+
+**All 7 fixes verified with `next build`.**
+
+---
+
 ## Implementation Notes
 
 - Phases are sequential: A → B → C → D

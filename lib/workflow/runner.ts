@@ -600,49 +600,108 @@ function bindAssetsToSections(sections: Section[], assets: Asset[]): Section[] {
     assetsBySource[sourceKey].push(asset);
   }
 
+  // Build a pool of unassigned image assets for fallback item-level binding
+  const assignedIds = new Set<string>();
+
   return sections.map((section) => {
     const content = { ...section.content };
     const sectionAssets: { imageIds?: string[]; backgroundImageId?: string } = { ...(section.assets || {}) };
 
     switch (section.type) {
       case "hero": {
-        // Bind hero image
         const heroAsset = assetsBySlot.get("hero_image");
         if (heroAsset && !content.heroImageId) {
           content.heroImageId = heroAsset.id;
           sectionAssets.imageIds = [...(sectionAssets.imageIds || []), heroAsset.id];
+          assignedIds.add(heroAsset.id);
         }
         break;
       }
       case "gallery": {
-        // Bind gallery images to gallery items
         const images = content.images as Array<Record<string, unknown>> | undefined;
         if (images) {
           const galleryAssets = assets.filter((a) => a.kind === "image" && a.source !== "placeholder");
           content.images = images.map((img, i) => {
-            if (img.imageId) return img;
+            if (img.imageId) { assignedIds.add(img.imageId as string); return img; }
             const available = galleryAssets[i];
-            return available ? { ...img, imageId: available.id } : img;
+            if (available) { assignedIds.add(available.id); return { ...img, imageId: available.id }; }
+            return img;
           });
         }
         break;
       }
+      case "features":
+      case "services": {
+        // Bind item-level imageId for image-cards variant or any available assets
+        const items = content.items as Array<Record<string, unknown>> | undefined;
+        if (items) {
+          const slotAsset = assetsBySlot.get(`${section.type}_image`);
+          const availablePool = assets.filter((a) => a.kind === "image" && !assignedIds.has(a.id));
+          let poolIdx = 0;
+          content.items = items.map((item) => {
+            if (item.imageId) { assignedIds.add(item.imageId as string); return item; }
+            // Try slot-based, then pool-based
+            if (slotAsset && !assignedIds.has(slotAsset.id)) {
+              assignedIds.add(slotAsset.id);
+              return { ...item, imageId: slotAsset.id };
+            }
+            if (poolIdx < availablePool.length) {
+              const poolAsset = availablePool[poolIdx++];
+              assignedIds.add(poolAsset.id);
+              return { ...item, imageId: poolAsset.id };
+            }
+            return item;
+          });
+          sectionAssets.imageIds = items
+            .map((item) => item.imageId as string | undefined)
+            .filter(Boolean) as string[];
+        }
+        break;
+      }
       case "testimonials": {
-        // Bind testimonial avatar images if available
+        // Bind item-level avatarImageId
         const items = content.items as Array<Record<string, unknown>> | undefined;
         if (items) {
           const testimonialAsset = assetsBySlot.get("testimonials_image");
           if (testimonialAsset) {
+            assignedIds.add(testimonialAsset.id);
+            // Assign avatar to first item without one
+            content.items = items.map((item) => {
+              if (item.avatarImageId) return item;
+              if (testimonialAsset && !assignedIds.has(testimonialAsset.id + "_used")) {
+                assignedIds.add(testimonialAsset.id + "_used");
+                return { ...item, avatarImageId: testimonialAsset.id };
+              }
+              return item;
+            });
             sectionAssets.imageIds = [...(sectionAssets.imageIds || []), testimonialAsset.id];
           }
         }
         break;
       }
+      case "about-team": {
+        // Bind member imageId
+        const members = content.members as Array<Record<string, unknown>> | undefined;
+        if (members) {
+          const availablePool = assets.filter((a) => a.kind === "image" && !assignedIds.has(a.id));
+          let poolIdx = 0;
+          content.members = members.map((member) => {
+            if (member.imageId) return member;
+            if (poolIdx < availablePool.length) {
+              const poolAsset = availablePool[poolIdx++];
+              assignedIds.add(poolAsset.id);
+              return { ...member, imageId: poolAsset.id };
+            }
+            return member;
+          });
+        }
+        break;
+      }
       default: {
-        // Try to match any asset with this section's type as the slot
         const sectionAsset = assetsBySlot.get(`${section.type}_image`);
         if (sectionAsset) {
           sectionAssets.imageIds = [...(sectionAssets.imageIds || []), sectionAsset.id];
+          assignedIds.add(sectionAsset.id);
         }
         break;
       }

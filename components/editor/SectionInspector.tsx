@@ -446,26 +446,43 @@ function ActionsPanel() {
 // ---- Assets Panel ----
 
 function AssetsPanel() {
-  const { assets, addAsset, deleteAsset } = useEditor();
+  const { assets, addAsset, deleteAsset, projectId } = useEditor();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
+    setUploadError("");
     try {
-      // Create a local object URL for preview (real upload would go to server)
-      const url = URL.createObjectURL(file);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("altText", file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "));
+
+      const res = await fetch(`/api/projects/${projectId}/assets`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Upload failed");
+      }
+
+      const data = await res.json();
       const newAsset: Asset = {
-        id: `asset_upload_${Math.random().toString(36).substring(2, 10)}`,
-        kind: "image",
-        source: "upload",
-        url,
-        alt: file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
+        id: data.asset.id,
+        kind: data.asset.kind,
+        source: data.asset.source,
+        url: data.asset.url,
+        alt: data.asset.altText || undefined,
       };
       addAsset(newAsset);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -482,6 +499,7 @@ function AssetsPanel() {
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
       </div>
 
+      {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
       {assets.length === 0 && <p className="py-4 text-center text-xs text-gray-400">No assets. Upload images or generate with AI.</p>}
 
       <div className="space-y-2">
@@ -494,14 +512,12 @@ function AssetsPanel() {
 }
 
 function AssetCard({ asset, onDelete }: { asset: Asset; onDelete: () => void }) {
-  const { dispatch } = useEditor();
+  const { updateAsset } = useEditor();
   const [editingAlt, setEditingAlt] = useState(false);
   const [altText, setAltText] = useState(asset.alt || "");
 
   const saveAlt = () => {
-    // Update asset alt text via dispatch
-    dispatch({ type: "DELETE_ASSET", assetId: asset.id });
-    dispatch({ type: "ADD_ASSET", asset: { ...asset, alt: altText } });
+    updateAsset(asset.id, { alt: altText });
     setEditingAlt(false);
   };
 

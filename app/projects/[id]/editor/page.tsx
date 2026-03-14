@@ -152,7 +152,7 @@ export default function EditorPage() {
   }
 
   return (
-    <EditorProvider>
+    <EditorProvider projectId={projectId}>
       <Navbar />
       <EditorContent projectId={projectId} />
     </EditorProvider>

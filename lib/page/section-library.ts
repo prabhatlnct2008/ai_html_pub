@@ -297,6 +297,37 @@ export function createDefaultSection(
   };
 }
 
+// ---- Variant Normalization (legacy → canonical) ----
+
+const LEGACY_VARIANT_MAP: Record<string, Record<string, string>> = {
+  services: {
+    list: "alternating-rows",
+    featured: "image-cards",
+  },
+  testimonials: {
+    "single-spotlight": "single-highlight",
+    "minimal-list": "avatars",
+  },
+  "cta-band": {
+    split: "dual",
+    card: "contact-strip",
+  },
+  footer: {
+    "simple-centered": "simple",
+    minimal: "legal-heavy",
+  },
+};
+
+/**
+ * Normalize a variant name, mapping legacy names to current canonical names.
+ * Returns the canonical variant or the original if no mapping exists.
+ */
+export function normalizeVariant(sectionType: string, variant: string): string {
+  const map = LEGACY_VARIANT_MAP[sectionType];
+  if (map && map[variant]) return map[variant];
+  return variant;
+}
+
 // ---- Legacy Conversion ----
 // Convert old-format sections (from existing pages) to new schema
 

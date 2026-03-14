@@ -4,6 +4,7 @@ import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { renderPageHtml } from "@/lib/html-renderer";
 import { renderPageFromDocument } from "@/lib/page/renderer";
 import { normalizeDocumentActions } from "@/lib/actions/normalizer";
+import { normalizeVariant } from "@/lib/page/section-library";
 import type { PageDocument } from "@/lib/page/schema";
 
 // Get page data
@@ -34,6 +35,11 @@ export async function GET(
     : null;
   if (doc) {
     doc = normalizeDocumentActions(doc);
+    // Normalize legacy variant names to canonical
+    doc.sections = doc.sections.map((s) => ({
+      ...s,
+      variant: normalizeVariant(s.type, s.variant),
+    }));
   }
 
   // V2: prefer documentJson sections as canonical source; fall back to sectionsJson for legacy

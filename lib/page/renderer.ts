@@ -26,6 +26,7 @@ import type {
 import { getPlaceholderUrl } from "@/lib/assets/placeholders";
 import { resolveAction, getActionHref } from "@/lib/actions/resolver";
 import { resolveIcon } from "./icons";
+import { normalizeVariant } from "./section-library";
 
 // ---- Main Render Function ----
 
@@ -112,7 +113,9 @@ ${sectionsHtml}
 
 // ---- Section Dispatcher ----
 
-function renderSection(section: Section, brand: Brand, assets: Asset[], actions: Action[]): string {
+function renderSection(rawSection: Section, brand: Brand, assets: Asset[], actions: Action[]): string {
+  // Normalize legacy variant names
+  const section = { ...rawSection, variant: normalizeVariant(rawSection.type, rawSection.variant) };
   const resolveAssetFn = (id?: string) => assets.find((a) => a.id === id);
   const bgColor = section.style.backgroundColor;
   const textColor = section.style.textColor;
@@ -123,12 +126,12 @@ function renderSection(section: Section, brand: Brand, assets: Asset[], actions:
   const renderers: Record<string, () => string> = {
     hero: () => renderHero(section, sectionStyle, brand, resolveAssetFn, actions),
     "trust-bar": () => renderTrustBar(section, sectionStyle, brand),
-    features: () => renderFeatures(section, sectionStyle, brand),
+    features: () => renderFeatures(section, sectionStyle, brand, resolveAssetFn),
     benefits: () => renderBenefits(section, sectionStyle, brand),
     "problem-solution": () => renderProblemSolution(section, sectionStyle, brand),
     "how-it-works": () => renderHowItWorks(section, sectionStyle, brand),
-    services: () => renderServices(section, sectionStyle, brand),
-    testimonials: () => renderTestimonials(section, sectionStyle),
+    services: () => renderServices(section, sectionStyle, brand, resolveAssetFn),
+    testimonials: () => renderTestimonials(section, sectionStyle, resolveAssetFn),
     results: () => renderResults(section, sectionStyle),
     pricing: () => renderPricing(section, sectionStyle, brand, actions),
     faq: () => renderFaq(section, sectionStyle),
@@ -273,17 +276,17 @@ function renderTrustBar(section: Section, sectionStyle: string, brand: Brand): s
 </section>`;
 }
 
-function renderFeatures(section: Section, sectionStyle: string, brand: Brand): string {
+function renderFeatures(section: Section, sectionStyle: string, brand: Brand, resolveAsset?: (id?: string) => Asset | undefined): string {
   const c = section.content as unknown as FeaturesContent;
-  const gridClass = section.variant === "list-with-icons" ? "" : c.items.length <= 2 ? "grid-2" : "grid-3";
+  const headerHtml = `<div class="text-center" style="margin-bottom: 48px;">
+      <h2>${esc(c.heading)}</h2>
+      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
+    </div>`;
 
   if (section.variant === "list-with-icons") {
     return `<section data-section-id="${section.id}" data-section-type="features" id="features" class="section" style="${sectionStyle}">
   <div class="container" style="max-width: 800px;">
-    <div class="text-center" style="margin-bottom: 48px;">
-      <h2>${esc(c.heading)}</h2>
-      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
-    </div>
+    ${headerHtml}
     ${c.items.map((item) => {
       const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
       return `<div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 32px;">
@@ -298,12 +301,32 @@ function renderFeatures(section: Section, sectionStyle: string, brand: Brand): s
 </section>`;
   }
 
+  if (section.variant === "image-cards") {
+    return `<section data-section-id="${section.id}" data-section-type="features" id="features" class="section" style="${sectionStyle}">
+  <div class="container">
+    ${headerHtml}
+    <div class="grid-${c.items.length <= 2 ? "2" : "3"}">
+      ${c.items.map((item) => {
+        const imgAsset = resolveAsset?.(item.imageId);
+        const imgUrl = imgAsset?.url || (item.imageId ? getPlaceholderUrl("feature", 400, 250) : "");
+        return `<div class="card" style="overflow: hidden; padding: 0;">
+        ${imgUrl ? `<img src="${esc(imgUrl)}" alt="${esc(imgAsset?.alt || item.title)}" style="width: 100%; height: 200px; object-fit: cover;" loading="lazy" />` : ""}
+        <div style="padding: 24px;">
+          <h3>${esc(item.title)}</h3>
+          <p style="opacity: 0.7;">${esc(item.description)}</p>
+        </div>
+      </div>`;
+      }).join("\n      ")}
+    </div>
+  </div>
+</section>`;
+  }
+
+  // Default: icon-grid
+  const gridClass = c.items.length <= 2 ? "grid-2" : "grid-3";
   return `<section data-section-id="${section.id}" data-section-type="features" id="features" class="section" style="${sectionStyle}">
   <div class="container">
-    <div class="text-center" style="margin-bottom: 48px;">
-      <h2>${esc(c.heading)}</h2>
-      ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
-    </div>
+    ${headerHtml}
     <div class="${gridClass}">
       ${c.items.map((item) => {
         const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
@@ -422,14 +445,14 @@ function renderHowItWorks(section: Section, sectionStyle: string, brand: Brand):
 </section>`;
 }
 
-function renderServices(section: Section, sectionStyle: string, brand: Brand): string {
+function renderServices(section: Section, sectionStyle: string, brand: Brand, resolveAsset?: (id?: string) => Asset | undefined): string {
   const c = section.content as unknown as ServicesContent;
   const headerHtml = `<div class="text-center" style="margin-bottom: 48px;">
       <h2>${esc(c.heading)}</h2>
       ${c.subheading ? `<p style="font-size: 18px; opacity: 0.7; max-width: 600px; margin: 8px auto 0;">${esc(c.subheading)}</p>` : ""}
     </div>`;
 
-  if (section.variant === "list") {
+  if (section.variant === "alternating-rows") {
     return `<section data-section-id="${section.id}" data-section-type="services" id="services" class="section" style="${sectionStyle}">
   <div class="container" style="max-width: 800px;">
     ${headerHtml}
@@ -447,29 +470,20 @@ function renderServices(section: Section, sectionStyle: string, brand: Brand): s
 </section>`;
   }
 
-  if (section.variant === "featured") {
-    const featured = c.items[0];
-    const rest = c.items.slice(1);
-    const featuredIcon = featured?.iconIntent ? resolveIcon(featured.iconIntent) : getSimpleIcon(featured?.icon);
+  if (section.variant === "image-cards") {
     return `<section data-section-id="${section.id}" data-section-type="services" id="services" class="section" style="${sectionStyle}">
   <div class="container">
     ${headerHtml}
-    ${featured ? `<div class="card" style="margin-bottom: 32px; padding: 48px; border-left: 4px solid ${brand.primaryColor};">
-      <div style="display: flex; gap: 24px; align-items: flex-start;">
-        <div style="flex-shrink: 0; width: 64px; height: 64px; border-radius: 16px; background: ${brand.primaryColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px;">${featuredIcon}</div>
-        <div>
-          <h3 style="font-size: 28px;">${esc(featured.title)}</h3>
-          <p style="opacity: 0.7; font-size: 17px;">${esc(featured.description)}</p>
+    <div class="grid-${Math.min(c.items.length, 3)}">
+      ${c.items.map((item) => {
+        const imgAsset = resolveAsset?.(item.imageId);
+        const imgUrl = imgAsset?.url || (item.imageId ? getPlaceholderUrl("service", 400, 250) : "");
+        return `<div class="card" style="overflow: hidden; padding: 0;">
+        ${imgUrl ? `<img src="${esc(imgUrl)}" alt="${esc(imgAsset?.alt || item.title)}" style="width: 100%; height: 200px; object-fit: cover;" loading="lazy" />` : ""}
+        <div style="padding: 24px;">
+          <h3>${esc(item.title)}</h3>
+          <p style="opacity: 0.7;">${esc(item.description)}</p>
         </div>
-      </div>
-    </div>` : ""}
-    <div class="grid-${Math.min(rest.length, 3)}">
-      ${rest.map((item) => {
-        const iconHtml = item.iconIntent ? resolveIcon(item.iconIntent) : getSimpleIcon(item.icon);
-        return `<div class="card">
-        <div style="width: 48px; height: 48px; border-radius: 10px; background: ${brand.primaryColor}15; color: ${brand.primaryColor}; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">${iconHtml}</div>
-        <h3>${esc(item.title)}</h3>
-        <p style="opacity: 0.7;">${esc(item.description)}</p>
       </div>`;
       }).join("\n      ")}
     </div>
@@ -495,11 +509,11 @@ function renderServices(section: Section, sectionStyle: string, brand: Brand): s
 </section>`;
 }
 
-function renderTestimonials(section: Section, sectionStyle: string): string {
+function renderTestimonials(section: Section, sectionStyle: string, resolveAsset?: (id?: string) => Asset | undefined): string {
   const c = section.content as unknown as TestimonialsContent;
   const headingHtml = `<h2 class="text-center" style="margin-bottom: 48px;">${esc(c.heading)}</h2>`;
 
-  if (section.variant === "single-spotlight" && c.items.length > 0) {
+  if (section.variant === "single-highlight" && c.items.length > 0) {
     const featured = c.items[0];
     return `<section data-section-id="${section.id}" data-section-type="testimonials" id="testimonials" class="section" style="${sectionStyle}">
   <div class="container" style="max-width: 700px;">
@@ -514,16 +528,23 @@ function renderTestimonials(section: Section, sectionStyle: string): string {
 </section>`;
   }
 
-  if (section.variant === "minimal-list") {
+  if (section.variant === "avatars") {
     return `<section data-section-id="${section.id}" data-section-type="testimonials" id="testimonials" class="section" style="${sectionStyle}">
   <div class="container" style="max-width: 800px;">
     ${headingHtml}
-    ${c.items.map((item) => `<div style="border-left: 3px solid rgba(0,0,0,0.15); padding: 24px 0 24px 24px; margin-bottom: 32px;">
-      <p style="font-size: 18px; font-style: italic; line-height: 1.6; margin-bottom: 12px;">&ldquo;${esc(item.quote)}&rdquo;</p>
+    ${c.items.map((item) => {
+      const avatarAsset = resolveAsset?.(item.avatarImageId);
+      const avatarHtml = avatarAsset?.url
+        ? `<img src="${esc(avatarAsset.url)}" alt="${esc(item.author)}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover;" loading="lazy" />`
+        : `<div style="width: 56px; height: 56px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: #6b7280;">${esc(item.author.charAt(0))}</div>`;
+      return `<div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 32px;">
+      ${avatarHtml}
       <div>
+        <p style="font-size: 18px; font-style: italic; line-height: 1.6; margin-bottom: 8px;">&ldquo;${esc(item.quote)}&rdquo;</p>
         <strong>${esc(item.author)}</strong>${item.role ? ` &mdash; <span style="opacity: 0.6;">${esc(item.role)}</span>` : ""}
       </div>
-    </div>`).join("\n    ")}
+    </div>`;
+    }).join("\n    ")}
   </div>
 </section>`;
   }
@@ -618,7 +639,7 @@ function renderCtaBand(section: Section, sectionStyle: string, actions: Action[]
     ? `<a href="${esc(c.secondaryButtonHref || "#")}" class="btn btn-ghost" style="padding: 16px 40px;">${esc(c.secondaryButtonText)}</a>`
     : "";
 
-  if (section.variant === "split") {
+  if (section.variant === "dual") {
     return `<section data-section-id="${section.id}" data-section-type="cta-band" id="cta-band" class="section" style="${sectionStyle}">
   <div class="container">
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px;">
@@ -634,7 +655,7 @@ function renderCtaBand(section: Section, sectionStyle: string, actions: Action[]
 </section>`;
   }
 
-  if (section.variant === "card") {
+  if (section.variant === "contact-strip") {
     return `<section data-section-id="${section.id}" data-section-type="cta-band" id="cta-band" class="section" style="padding: 80px 0;">
   <div class="container" style="max-width: 800px;">
     <div class="card text-center" style="padding: 56px; ${sectionStyle} border-radius: 16px;">
@@ -718,7 +739,7 @@ function renderFooter(section: Section, sectionStyle: string, brand: Brand): str
     ? `<div style="display: flex; gap: 12px; margin-top: 16px;">${c.socialLinks.map((sl) => `<a href="${esc(sl.url)}" style="color: inherit; opacity: 0.6; text-decoration: none; font-size: 14px;">${esc(sl.platform)}</a>`).join("\n          ")}</div>`
     : "";
 
-  if (section.variant === "simple-centered") {
+  if (section.variant === "simple") {
     return `<footer data-section-id="${section.id}" data-section-type="footer" style="${sectionStyle}">
   <div class="container text-center">
     <h3 style="color: #ffffff; font-size: 22px; margin-bottom: 8px;">${esc(c.companyName)}</h3>
@@ -732,7 +753,7 @@ function renderFooter(section: Section, sectionStyle: string, brand: Brand): str
 </footer>`;
   }
 
-  if (section.variant === "minimal") {
+  if (section.variant === "legal-heavy") {
     return `<footer data-section-id="${section.id}" data-section-type="footer" style="${sectionStyle}">
   <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 14px; opacity: 0.7;">
