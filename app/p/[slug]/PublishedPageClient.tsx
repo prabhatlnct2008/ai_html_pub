@@ -45,7 +45,7 @@ export default function PublishedPageClient({ html, isOwner, projectId }: Props)
     <div style={{ position: "relative" }}>
       <iframe
         ref={iframeRef}
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         style={{
           width: "100%",
           border: "none",
