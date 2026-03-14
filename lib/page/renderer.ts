@@ -46,13 +46,29 @@ export function renderPageFromDocument(doc: PageDocument): string {
     .map((f) => `family=${encodeURIComponent(f)}:wght@400;500;600;700;800`)
     .join("&");
 
+  // Build structured data (LocalBusiness / Organization)
+  const structuredData = buildStructuredData(doc);
+  const ogType = doc.meta.pageType === "local-business" ? "business.business" : "website";
+  const heroSection = visibleSections.find((s) => s.type === "hero");
+  const heroContent = heroSection?.content as Record<string, unknown> | undefined;
+  const ogDescription = doc.meta.description || (heroContent?.subheading as string) || "";
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="${esc(doc.meta.description)}">
+  <meta name="description" content="${esc(ogDescription)}">
   <title>${esc(doc.meta.title)}</title>
+  <!-- Open Graph -->
+  <meta property="og:title" content="${esc(doc.meta.title)}">
+  <meta property="og:description" content="${esc(ogDescription)}">
+  <meta property="og:type" content="${ogType}">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="${esc(doc.meta.title)}">
+  <meta name="twitter:description" content="${esc(ogDescription)}">
+  ${structuredData ? `<script type="application/ld+json">${structuredData}</script>` : ""}
   <link href="https://fonts.googleapis.com/css2?${fontsParam}&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -652,6 +668,52 @@ function esc(str: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function buildStructuredData(doc: PageDocument): string | null {
+  const heroSection = doc.sections.find((s) => s.type === "hero" && s.visible);
+  const contactSection = doc.sections.find((s) => s.type === "contact" && s.visible);
+  const faqSection = doc.sections.find((s) => s.type === "faq" && s.visible);
+
+  const data: Record<string, unknown>[] = [];
+
+  // Organization / LocalBusiness
+  const org: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": doc.meta.pageType === "local-business" ? "LocalBusiness" : "Organization",
+    name: doc.meta.title,
+    description: doc.meta.description,
+  };
+  if (contactSection) {
+    const cc = contactSection.content as Record<string, unknown>;
+    if (cc.email) org.email = cc.email;
+    if (cc.phone) org.telephone = cc.phone;
+    if (cc.address) org.address = { "@type": "PostalAddress", streetAddress: cc.address };
+  }
+  data.push(org);
+
+  // FAQ structured data
+  if (faqSection) {
+    const fc = faqSection.content as { items?: Array<{ question: string; answer: string }> };
+    if (fc.items && fc.items.length > 0) {
+      data.push({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: fc.items.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      });
+    }
+  }
+
+  if (data.length === 0) return null;
+  if (data.length === 1) return JSON.stringify(data[0]);
+  return JSON.stringify(data);
 }
 
 function getSimpleIcon(name?: string): string {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { renderPageHtml } from "@/lib/html-renderer";
 import { renderPageFromDocument } from "@/lib/page/renderer";
+import { normalizeDocumentActions } from "@/lib/actions/normalizer";
 import type { PageDocument } from "@/lib/page/schema";
 
 // Get page data
@@ -27,10 +28,13 @@ export async function GET(
     return errorResponse("No page generated yet", 404);
   }
 
-  // Parse document if available
-  const doc = project.page.documentJson && project.page.documentJson !== "{}"
+  // Parse document if available, normalize legacy actions
+  let doc = project.page.documentJson && project.page.documentJson !== "{}"
     ? JSON.parse(project.page.documentJson) as PageDocument
     : null;
+  if (doc) {
+    doc = normalizeDocumentActions(doc);
+  }
 
   return jsonResponse({
     sections: JSON.parse(project.page.sectionsJson),

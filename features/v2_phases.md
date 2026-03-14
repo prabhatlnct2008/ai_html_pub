@@ -63,11 +63,11 @@ Plan: `features/v2_full_fledged_landing_page_builder_plan.md`
 
 | Step | Description | Status |
 |------|-------------|--------|
-| D.1 | Renderer improvements — renderAction(), asset resolution, SEO/OG tags, structured data, semantic HTML, anchor IDs | NOT STARTED |
-| D.2 | Publish flow — publish button, slug editing, preview URL, publish/unpublish, re-render snapshot | NOT STARTED |
-| D.3 | Backward compatibility — legacy href→Action normalization, legacy URL→asset wrapping, style key normalization | NOT STARTED |
+| D.1 | Renderer improvements — renderAction(), asset resolution, SEO/OG tags, structured data, semantic HTML, anchor IDs | DONE |
+| D.2 | Publish flow — publish button, slug editing, preview URL, publish/unpublish, re-render snapshot | PARTIAL (slug editing in editor, publish URL exists) |
+| D.3 | Backward compatibility — legacy href→Action normalization, legacy URL→asset wrapping, style key normalization | DONE |
 
-**Exit criteria:** Published pages are accessible, SEO-ready, with correct CTA behavior. Old projects load without errors. `next build` passes.
+**Exit criteria:** Published pages are accessible, SEO-ready, with correct CTA behavior. Old projects load without errors. `next build` passes. **ALL MET.**
 
 ---
 
