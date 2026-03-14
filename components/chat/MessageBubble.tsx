@@ -5,17 +5,29 @@ interface MessageBubbleProps {
   content: string;
 }
 
+// Escape HTML entities to prevent XSS
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export default function MessageBubble({ role, content }: MessageBubbleProps) {
   const isUser = role === "user";
 
-  // Simple markdown-like rendering for bold text and lists
+  // Safe markdown-like rendering: escape first, then apply formatting
   const renderContent = (text: string) => {
     return text.split("\n").map((line, i) => {
-      // Bold
-      let processed = line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      // Escape HTML entities FIRST to prevent XSS
+      let processed = escapeHtml(line);
+      // Bold (safe: content is already escaped)
+      processed = processed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
       // List items
       if (processed.startsWith("- ")) {
-        processed = `<span style="display: block; padding-left: 16px;">• ${processed.slice(2)}</span>`;
+        processed = `<span style="display: block; padding-left: 16px;">&bull; ${processed.slice(2)}</span>`;
       }
       // Numbered lists
       const numMatch = processed.match(/^(\d+)\.\s/);

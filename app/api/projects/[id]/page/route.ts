@@ -70,28 +70,29 @@ export async function PUT(
     ? JSON.parse(project.pagePlan.planData)
     : { page_meta: { title: project.name, description: "" } };
 
-  // Create version backup
-  await prisma.pageVersion.create({
-    data: {
-      pageId: project.page.id,
-      sectionsJson: project.page.sectionsJson,
-      globalStyles: project.page.globalStyles,
-      versionNumber: project.page.version,
-    },
-  });
-
   // Re-render HTML
   const renderedHtml = renderPageHtml(sections, stylesObj, planData.page_meta);
 
-  // Update page
-  const updated = await prisma.page.update({
-    where: { id: project.page.id },
-    data: {
-      sectionsJson: JSON.stringify(sections),
-      globalStyles: JSON.stringify(stylesObj),
-      renderedHtml,
-      version: { increment: 1 },
-    },
+  // Atomic transaction: version backup + page update together
+  const updated = await prisma.$transaction(async (tx) => {
+    await tx.pageVersion.create({
+      data: {
+        pageId: project.page!.id,
+        sectionsJson: project.page!.sectionsJson,
+        globalStyles: project.page!.globalStyles,
+        versionNumber: project.page!.version,
+      },
+    });
+
+    return tx.page.update({
+      where: { id: project.page!.id },
+      data: {
+        sectionsJson: JSON.stringify(sections),
+        globalStyles: JSON.stringify(stylesObj),
+        renderedHtml,
+        version: { increment: 1 },
+      },
+    });
   });
 
   return jsonResponse({
