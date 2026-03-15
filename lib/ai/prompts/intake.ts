@@ -1,7 +1,14 @@
 import { REQUIRED_FIELDS } from "@/lib/workflow/types";
+import { AI_ROLE, QUESTIONING_RULES, INFERENCE_RULES } from "./behavior";
 
 export function buildIntakeSystemPrompt(): string {
-  return `You are an expert landing page consultant. Your job is to extract business information from the user's messages.
+  return `${AI_ROLE}
+
+${QUESTIONING_RULES}
+
+${INFERENCE_RULES}
+
+Your job is to extract business information from the user's messages.
 
 Extract as much as you can into the schema below. Ask ONLY about REQUIRED fields that are still missing. Never ask about optional fields — they will be auto-filled later.
 

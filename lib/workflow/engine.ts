@@ -7,6 +7,7 @@ import {
 } from "./types";
 import { getNextState, stateToStepName, stateToProgress } from "./transitions";
 import { executeState } from "./runner";
+import { appendProgress, compactProgressLog } from "./progress";
 
 /**
  * Run the workflow engine for a project.
@@ -49,6 +50,12 @@ export async function runWorkflow(projectId: string): Promise<WorkflowStatus> {
     await updateStepStatus(projectId, state, "in_progress");
     await updateWorkflowState(projectId, state, getStepMessage(state));
 
+    // Emit progress event
+    await appendProgress(projectId, "progress", {
+      state,
+      message: getProgressMessage(state),
+    });
+
     // Post a progress message to the chat so the user sees what's happening
     const progressMsg = getProgressChatMessage(state);
     if (progressMsg) {
@@ -86,6 +93,16 @@ export async function runWorkflow(projectId: string): Promise<WorkflowStatus> {
   // Mark plan_approval step as in_progress when we reach plan_review
   if (state === "plan_review") {
     await updateStepStatus(projectId, "plan_review" as WorkflowState, "in_progress");
+    await appendProgress(projectId, "plan_ready", { message: "Your page plan is ready for review" });
+  }
+
+  // Emit terminal progress events and compact log
+  if (state === "complete") {
+    await appendProgress(projectId, "complete", { message: "Your landing page is ready!" });
+    await compactProgressLog(projectId);
+  } else if (state === "failed") {
+    await appendProgress(projectId, "error", { message: "Something went wrong" });
+    await compactProgressLog(projectId);
   }
 
   return buildStatus(projectId);
@@ -213,6 +230,8 @@ async function projectHasCompetitorUrl(projectId: string): Promise<boolean> {
 function getStepMessage(state: WorkflowState): string {
   const messages: Record<string, string> = {
     intake: "Understanding your business",
+    kickoff_inferring: "AI is analyzing your business...",
+    questioning: "A quick question for you",
     intake_complete: "Business info collected",
     competitor_analysis_running: "Analyzing competitor website...",
     competitor_analysis_complete: "Competitor analysis done",
@@ -236,6 +255,8 @@ function getStepMessage(state: WorkflowState): string {
 function getProgressMessage(state: WorkflowState): string {
   const messages: Record<string, string> = {
     intake: "Tell us about your business to get started",
+    kickoff_inferring: "AI is analyzing your business and inferring page strategy...",
+    questioning: "The AI has a quick question to improve your page",
     intake_complete: "Processing your information...",
     competitor_analysis_running: "Analyzing the competitor website for design patterns...",
     competitor_analysis_complete: "Moving to strategy generation...",

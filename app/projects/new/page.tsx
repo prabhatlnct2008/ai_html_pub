@@ -14,9 +14,6 @@ export default function NewProjectPage() {
     name: "",
     businessDescription: "",
     competitorUrl: "",
-    targetAudience: "",
-    primaryCta: "",
-    secondaryCta: "",
   });
 
   useEffect(() => {
@@ -26,7 +23,11 @@ export default function NewProjectPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      setError("Project name is required");
+      setError("Business name is required");
+      return;
+    }
+    if (!form.businessDescription.trim()) {
+      setError("Please describe what your business offers");
       return;
     }
     setError("");
@@ -58,10 +59,9 @@ export default function NewProjectPage() {
     <>
       <Navbar />
       <main className="mx-auto max-w-2xl px-6 py-8">
-        <h1 className="mb-2 text-2xl font-bold">Create New Landing Page</h1>
+        <h1 className="mb-2 text-2xl font-bold">Start Your Landing Page</h1>
         <p className="mb-8 text-sm text-gray-500">
-          Tell us about your business. The AI will use this to generate your
-          page.
+          Just the basics — the AI will handle the rest.
         </p>
 
         <form
@@ -90,14 +90,15 @@ export default function NewProjectPage() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium">
-              What does your business do?
+              What does your business offer? <span className="text-red-500">*</span>
             </label>
             <textarea
               value={form.businessDescription}
               onChange={(e) => updateForm("businessDescription", e.target.value)}
               rows={3}
+              required
               className="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-              placeholder="e.g., Dog training services including puppy training, obedience, and agility"
+              placeholder="e.g., Dog training services including puppy training, obedience, and agility classes in Mumbai"
             />
           </div>
 
@@ -115,53 +116,13 @@ export default function NewProjectPage() {
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">
-              Target Audience
-            </label>
-            <input
-              type="text"
-              value={form.targetAudience}
-              onChange={(e) => updateForm("targetAudience", e.target.value)}
-              className="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-              placeholder="e.g., Small business owners, pet owners in Delhi"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">
-                Primary CTA
-              </label>
-              <input
-                type="text"
-                value={form.primaryCta}
-                onChange={(e) => updateForm("primaryCta", e.target.value)}
-                className="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                placeholder="e.g., Book Now, Contact Us"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">
-                Secondary CTA
-              </label>
-              <input
-                type="text"
-                value={form.secondaryCta}
-                onChange={(e) => updateForm("secondaryCta", e.target.value)}
-                className="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                placeholder="e.g., Learn More, See Pricing"
-              />
-            </div>
-          </div>
-
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
               disabled={loading}
               className="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
             >
-              {loading ? "Creating..." : "Start AI Builder"}
+              {loading ? "Starting..." : "Start with AI"}
             </button>
             <button
               type="button"

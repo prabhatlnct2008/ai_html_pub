@@ -1,3 +1,5 @@
+import { AI_ROLE, OUTPUT_RULES } from "./behavior";
+
 export function buildSectionGeneratorPrompt(
   sectionType: string,
   sectionDescription: string,
@@ -137,7 +139,11 @@ export function buildSectionGeneratorPrompt(
 
   const schema = schemas[sectionType] || schemas["cta"];
 
-  return `Generate content for a "${sectionType}" section of a landing page.
+  return `${AI_ROLE}
+
+${OUTPUT_RULES}
+
+Generate content for a "${sectionType}" section of a landing page.
 
 BUSINESS CONTEXT:
 ${JSON.stringify(businessContext, null, 2)}

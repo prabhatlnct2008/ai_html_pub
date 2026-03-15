@@ -1,5 +1,9 @@
+import { AI_ROLE } from "./behavior";
+
 export function buildCompetitorAnalysisPrompt(pageContent: string): string {
-  return `Analyze this competitor's landing page content and extract structural patterns useful for designing a similar (but unique) landing page.
+  return `${AI_ROLE}
+
+Analyze this competitor's landing page content and extract structural patterns useful for designing a similar (but unique) landing page.
 
 PAGE CONTENT:
 ${pageContent.substring(0, 8000)}

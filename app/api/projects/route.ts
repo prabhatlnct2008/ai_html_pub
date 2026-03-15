@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   if ("error" in auth) return auth.error;
 
   const body = await request.json();
-  const { name, businessDescription, competitorUrl, targetAudience, primaryCta, secondaryCta } = body;
+  const { name, businessDescription, competitorUrl } = body;
 
   if (!name) {
     return errorResponse("Project name is required");
@@ -43,16 +43,25 @@ export async function POST(request: NextRequest) {
 
   const slug = await ensureUniqueSlug(baseSlug);
 
-  // Map form fields to BusinessContext schema
-  // businessName comes from the project name
-  // businessType comes from businessDescription
+  // Minimal kickoff: only name + description + optional URL
+  // AI will infer businessType, targetAudience, primaryCta, etc.
   const businessContext = {
     businessName: name,
     businessType: businessDescription || "",
+    businessDescription: businessDescription || "",
     competitorUrl: competitorUrl || "",
-    targetAudience: targetAudience || "",
-    primaryCta: primaryCta || "",
-    secondaryCta: secondaryCta || "",
+    targetAudience: "",
+    primaryCta: "",
+    secondaryCta: "",
+    // Signal that this project uses the new kickoff flow
+    _kickoff: {
+      status: "pending" as const,
+      inferredAt: null as string | null,
+      summary: null as string | null,
+      confidence: {} as Record<string, string>,
+      questions: [] as Array<Record<string, unknown>>,
+      currentQuestionIndex: 0,
+    },
   };
 
   const project = await prisma.project.create({

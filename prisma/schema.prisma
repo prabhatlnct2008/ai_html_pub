@@ -52,6 +52,7 @@ model WorkflowRun {
   steps           String    @default("[]")
   canUserReply    Boolean   @default(true)
   progressPercent Int       @default(0)
+  progressLog     String    @default("[]")
   lastError       String?
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
