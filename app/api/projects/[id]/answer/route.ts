@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
+import { runWorkflow } from "@/lib/workflow/engine";
 
 /**
  * POST /api/projects/[id]/answer
@@ -60,10 +61,11 @@ export async function POST(
       data: { businessContext: JSON.stringify(businessContext) },
     });
 
-    // Transition workflow past intake
+    // Transition workflow past intake and start engine
     await transitionWorkflowPastIntake(projectId, businessContext);
+    const workflowStatus = await runWorkflow(projectId);
 
-    return jsonResponse({ status: "complete", kickoff });
+    return jsonResponse({ status: "complete", kickoff, workflow: workflowStatus });
   }
 
   // Handle individual answer/skip
@@ -116,10 +118,11 @@ export async function POST(
       data: { businessContext: JSON.stringify(businessContext) },
     });
 
-    // Transition workflow past intake
+    // Transition workflow past intake and start engine
     await transitionWorkflowPastIntake(projectId, businessContext);
+    const workflowStatus = await runWorkflow(projectId);
 
-    return jsonResponse({ status: "complete", kickoff });
+    return jsonResponse({ status: "complete", kickoff, workflow: workflowStatus });
   }
 
   businessContext._kickoff = kickoff;
