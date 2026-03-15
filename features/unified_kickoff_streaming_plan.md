@@ -69,6 +69,17 @@ WorkflowRun.progressLog: Array<{
 }>
 ```
 
+**progressLog lifecycle and compaction:**
+
+`progressLog` is a short-lived operational log, not a long-term event store. It exists to bridge the gap between "workflow is running" and "client is watching." Rules:
+
+1. **Cap at 100 entries.** When `appendProgress()` would exceed 100 entries, drop the oldest non-`text` entries first (progress steps are transient). Keep the most recent 80 entries. This is enforced in `appendProgress()` itself.
+2. **Compact on workflow completion.** When the workflow reaches `complete` or `failed`, compact `progressLog` to a summary: keep only the final `complete`/`error` entry and discard the rest. The full step-by-step history is already captured in `WorkflowRun.steps` (which tracks step name, status, and timestamps).
+3. **Streamed text batching.** Text chunks are batched (~200ms or ~50 chars) before flushing, so a typical 2-sentence streamed summary produces ~3-5 `text` entries, not hundreds.
+4. **Typical size.** A full workflow run produces ~15-25 progress entries + ~10-15 text chunk entries = ~30-40 entries total. Well under the 100 cap.
+
+This is explicitly a short-term operational buffer. If the product later needs persistent audit trails or replay, that would be a separate event store — not this column.
+
 **SSE scope:** Phase 4 implements SSE as local/dev enhancement. Production SSE hardening (extracting to an edge-compatible transport if needed) is a separate future scope item. The DB-backed polling path is the production-safe default from day one.
 
 ### A2: Kickoff/Questioning State Persistence Model
@@ -154,6 +165,59 @@ Since Prisma's JSON path filtering varies by provider, the practical implementat
 **Multi-tab safety:** If two tabs both call kickoff simultaneously, only the first one transitions from `pending` → `inferring`. The second sees `inferring` and returns the current state without re-running. The builder polls or uses SSE to pick up results from the first request.
 
 **WorkflowRun state guard:** The kickoff endpoint also checks that `WorkflowRun.state` is still `intake` or `kickoff_inferring`. If the workflow has already advanced past intake (e.g., user completed intake via chat in another tab), kickoff is a no-op.
+
+### A5: Conversation vs ProgressLog — Source of Truth for Builder Display
+
+The builder currently reads `Conversation.messages` to display the chat transcript. The new plan adds `progressLog` for real-time progress and streamed text. These must not drift or create ambiguous display state.
+
+**Decision: `Conversation.messages` remains the canonical user-facing transcript. Streamed text is mirrored into it.**
+
+Rules:
+
+1. **Every user-visible AI message is written to `Conversation.messages`.** This includes: kickoff summary, question rationale text, plan explanation text. When `streamAITextToWorkflow()` completes (the full text is available), the complete text is appended to `Conversation.messages` as an `assistant` message. This happens in the `onComplete` callback, not per-chunk.
+
+2. **Every user answer/skip is written to `Conversation.messages`.** The answer endpoint appends the user's response (or "Skipped") as a `user` message. This keeps the transcript readable if the user reviews it later.
+
+3. **`progressLog` is the live feed during active workflow execution.** The builder reads `progressLog` for real-time progress updates and streamed text chunks. But once the text is complete and mirrored to `Conversation.messages`, the progressLog text entries become redundant and are compacted on workflow completion (per A1 compaction rules).
+
+4. **The builder displays from both sources, without duplication.** During active workflow: render `progressLog` entries for live progress + text streaming. During idle/review states: render `Conversation.messages` for the transcript. The builder tracks which messages it has already shown to avoid duplicating content that appears in both.
+
+5. **Legacy chat-based intake messages remain in `Conversation.messages`.** If a user typed free-form messages during intake (legacy flow), those are already in `Conversation.messages` and continue to display normally.
+
+**Why not make progressLog the primary display source?** Because `Conversation.messages` is already used by multiple endpoints, the existing builder, and the intake flow. Replacing it would require migrating all consumers. Mirroring completed text into it is simpler and preserves backward compatibility.
+
+### A6: Backward Compatibility for Existing Projects
+
+Existing projects were created under the old flow (6-field form → chat-based intake → builder). The new kickoff/questioning flow must handle them gracefully.
+
+**Rules:**
+
+1. **Missing `_kickoff` means legacy project.** When `businessContext._kickoff` is `undefined`, the project was created before the kickoff flow existed. The builder treats this as `_kickoff.status = "complete"` — kickoff already happened (via the legacy chat intake). No kickoff is triggered.
+
+2. **Legacy intake-in-progress projects stay on legacy flow.** If `WorkflowRun.state` is `intake` and `_kickoff` is absent, the builder shows the existing chat-based intake UI. It does NOT auto-trigger kickoff. The user continues chatting to complete intake as before. This avoids disrupting in-progress projects.
+
+3. **New projects always get `_kickoff`.** The updated `POST /api/projects` endpoint initializes `businessContext._kickoff = { status: "pending", ... }` at creation time. This is the signal that the project uses the new flow.
+
+4. **Builder routing logic:**
+
+```
+if (_kickoff is undefined) {
+  // Legacy project — use existing builder behavior (chat intake or workflow progress)
+  // No kickoff trigger, no question cards
+} else {
+  // New project — use kickoff/questioning flow
+  switch (_kickoff.status) {
+    case "pending": trigger kickoff
+    case "inferring": show progress
+    case "questioning": show question cards
+    case "complete": show normal workflow
+  }
+}
+```
+
+5. **No migration of old projects.** Existing projects are not retroactively modified. They work as-is through the legacy path. Only newly created projects get the unified kickoff experience. This is the safest approach — zero risk of breaking in-progress or completed projects.
+
+6. **`progressLog` column default.** The new `progressLog` column defaults to `"[]"`. Old `WorkflowRun` records that don't have it get an empty array. The polling endpoint handles empty progressLog gracefully (returns no progress entries).
 
 ### A4: AI Client Split — Structured JSON vs Streamed Text
 
@@ -737,6 +801,8 @@ Re-enable input only when the AI genuinely needs user input (questioning, plan r
 | Auto-inference may be wrong | Always show summary and allow correction before proceeding |
 | Too few questions → bad output | Confidence thresholds tuned conservatively; editor exists for refinement |
 | Questioning state lost on refresh | All question state persisted in `businessContext._kickoff` (A2); builder reconstructs from DB |
-| `progressLog` grows unbounded | Entries are small (~100 bytes each); typical workflow produces <50 entries; can truncate on workflow completion |
+| `progressLog` grows unbounded | Capped at 100 entries; compacted to single entry on workflow completion; typical run produces ~30-40 entries (A1) |
+| Conversation and progressLog drift | Streamed text mirrored to Conversation.messages on completion; progressLog is live feed only (A5) |
+| Old projects break with new flow | Legacy projects (no `_kickoff`) stay on existing chat intake; no migration, no auto-kickoff trigger (A6) |
 | Streaming adds complexity | Only 3 AI-streamed moments; all other progress is static template strings; two distinct AI client functions (A4) |
 | Builder state machine gets complex | New states are simple additions to existing machine, not a rewrite |
