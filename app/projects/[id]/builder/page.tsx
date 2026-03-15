@@ -6,6 +6,7 @@ import Navbar from "@/components/common/Navbar";
 import ChatPanel from "@/components/chat/ChatPanel";
 import WorkflowProgress from "@/components/builder/WorkflowProgress";
 import PlanApproval from "@/components/builder/PlanApproval";
+import QuestionCard from "@/components/builder/QuestionCard";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { useAuth } from "@/components/common/AuthProvider";
 
@@ -55,7 +56,24 @@ export default function BuilderPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [kickoffState, setKickoffState] = useState<{
+    status: string;
+    summary?: string;
+    questions?: Array<{
+      field: string;
+      question: string;
+      options: string[];
+      aiSuggestion?: string;
+      required: boolean;
+      answered: boolean;
+      skipped: boolean;
+      answer?: string;
+    }>;
+    currentQuestionIndex?: number;
+  } | null>(null);
+  const [kickoffLoading, setKickoffLoading] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const kickoffTriggered = useRef(false);
 
   const fetchWorkflowStatus = useCallback(async () => {
     try {
@@ -119,6 +137,7 @@ export default function BuilderPage() {
     if (!workflow) return;
 
     const autoStates = [
+      "kickoff_inferring",
       "intake_complete",
       "competitor_analysis_running",
       "competitor_analysis_complete",
@@ -228,6 +247,182 @@ export default function BuilderPage() {
     }
   };
 
+  // Auto-trigger kickoff for new-flow projects
+  const triggerKickoff = useCallback(async () => {
+    if (kickoffTriggered.current) return;
+    kickoffTriggered.current = true;
+    setKickoffLoading(true);
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/kickoff`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        kickoffTriggered.current = false;
+        return;
+      }
+      const data = await res.json();
+      setKickoffState({
+        status: data.status,
+        summary: data.summary || data.kickoff?.summary,
+        questions: data.kickoff?.questions,
+        currentQuestionIndex: data.kickoff?.currentQuestionIndex || 0,
+      });
+
+      // Refresh workflow status and messages
+      await fetchWorkflowStatus();
+
+      // If kickoff completed with no questions, start polling for workflow
+      if (data.status === "complete") {
+        startPolling();
+      }
+    } catch {
+      kickoffTriggered.current = false;
+    } finally {
+      setKickoffLoading(false);
+    }
+  }, [projectId, fetchWorkflowStatus, startPolling]);
+
+  // Answer a kickoff question
+  const handleAnswer = async (field: string, value: string) => {
+    setSending(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ field, value }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      setKickoffState((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: data.status,
+              questions: data.kickoff?.questions || prev.questions,
+              currentQuestionIndex:
+                data.kickoff?.currentQuestionIndex ?? (prev.currentQuestionIndex || 0) + 1,
+            }
+          : prev
+      );
+
+      await fetchWorkflowStatus();
+
+      if (data.status === "complete") {
+        startPolling();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Skip a kickoff question
+  const handleSkip = async (field: string) => {
+    setSending(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ field, skipped: true }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      setKickoffState((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: data.status,
+              questions: data.kickoff?.questions || prev.questions,
+              currentQuestionIndex:
+                data.kickoff?.currentQuestionIndex ?? (prev.currentQuestionIndex || 0) + 1,
+            }
+          : prev
+      );
+
+      await fetchWorkflowStatus();
+
+      if (data.status === "complete") {
+        startPolling();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Skip all remaining questions
+  const handleSkipAll = async () => {
+    setSending(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skipAll: true }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      setKickoffState((prev) =>
+        prev ? { ...prev, status: "complete" } : prev
+      );
+
+      await fetchWorkflowStatus();
+      startPolling();
+    } catch {
+      // ignore
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Check if this project uses the new kickoff flow on initial load
+  useEffect(() => {
+    if (!workflow || kickoffTriggered.current) return;
+
+    // Only trigger kickoff for intake state
+    if (workflow.state !== "intake") return;
+
+    // Check if this is a new-flow project by fetching the project
+    const checkKickoff = async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}`);
+        if (!res.ok) return;
+        const proj = await res.json();
+        const ctx = typeof proj.businessContext === "string"
+          ? JSON.parse(proj.businessContext)
+          : proj.businessContext || {};
+
+        if (ctx._kickoff) {
+          if (ctx._kickoff.status === "pending") {
+            // New project, trigger kickoff
+            triggerKickoff();
+          } else if (ctx._kickoff.status === "questioning") {
+            // Returning to questioning state
+            setKickoffState({
+              status: "questioning",
+              summary: ctx._kickoff.summary,
+              questions: ctx._kickoff.questions,
+              currentQuestionIndex: ctx._kickoff.currentQuestionIndex || 0,
+            });
+          } else if (ctx._kickoff.status === "inferring") {
+            // Was inferring, retry
+            triggerKickoff();
+          }
+          // status === "complete" means kickoff done, normal flow
+        }
+        // No _kickoff = legacy project, don't trigger
+      } catch {
+        // ignore
+      }
+    };
+    checkKickoff();
+  }, [workflow, projectId, triggerKickoff]);
+
   const canReply = workflow?.canUserReply ?? true;
   const isAutoExecuting = workflow
     ? !workflow.canUserReply && workflow.state !== "complete" && workflow.state !== "failed"
@@ -268,19 +463,55 @@ export default function BuilderPage() {
             </p>
           </div>
 
+          {/* Kickoff inferring state */}
+          {kickoffLoading && (
+            <div className="flex items-center gap-3 bg-primary-50 px-4 py-3 text-sm text-primary-700">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" />
+              Understanding your business...
+            </div>
+          )}
+
           {/* Status banner during auto-execution */}
-          {isAutoExecuting && (
+          {isAutoExecuting && !kickoffLoading && (
             <div className="flex items-center gap-2 bg-primary-50 px-4 py-2 text-sm text-primary-700">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" />
               {workflow?.currentStep || "Processing..."}
             </div>
           )}
 
+          {/* Question card during questioning */}
+          {kickoffState?.status === "questioning" &&
+            kickoffState.questions &&
+            typeof kickoffState.currentQuestionIndex === "number" &&
+            kickoffState.currentQuestionIndex < kickoffState.questions.length && (
+              <div className="border-b bg-gray-50 p-4">
+                {kickoffState.summary && (
+                  <p className="mb-3 text-sm text-gray-600">
+                    {kickoffState.summary}
+                  </p>
+                )}
+                <QuestionCard
+                  question={kickoffState.questions[kickoffState.currentQuestionIndex]}
+                  questionIndex={kickoffState.currentQuestionIndex}
+                  totalQuestions={kickoffState.questions.length}
+                  onAnswer={handleAnswer}
+                  onSkip={handleSkip}
+                  onSkipAll={handleSkipAll}
+                  loading={sending}
+                />
+              </div>
+            )}
+
           <ChatPanel
             messages={messages}
             onSendMessage={sendMessage}
             loading={sending}
-            disabled={!canReply || workflow?.state === "plan_review"}
+            disabled={
+              !canReply ||
+              workflow?.state === "plan_review" ||
+              kickoffState?.status === "questioning" ||
+              kickoffLoading
+            }
             placeholder={getPlaceholder()}
           />
         </div>

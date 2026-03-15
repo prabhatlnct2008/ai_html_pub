@@ -1,9 +1,15 @@
+import { AI_ROLE, OUTPUT_RULES } from "./behavior";
+
 export function buildSectionUpdatePrompt(
   currentSection: Record<string, unknown>,
   businessContext: Record<string, unknown>,
   userInstructions: string
 ): string {
-  return `Update this landing page section based on the user's instructions.
+  return `${AI_ROLE}
+
+${OUTPUT_RULES}
+
+Update this landing page section based on the user's instructions.
 
 CURRENT SECTION:
 ${JSON.stringify(currentSection, null, 2)}

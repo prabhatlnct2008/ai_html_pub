@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { buildStatus } from "@/lib/workflow/engine";
+import { getProgressSince } from "@/lib/workflow/progress";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAuth();
@@ -22,5 +23,19 @@ export async function GET(
   const conv = await prisma.conversation.findUnique({ where: { projectId: id } });
   const messages = conv ? JSON.parse(conv.messages) : [];
 
-  return jsonResponse({ workflow: status, messages });
+  // Support ?since= param for incremental progress updates
+  const sinceParam = request.nextUrl.searchParams.get("since");
+  const sinceTs = sinceParam ? parseInt(sinceParam, 10) : 0;
+  const progressEntries = await getProgressSince(id, sinceTs);
+
+  // Include kickoff state from businessContext
+  const businessContext = JSON.parse(project.businessContext || "{}");
+  const kickoff = businessContext._kickoff || null;
+
+  return jsonResponse({
+    workflow: status,
+    messages,
+    progressLog: progressEntries,
+    kickoff,
+  });
 }

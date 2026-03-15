@@ -2,6 +2,8 @@
 
 export const WORKFLOW_STATES = [
   "intake",
+  "kickoff_inferring",
+  "questioning",
   "intake_complete",
   "competitor_analysis_running",
   "competitor_analysis_complete",
@@ -23,10 +25,11 @@ export const WORKFLOW_STATES = [
 export type WorkflowState = (typeof WORKFLOW_STATES)[number];
 
 // States that require user input before proceeding
-export const USER_INPUT_STATES: WorkflowState[] = ["intake", "plan_review"];
+export const USER_INPUT_STATES: WorkflowState[] = ["intake", "questioning", "plan_review"];
 
 // States that auto-execute without user input
 export const AUTO_EXECUTE_STATES: WorkflowState[] = [
+  "kickoff_inferring",
   "intake_complete",
   "competitor_analysis_running",
   "competitor_analysis_complete",

@@ -33,6 +33,8 @@ export function getNextState(
 
     // User-input states and terminal states
     case "intake":
+    case "kickoff_inferring":
+    case "questioning":
     case "plan_review":
     case "complete":
     case "failed":
@@ -49,6 +51,8 @@ export function getNextState(
 export function stateToStepName(state: WorkflowState): string {
   switch (state) {
     case "intake":
+    case "kickoff_inferring":
+    case "questioning":
     case "intake_complete":
       return "intake";
     case "competitor_analysis_running":
@@ -89,7 +93,7 @@ export function stateToStepName(state: WorkflowState): string {
 export function stateToProgress(state: WorkflowState, hasCompetitorUrl: boolean): number {
   const allStates: WorkflowState[] = hasCompetitorUrl
     ? [
-        "intake", "intake_complete",
+        "intake", "kickoff_inferring", "questioning", "intake_complete",
         "competitor_analysis_running", "competitor_analysis_complete",
         "strategy_generation", "theme_generation", "asset_planning",
         "image_prompt_generation", "image_generation",
@@ -97,7 +101,7 @@ export function stateToProgress(state: WorkflowState, hasCompetitorUrl: boolean)
         "generation_running", "document_assembly", "rendering", "saving", "complete",
       ]
     : [
-        "intake", "intake_complete",
+        "intake", "kickoff_inferring", "questioning", "intake_complete",
         "strategy_generation", "theme_generation", "asset_planning",
         "image_prompt_generation", "image_generation",
         "plan_generation_running", "plan_review",

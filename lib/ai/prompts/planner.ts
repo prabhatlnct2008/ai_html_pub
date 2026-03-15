@@ -1,8 +1,14 @@
+import { AI_ROLE, OUTPUT_RULES } from "./behavior";
+
 export function buildPlannerPrompt(
   businessContext: Record<string, unknown>,
   competitorInsights: Record<string, unknown> | null
 ): string {
-  return `You are an expert landing page architect. Create a detailed page plan based on the business information provided.
+  return `${AI_ROLE}
+
+${OUTPUT_RULES}
+
+Create a detailed page plan based on the business information provided.
 
 BUSINESS CONTEXT:
 ${JSON.stringify(businessContext, null, 2)}
