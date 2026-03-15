@@ -63,7 +63,13 @@ export async function runWorkflow(projectId: string): Promise<WorkflowStatus> {
     }
 
     try {
-      const result = await executeState(projectId, state);
+      const STATE_TIMEOUT_MS = 120_000; // 2 minute ceiling per state
+      const result = await Promise.race([
+        executeState(projectId, state),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Workflow state "${state}" timed out after ${STATE_TIMEOUT_MS / 1000}s`)), STATE_TIMEOUT_MS)
+        ),
+      ]);
 
       if (result.error) {
         await updateStepStatus(projectId, state, "failed", result.error);

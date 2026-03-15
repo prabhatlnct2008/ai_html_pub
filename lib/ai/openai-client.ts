@@ -14,11 +14,12 @@ export function getOpenAIClient(): OpenAI {
 export async function chatCompletion(
   systemPrompt: string,
   userPrompt: string,
-  options?: { temperature?: number; maxTokens?: number }
+  options?: { temperature?: number; maxTokens?: number; timeoutMs?: number }
 ): Promise<string> {
   const openai = getOpenAIClient();
+  const timeoutMs = options?.timeoutMs ?? 30_000;
 
-  const response = await openai.chat.completions.create({
+  const completionPromise = openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
@@ -28,6 +29,12 @@ export async function chatCompletion(
     max_tokens: options?.maxTokens ?? 2000,
     response_format: { type: "json_object" },
   });
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`AI completion timed out after ${timeoutMs}ms`)), timeoutMs)
+  );
+
+  const response = await Promise.race([completionPromise, timeoutPromise]);
 
   return response.choices[0]?.message?.content || "{}";
 }

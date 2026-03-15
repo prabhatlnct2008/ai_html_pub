@@ -56,11 +56,20 @@ export async function analyzeCompetitor(url: string): Promise<{
   }
 
   const prompt = buildCompetitorAnalysisPrompt(textContent);
-  const result = await chatCompletion(
-    "You are a web design analyst. Respond only with valid JSON.",
-    prompt,
-    { temperature: 0.3 }
-  );
+
+  let result: string;
+  try {
+    result = await chatCompletion(
+      "You are a web design analyst. Respond only with valid JSON.",
+      prompt,
+      { temperature: 0.3, timeoutMs: 25_000 }
+    );
+  } catch {
+    return {
+      insights: null,
+      error: "Competitor analysis timed out. Proceeding without competitor insights.",
+    };
+  }
 
   const insights = parseJSON<CompetitorInsights>(result);
   if (!insights) {
