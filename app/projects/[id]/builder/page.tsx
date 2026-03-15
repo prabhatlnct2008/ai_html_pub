@@ -429,7 +429,9 @@ export default function BuilderPage() {
     : false;
 
   const getPlaceholder = () => {
-    if (!canReply) return "Please wait while the AI processes...";
+    if (kickoffLoading) return "AI is analyzing your business...";
+    if (kickoffState?.status === "questioning") return "Answer above or type a message...";
+    if (!canReply) return "AI is working on your page...";
     if (workflow?.state === "intake") {
       return messages.length === 0
         ? "Describe your business to get started..."
@@ -554,14 +556,36 @@ export default function BuilderPage() {
             </div>
           )}
 
-          {/* Empty state */}
+          {/* Empty state / kickoff state */}
           {(!workflow || workflow.steps.length === 0) && !workflow?.plan && (
             <div className="flex h-full flex-col items-center justify-center text-center text-gray-400">
-              <div className="mb-3 text-4xl">📋</div>
-              <p className="text-sm">
-                Your page plan and progress will appear here once the AI has
-                gathered enough information.
-              </p>
+              {kickoffLoading ? (
+                <>
+                  <div className="mb-4 h-8 w-8 animate-spin rounded-full border-3 border-primary-200 border-t-primary-600" />
+                  <p className="text-sm font-medium text-primary-700">
+                    Analyzing your business...
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Inferring audience, CTA strategy, and page structure
+                  </p>
+                </>
+              ) : kickoffState?.status === "questioning" ? (
+                <>
+                  <p className="text-sm font-medium text-gray-600">
+                    Almost ready to build
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Answer the quick question on the left, or skip to proceed
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm">
+                    Your page plan and progress will appear here once the AI has
+                    gathered enough information.
+                  </p>
+                </>
+              )}
             </div>
           )}
 
