@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { chatCompletion, parseJSON } from "@/lib/ai/openai-client";
 import { buildKickoffSystemPrompt, buildKickoffUserPrompt } from "@/lib/ai/prompts/kickoff";
+import { runWorkflow } from "@/lib/workflow/engine";
 
 interface KickoffQuestion {
   field: string;
@@ -200,9 +201,16 @@ export async function POST(
       }
     }
 
-    // If kickoff complete (no questions), transition workflow to intake_complete
+    // If kickoff complete (no questions), transition workflow and start engine
     if (kickoff.status === "complete") {
       await transitionWorkflowPastIntake(projectId, businessContext);
+      const workflowStatus = await runWorkflow(projectId);
+      return jsonResponse({
+        status: kickoff.status,
+        kickoff,
+        summary: result.summary,
+        workflow: workflowStatus,
+      });
     }
 
     return jsonResponse({
