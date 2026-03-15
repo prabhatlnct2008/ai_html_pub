@@ -41,6 +41,182 @@ Supporting context (existing V2 architecture):
 
 ---
 
+## Architecture Decisions
+
+These decisions address production safety, persistence, idempotency, and AI client design. They apply across all phases.
+
+### A1: Streaming Architecture — DB-Backed Polling With Optional SSE Overlay
+
+The app runs on Vercel (serverless). In-memory state does not survive across requests, instances, or cold starts. Therefore:
+
+**Primary transport: Enhanced polling (always works)**
+
+The existing 1.5s polling against `GET /api/projects/[id]/workflow` remains the source of truth. Workflow progress, questions, and streamed text summaries are persisted to the database as they are produced. The polling endpoint reads from DB and returns the latest state. This is production-safe, works across restarts, tabs, and serverless invocations.
+
+**Secondary transport: SSE overlay (progressive enhancement, local/dev first)**
+
+SSE via `GET /api/projects/[id]/stream` provides faster updates when a persistent connection is available. The SSE endpoint reads the same DB state but can also receive in-process events for the duration of a single request execution (e.g., during a long-running kickoff or generation call that happens to be on the same instance).
+
+**Implementation rule:** Every event that SSE would emit must ALSO be persisted to DB before or at the same time. The client must never depend on catching a transient SSE event — it can always recover full state from the polling endpoint. SSE is a latency optimization, not the persistence layer.
+
+**Event persistence model:** Add a `progressLog` JSON column to `WorkflowRun` that stores an append-only array of `{ ts, type, data }` entries. The SSE endpoint serves entries newer than the client's last-seen timestamp. The polling endpoint returns the latest entry as `currentProgress`. This avoids the in-memory Map entirely.
+
+```
+WorkflowRun.progressLog: Array<{
+  ts: number,          // Date.now()
+  type: "progress" | "text" | "question" | "plan_ready" | "complete" | "error",
+  data: Record<string, unknown>
+}>
+```
+
+**SSE scope:** Phase 4 implements SSE as local/dev enhancement. Production SSE hardening (extracting to an edge-compatible transport if needed) is a separate future scope item. The DB-backed polling path is the production-safe default from day one.
+
+### A2: Kickoff/Questioning State Persistence Model
+
+The plan introduces structured questions, skip behavior, AI suggestions, confidence scores, and kickoff summaries. These must survive page refresh, re-entry, and multi-tab access.
+
+**Where it lives:** All kickoff/questioning state is persisted in `Project.businessContext` (existing JSON column). The schema expands from flat key-value business fields to include a `_kickoff` metadata namespace:
+
+```ts
+// Inside Project.businessContext JSON:
+{
+  // Existing business fields (unchanged)
+  businessName: "Pawsitive Training",
+  businessType: "service-business",
+  targetAudience: "dog owners in metro areas",
+  primaryCta: "book a session",
+  // ... other fields
+
+  // New: kickoff metadata namespace
+  _kickoff: {
+    status: "pending" | "inferring" | "questioning" | "complete",
+    inferredAt: string | null,           // ISO timestamp, null if not yet run
+    summary: string | null,              // AI-generated business understanding summary
+    confidence: Record<string, "high" | "medium" | "low">,
+    questions: Array<{
+      field: string,
+      question: string,
+      options: string[],
+      aiSuggestion?: string,
+      required: boolean,
+      answered: boolean,
+      skipped: boolean,
+      answer?: string,
+    }>,
+    currentQuestionIndex: number,
+  }
+}
+```
+
+**Read behavior:** When the builder loads, it reads `businessContext._kickoff.status` to determine what to show:
+- `pending` → trigger kickoff
+- `inferring` → show progress (kickoff in flight or interrupted — see A3 for recovery)
+- `questioning` → show question at `currentQuestionIndex`
+- `complete` → normal workflow behavior
+
+**Write behavior:** The kickoff endpoint and answer endpoint both write to `_kickoff` atomically via Prisma `update`. Each answer/skip updates the specific question entry and advances `currentQuestionIndex`.
+
+This approach requires no new tables. The `_kickoff` namespace is ignored by all existing code that reads `businessContext` for business fields.
+
+### A3: Kickoff Idempotency and Race Control
+
+The kickoff endpoint can be called multiple times (page refresh, multiple tabs, retry after partial failure). It must be safe to call repeatedly.
+
+**Rule: Kickoff is idempotent based on `_kickoff.status`.**
+
+The kickoff endpoint checks `_kickoff.status` before doing anything:
+
+| Current `_kickoff.status` | Kickoff endpoint behavior |
+|---|---|
+| `undefined` or `pending` | Run inference. Set status to `inferring` atomically FIRST (optimistic lock). Proceed. |
+| `inferring` | Check `inferredAt`. If null and `updatedAt` is >60s ago, assume interrupted — reset to `pending` and re-run. Otherwise return current state (another request is in flight). |
+| `questioning` | Do not re-run inference. Return current questions. |
+| `complete` | Do not re-run. Return current state. |
+
+**Atomicity:** The status transition from `pending` → `inferring` uses a Prisma conditional update:
+
+```ts
+const result = await prisma.project.updateMany({
+  where: {
+    id: projectId,
+    // Only transition if still in expected state
+    businessContext: { path: ["_kickoff", "status"], equals: "pending" }
+  },
+  data: { ... }
+});
+if (result.count === 0) {
+  // Another request already started — return current state
+}
+```
+
+Since Prisma's JSON path filtering varies by provider, the practical implementation uses a simpler pattern: read current state, check status, write with full businessContext replacement. The `updatedAt` column on Project provides a coarse-grained staleness check. For SQLite (current dev DB), this is sufficient since there's only one server process.
+
+**Multi-tab safety:** If two tabs both call kickoff simultaneously, only the first one transitions from `pending` → `inferring`. The second sees `inferring` and returns the current state without re-running. The builder polls or uses SSE to pick up results from the first request.
+
+**WorkflowRun state guard:** The kickoff endpoint also checks that `WorkflowRun.state` is still `intake` or `kickoff_inferring`. If the workflow has already advanced past intake (e.g., user completed intake via chat in another tab), kickoff is a no-op.
+
+### A4: AI Client Split — Structured JSON vs Streamed Text
+
+The current AI client (`lib/ai/openai-client.ts`) has one function: `chatCompletion()`. It always returns a complete JSON string using `response_format: { type: "json_object" }`. This is correct for machine-readable stages and must not change.
+
+The new streaming requirement adds a second calling pattern. These two patterns must coexist cleanly.
+
+**Two distinct AI call modes:**
+
+| Mode | Function | Used by | Response format | Streaming |
+|---|---|---|---|---|
+| Structured JSON | `chatCompletion()` (existing) | Strategy, theme, asset planning, image prompts, section generation, plan generation, intake extraction | `response_format: { type: "json_object" }` | No |
+| Streamed text | `streamChatText()` (new) | Kickoff summary, plan explanation, question context | No response_format constraint (plain text) | Yes, token-by-token |
+
+**New file:** `lib/ai/openai-client.ts` (extended, not replaced)
+
+```ts
+// Existing — unchanged
+export async function chatCompletion(...): Promise<string>
+
+// New — streaming text for user-visible copy
+export async function streamChatText(
+  systemPrompt: string,
+  userPrompt: string,
+  onChunk: (text: string) => void,
+  options?: { temperature?: number; maxTokens?: number }
+): Promise<string>
+```
+
+`streamChatText()` uses the same OpenAI client but calls `openai.chat.completions.create({ stream: true, ... })` WITHOUT `response_format: { type: "json_object" }`. It iterates the async stream, calls `onChunk()` for each token, and returns the full accumulated text.
+
+**`lib/ai/stream.ts` becomes a workflow-aware wrapper:**
+
+```ts
+export async function streamAITextToWorkflow(
+  projectId: string,
+  systemPrompt: string,
+  userPrompt: string,
+  options?: { temperature?: number; maxTokens?: number }
+): Promise<string>
+```
+
+This calls `streamChatText()` with an `onChunk` that:
+1. Appends each chunk to `WorkflowRun.progressLog` (batched, not per-token — flush every ~200ms or ~50 chars)
+2. If an SSE listener is connected on the same instance, also pushes to it for lower latency
+
+**What is NOT streamed:**
+- Strategy generation → structured JSON → `chatCompletion()`
+- Theme generation → structured JSON → `chatCompletion()`
+- Section generation → structured JSON → `chatCompletion()`
+- Plan generation → structured JSON → `chatCompletion()`
+- Asset/image planning → structured JSON → `chatCompletion()`
+- Kickoff inference → structured JSON → `chatCompletion()` (the inferred fields are JSON; only the summary text is streamed separately)
+
+**What IS streamed (3 moments only):**
+- Kickoff summary text (~2-3 sentences) → `streamAITextToWorkflow()`
+- Plan explanation text (~1-2 sentences) → `streamAITextToWorkflow()`
+- Question context text (~1 sentence) → `streamAITextToWorkflow()`
+
+**Progress messages during autonomous workflow steps are NOT AI-generated.** They are static template strings from `PROGRESS_MESSAGES` (e.g., "Choosing page layout and CTA strategy"). These are written to `progressLog` directly by the runner, not by an AI call.
+
+---
+
 ## Phase 1: Simplify `/projects/new` + Auto-Kickoff
 
 **Goal:** Reduce entry friction. Get user into builder in <10 seconds.
@@ -238,60 +414,42 @@ POST endpoint that:
 
 ## Phase 4: Streaming Infrastructure
 
-**Goal:** Replace polling with real-time SSE for workflow progress and streamed text.
+**Goal:** Add real-time progress visibility. DB-backed polling is the production-safe primary transport; SSE is a progressive enhancement overlay. See Architecture Decision A1 for the full rationale.
 
-### Step 4.1: SSE workflow stream endpoint
+### Step 4.1: Add `progressLog` column to WorkflowRun
 
-**New file:** `app/api/projects/[id]/stream/route.ts`
+**File:** `prisma/schema.prisma`
 
-GET endpoint that returns a Server-Sent Events stream.
+Add `progressLog String @default("[]")` to the `WorkflowRun` model. This is an append-only JSON array of `{ ts, type, data }` entries that stores all progress events, streamed text chunks, and question events.
 
-Event types:
-```
-event: progress
-data: { "state": "strategy_generation", "message": "Choosing page layout style", "progress": 35 }
+Run `npx prisma db push` to apply (no migration needed for SQLite dev).
 
-event: question
-data: { "field": "primaryCta", "question": "What should visitors do first?", "options": [...] }
+### Step 4.2: Progress log writer utility
 
-event: text
-data: { "content": "Based on your description, ", "done": false }
+**New file:** `lib/workflow/progress.ts`
 
-event: text
-data: { "content": "I can see this is a dog training business targeting...", "done": true }
-
-event: plan_ready
-data: { "plan": { ... } }
-
-event: complete
-data: { "redirectUrl": "/projects/abc/editor" }
-
-event: error
-data: { "message": "Generation failed", "retryable": true }
-```
-
-The stream stays open while the workflow is active. The client subscribes on mount and unsubscribes on unmount.
-
-### Step 4.2: Workflow event emitter
-
-**New file:** `lib/workflow/events.ts`
-
-A simple event emitter/channel pattern that workflow engine and runner can use to push events:
+Provides functions for writing progress entries to the DB:
 
 ```ts
-export function createWorkflowStream(projectId: string): ReadableStream
-export function emitProgress(projectId: string, state: string, message: string): void
-export function emitText(projectId: string, content: string, done: boolean): void
-export function emitQuestion(projectId: string, question: QuestionData): void
+export async function appendProgress(
+  projectId: string,
+  type: "progress" | "text" | "question" | "plan_ready" | "complete" | "error",
+  data: Record<string, unknown>
+): Promise<void>
+
+export async function getProgressSince(
+  projectId: string,
+  sinceTs: number
+): Promise<ProgressEntry[]>
 ```
 
-Implementation: Use an in-memory Map of project ID → TransformStream pairs. The SSE endpoint creates a stream for the project; the workflow runner pushes events into it. If no listener is connected, events are dropped (the client can still poll as fallback).
+`appendProgress()` reads current `progressLog`, appends the new entry, writes back. For streamed text, chunks are batched (~200ms or ~50 chars) before flushing to DB to avoid excessive writes.
 
 ### Step 4.3: Add progress emission to workflow runner
 
 **File:** `lib/workflow/runner.ts`
 
-Before each `executeState()` call, emit a human-readable progress message:
+Before each `executeState()` call, write a human-readable progress message to `progressLog`:
 
 ```ts
 const PROGRESS_MESSAGES: Record<string, string> = {
@@ -308,67 +466,117 @@ const PROGRESS_MESSAGES: Record<string, string> = {
 };
 ```
 
+These are static template strings, NOT AI-generated. They are written to `progressLog` directly.
+
 **File:** `lib/workflow/engine.ts`
 
-In the `runWorkflow` loop, call `emitProgress()` at each state transition.
+In the `runWorkflow` loop, call `appendProgress("progress", ...)` at each state transition.
 
-### Step 4.4: Update builder to use SSE
+### Step 4.4: Update polling endpoint to return progress
+
+**File:** `app/api/projects/[id]/workflow/route.ts`
+
+Extend the existing GET response to include:
+- `latestProgress`: the most recent `progressLog` entry
+- `progressLog`: full log (or entries since a `?since=` query param timestamp)
+
+The builder client sends `?since={lastSeenTs}` to get only new entries. This gives near-real-time progress without SSE, just by polling faster (500ms during active generation, 1.5s during idle).
+
+### Step 4.5: SSE endpoint (progressive enhancement)
+
+**New file:** `app/api/projects/[id]/stream/route.ts`
+
+GET endpoint returning Server-Sent Events. Scoped as local/dev enhancement in this phase.
+
+Implementation: Polls `progressLog` from DB every 500ms and sends new entries as SSE events. This is not in-memory fan-out — it reads the same persisted state as the polling endpoint, just with lower latency and push semantics.
+
+Event types remain as originally specified:
+```
+event: progress
+event: text
+event: question
+event: plan_ready
+event: complete
+event: error
+```
+
+If Vercel's serverless runtime kills the connection, the client falls back to polling automatically. No state is lost because everything is in `progressLog`.
+
+### Step 4.6: Update builder to consume progress
 
 **File:** `app/projects/[id]/builder/page.tsx`
 
-Replace the 1.5s polling with an EventSource connection to `/api/projects/[id]/stream`.
+Primary: Enhanced polling. The builder polls `GET /api/projects/[id]/workflow?since={ts}` and applies new `progressLog` entries to the UI:
+- `progress` → update progress tracker label and percentage
+- `text` → append to conversation area (token-by-token reconstruction)
+- `question` → show question card
+- `plan_ready` → show plan card
+- `complete` → show editor redirect
+- `error` → show error with retry
 
-Keep polling as a fallback: if EventSource fails to connect, fall back to the existing polling behavior (1.5s interval). This ensures the app works even if SSE has issues.
-
-The SSE connection:
-- Updates progress panel in real time
-- Appends streamed text to conversation area
-- Shows question cards when `question` events arrive
-- Handles `complete` event to show editor redirect
+Secondary: Attempt SSE connection to `/api/projects/[id]/stream`. If connected, reduce polling interval to 5s (heartbeat only). If SSE disconnects, resume 500ms polling. The SSE path applies the same entry types — it's just a faster delivery mechanism for the same persisted data.
 
 ---
 
 ## Phase 5: Stream AI Text for Key Moments
 
-**Goal:** Stream user-visible assistant text (not all AI calls — just the moments that benefit from progressive output).
+**Goal:** Stream user-visible assistant text at 3 specific moments. See Architecture Decision A4 for the full AI client split rationale.
 
-### Step 5.1: Stream the business understanding summary
+### Step 5.1: Add `streamChatText()` to OpenAI client
 
-After initial inference, stream a 2-3 sentence summary of what the AI understood:
+**File:** `lib/ai/openai-client.ts`
 
-> "You're building a page for [business name], a [type] business that [main offer]. Your target audience is [audience]. I'll optimize for [CTA direction]."
-
-This streams token-by-token into the builder conversation area via the SSE text events.
-
-### Step 5.2: Stream plan explanation
-
-When the plan is ready, stream a brief explanation before showing the structured plan card:
-
-> "I've designed a [N]-section page focused on [strategy]. Here's the plan:"
-
-### Step 5.3: Stream follow-up question context
-
-When asking a question, optionally stream a short rationale:
-
-> "I'm confident about most details, but I want to make sure about one thing:"
-
-Then show the structured question card.
-
-### Step 5.4: Streaming AI call wrapper
-
-**New file:** `lib/ai/stream.ts`
-
-A utility that wraps OpenAI/Anthropic streaming calls and pipes chunks through the workflow event emitter:
+Add alongside existing `chatCompletion()` (which remains unchanged):
 
 ```ts
-export async function streamAIText(
-  projectId: string,
-  messages: Message[],
-  options?: { onComplete?: (fullText: string) => void }
+export async function streamChatText(
+  systemPrompt: string,
+  userPrompt: string,
+  onChunk: (text: string) => void,
+  options?: { temperature?: number; maxTokens?: number }
 ): Promise<string>
 ```
 
-This is used selectively — only for the moments identified above, not for every AI call (strategy/theme/asset planning/section generation stay non-streamed since their output is structured JSON, not user-visible text).
+Uses `openai.chat.completions.create({ stream: true, ... })` WITHOUT `response_format: { type: "json_object" }`. Iterates the async stream, calls `onChunk()` per token, returns accumulated text.
+
+**Existing `chatCompletion()` is NOT modified.** All structured JSON calls continue using it.
+
+### Step 5.2: Create workflow-aware streaming wrapper
+
+**New file:** `lib/ai/stream.ts`
+
+```ts
+export async function streamAITextToWorkflow(
+  projectId: string,
+  systemPrompt: string,
+  userPrompt: string,
+  options?: { temperature?: number; maxTokens?: number }
+): Promise<string>
+```
+
+Calls `streamChatText()` with an `onChunk` that batches text chunks (~200ms or ~50 chars) and flushes them to `WorkflowRun.progressLog` via `appendProgress("text", { content, done: false })`. On completion, writes a final `{ content: fullText, done: true }` entry.
+
+### Step 5.3: Stream the business understanding summary
+
+After kickoff inference (which uses `chatCompletion()` for the structured JSON), make a second `streamAITextToWorkflow()` call with a short prompt that produces a 2-3 sentence summary:
+
+> "You're building a page for Pawsitive Training, a dog training service targeting pet owners in metro areas. I'll optimize for booking consultations."
+
+The summary is also persisted to `businessContext._kickoff.summary`.
+
+### Step 5.4: Stream plan explanation
+
+When the plan is ready, stream a brief explanation before showing the structured plan card:
+
+> "I've designed a 10-section page focused on lead generation. Here's the plan:"
+
+### Step 5.5: Stream follow-up question context
+
+When asking a question, stream a short rationale:
+
+> "I'm confident about most details, but I want to make sure about one thing:"
+
+Then the structured question card appears (from `progressLog` question event, not streamed).
 
 ---
 
@@ -434,11 +642,11 @@ Re-enable input only when the AI genuinely needs user input (questioning, plan r
 |---|---|
 | `lib/ai/prompts/behavior.ts` | Shared AI role + rules (composed into all prompts) |
 | `lib/ai/prompts/kickoff.ts` | Kickoff inference prompt |
-| `lib/ai/stream.ts` | Streaming AI call wrapper |
-| `lib/workflow/events.ts` | Workflow event emitter for SSE |
-| `app/api/projects/[id]/kickoff/route.ts` | Auto-inference endpoint |
+| `lib/ai/stream.ts` | Workflow-aware streaming text wrapper (uses `streamChatText` + writes to `progressLog`) |
+| `lib/workflow/progress.ts` | DB-backed progress log writer/reader (`appendProgress`, `getProgressSince`) |
+| `app/api/projects/[id]/kickoff/route.ts` | Auto-inference endpoint (idempotent, see A3) |
 | `app/api/projects/[id]/answer/route.ts` | Question answer endpoint |
-| `app/api/projects/[id]/stream/route.ts` | SSE stream endpoint |
+| `app/api/projects/[id]/stream/route.ts` | SSE endpoint (progressive enhancement, polls `progressLog` from DB) |
 | `components/builder/QuestionCard.tsx` | Structured question UI |
 | `components/builder/ProgressTracker.tsx` | Real-time progress indicator |
 | `components/builder/PlanCard.tsx` | Concise plan approval card |
@@ -446,9 +654,12 @@ Re-enable input only when the AI genuinely needs user input (questioning, plan r
 ### Modified Files
 | File | Change |
 |---|---|
+| `prisma/schema.prisma` | Add `progressLog` column to `WorkflowRun` |
 | `app/projects/new/page.tsx` | Reduce to 3 fields, rename button |
-| `app/projects/[id]/builder/page.tsx` | New UX states, SSE, auto-kickoff, question cards |
+| `app/projects/[id]/builder/page.tsx` | New UX states, enhanced polling, SSE overlay, auto-kickoff, question cards |
 | `app/api/projects/route.ts` | Accept reduced field set |
+| `app/api/projects/[id]/workflow/route.ts` | Return `progressLog` entries, support `?since=` param |
+| `lib/ai/openai-client.ts` | Add `streamChatText()` alongside existing `chatCompletion()` |
 | `lib/ai/intake.ts` | Support auto-inference mode |
 | `lib/ai/prompts/intake.ts` | Compose shared behavior layer |
 | `lib/ai/prompts/planner.ts` | Compose shared behavior layer |
@@ -457,8 +668,8 @@ Re-enable input only when the AI genuinely needs user input (questioning, plan r
 | `lib/ai/prompts/section-update.ts` | Compose shared behavior layer |
 | `lib/workflow/types.ts` | Add `kickoff_inferring` and `questioning` states |
 | `lib/workflow/transitions.ts` | Add transitions for new states |
-| `lib/workflow/engine.ts` | Emit progress events during execution |
-| `lib/workflow/runner.ts` | Emit progress messages, handle kickoff state |
+| `lib/workflow/engine.ts` | Write progress events to `progressLog` during execution |
+| `lib/workflow/runner.ts` | Write progress messages to `progressLog`, handle kickoff state |
 
 ---
 
@@ -480,23 +691,26 @@ Re-enable input only when the AI genuinely needs user input (questioning, plan r
 9. Step 3.2: Question card component
 10. Step 3.3: Update builder page
 
-### Phase 4 — Streaming
-11. Step 4.2: Event emitter
-12. Step 4.1: SSE endpoint
-13. Step 4.3: Progress emission in runner
-14. Step 4.4: Builder SSE client
+### Phase 4 — Streaming Infrastructure
+11. Step 4.1: Add `progressLog` column to WorkflowRun
+12. Step 4.2: Progress log writer utility
+13. Step 4.3: Progress emission in runner/engine
+14. Step 4.4: Update polling endpoint to return progress
+15. Step 4.5: SSE endpoint (progressive enhancement)
+16. Step 4.6: Builder progress consumption (polling + SSE overlay)
 
 ### Phase 5 — Streamed AI Text
-15. Step 5.4: Streaming AI call wrapper
-16. Step 5.1: Stream business summary
-17. Step 5.2: Stream plan explanation
-18. Step 5.3: Stream question context
+17. Step 5.1: Add `streamChatText()` to OpenAI client
+18. Step 5.2: Workflow-aware streaming wrapper
+19. Step 5.3: Stream business summary
+20. Step 5.4: Stream plan explanation
+21. Step 5.5: Stream question context
 
 ### Phase 6 — Builder UX Polish
-19. Step 6.1: Layout redesign
-20. Step 6.2: Progress tracker
-21. Step 6.3: Plan card redesign
-22. Step 6.4: Input state management
+22. Step 6.1: Layout redesign
+23. Step 6.2: Progress tracker
+24. Step 6.3: Plan card redesign
+25. Step 6.4: Input state management
 
 ---
 
@@ -508,7 +722,8 @@ Re-enable input only when the AI genuinely needs user input (questioning, plan r
 - The V2 action system — untouched
 - The V2 asset system — untouched
 - Section generation logic — only prompt composition changes, not output schema
-- Database schema — no new tables needed (workflow state and businessContext already stored in existing tables)
+- `chatCompletion()` in `openai-client.ts` — unchanged; all structured JSON AI calls continue using it
+- No new database tables — one new column (`progressLog`) on existing `WorkflowRun`, plus expanded JSON structure in existing `Project.businessContext`
 
 ---
 
@@ -516,8 +731,12 @@ Re-enable input only when the AI genuinely needs user input (questioning, plan r
 
 | Risk | Mitigation |
 |---|---|
-| SSE may not work behind all proxies | Keep polling as fallback; SSE is progressive enhancement |
+| SSE fails in serverless/Vercel | SSE is overlay only; DB-backed polling is primary transport; no state lost if SSE dies (A1) |
+| Auto-kickoff called multiple times | Idempotent based on `_kickoff.status`; race-controlled with conditional update (A3) |
+| Kickoff interrupted mid-inference | 60s staleness check allows recovery; status reset to `pending` on stale `inferring` (A3) |
 | Auto-inference may be wrong | Always show summary and allow correction before proceeding |
 | Too few questions → bad output | Confidence thresholds tuned conservatively; editor exists for refinement |
-| Streaming adds complexity | Only stream 3 specific moments (summary, plan, question context), not everything |
+| Questioning state lost on refresh | All question state persisted in `businessContext._kickoff` (A2); builder reconstructs from DB |
+| `progressLog` grows unbounded | Entries are small (~100 bytes each); typical workflow produces <50 entries; can truncate on workflow completion |
+| Streaming adds complexity | Only 3 AI-streamed moments; all other progress is static template strings; two distinct AI client functions (A4) |
 | Builder state machine gets complex | New states are simple additions to existing machine, not a rewrite |
