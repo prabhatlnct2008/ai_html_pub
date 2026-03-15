@@ -76,7 +76,16 @@ async function executeCompetitorAnalysis(
     return { nextState: "strategy_generation" };
   }
 
-  const { insights, error } = await analyzeCompetitor(ctx.competitorUrl);
+  let insights: Awaited<ReturnType<typeof analyzeCompetitor>>["insights"] = null;
+  let error: string | undefined;
+
+  try {
+    const result = await analyzeCompetitor(ctx.competitorUrl);
+    insights = result.insights;
+    error = result.error;
+  } catch (err) {
+    error = err instanceof Error ? err.message : "Competitor analysis failed unexpectedly";
+  }
 
   if (error || !insights) {
     await prisma.project.update({
