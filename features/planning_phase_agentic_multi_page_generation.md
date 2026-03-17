@@ -277,8 +277,8 @@ START (acquire generation-run lock)
 | page planning fails for one page | Mark page plan as failed, continue with other pages |
 | page generation fails for one page | Mark page as failed, continue with other pages |
 | review finds repairable issues | Go to repair node |
-| repair pass completes | Re-review once, then persist |
-| repair still fails | Skip, persist with partial results |
+| repair pass completes | Re-review once, then finalize |
+| repair still fails | Skip, finalize with partial results |
 | all pages fail | End as failed |
 | some pages fail | End as partial_complete |
 | all pages succeed | End as complete |
@@ -495,8 +495,8 @@ model GenerationRun {
 **One active run per project.** Before starting a new generation:
 
 1. Check for an existing `GenerationRun` with `status = "running"` for this project.
-2. If one exists and was started < 15 minutes ago → reject with `409 Conflict` ("generation already in progress").
-3. If one exists but is older than 15 minutes → mark it as `failed` (stale/crashed), allow new run.
+2. If one exists and its `updatedAt` is < 15 minutes ago → reject with `409 Conflict` ("generation already in progress"). The run is still actively writing progress.
+3. If one exists but `updatedAt` is > 15 minutes ago → mark it as `failed` (stale/crashed), allow new run. A run that hasn't written to the DB in 15 minutes is dead.
 4. Create a new `GenerationRun` with `status = "running"` before launching the graph.
 5. On completion (any terminal state), update the run record.
 
@@ -845,7 +845,7 @@ Agents produce content. Validators verify structure. The orchestrator controls f
 | Shared Settings | 2 | DEFAULT_SITE_SETTINGS + business name |
 | Page Planner | 2 per page | Default section template for page type |
 | Page Generator | 2 per page | Mark page as failed, continue |
-| Site Reviewer | 1 | Skip review, proceed to persist |
+| Site Reviewer | 1 | Skip review, proceed to finalize |
 | Repair Agent | 2 per target | Skip repair for that target |
 
 ### Review/Repair Loop
