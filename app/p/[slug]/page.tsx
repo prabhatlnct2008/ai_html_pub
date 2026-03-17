@@ -35,7 +35,12 @@ export default async function PublishedPage({ params }: Props) {
   }
 
   // Render on read: re-render from documentJson for freshest output
-  const html = renderOnRead(page.documentJson, page.renderedHtml);
+  // Compose with site shell (header/footer/nav) from siteSettings
+  let siteSettings = null;
+  if (project.siteSettings && project.siteSettings !== "{}") {
+    try { siteSettings = JSON.parse(project.siteSettings); } catch { /* ignore */ }
+  }
+  const html = renderOnRead(page.documentJson, page.renderedHtml, siteSettings);
   if (!html) notFound();
 
   return (

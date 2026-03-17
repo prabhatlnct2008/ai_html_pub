@@ -122,8 +122,30 @@ export async function PUT(
   let renderedHtml: string;
   let documentJson: string;
 
+  // Get site-level brand if available
+  let siteBrand = null;
+  let siteActions: import("@/lib/page/schema").Action[] = [];
+  if (project.siteSettings && project.siteSettings !== "{}") {
+    try {
+      const ss = JSON.parse(project.siteSettings);
+      siteBrand = ss.brand;
+      siteActions = ss.actions || [];
+    } catch { /* ignore */ }
+  }
+
   if (existingDoc || actions || meta || brand) {
-    // Build/update the PageDocument — this is the canonical source of truth
+    // Build/update the PageDocument
+    // Brand is a snapshot from site settings for rendering;
+    // actions are empty in the doc (canonical source is siteSettings)
+    const brandSnapshot = siteBrand || brand || existingDoc?.brand || {
+      tone: "professional",
+      primaryColor: "#2563eb",
+      secondaryColor: "#1e40af",
+      accentColor: "#f59e0b",
+      fontHeading: "Inter",
+      fontBody: "Inter",
+    };
+
     const updatedDoc: PageDocument = {
       meta: meta || existingDoc?.meta || {
         title: project.name,
@@ -131,20 +153,15 @@ export async function PUT(
         pageType: page.pageType || "service-business",
         themeVariant: page.themeVariant || "clean",
       },
-      brand: brand || existingDoc?.brand || {
-        tone: "professional",
-        primaryColor: "#2563eb",
-        secondaryColor: "#1e40af",
-        accentColor: "#f59e0b",
-        fontHeading: "Inter",
-        fontBody: "Inter",
-      },
+      brand: brandSnapshot,
       assets: assets || existingDoc?.assets || [],
-      actions: actions || existingDoc?.actions || [],
+      actions: [], // Actions live exclusively at site level
       sections,
     };
     documentJson = JSON.stringify(updatedDoc);
-    renderedHtml = renderPageFromDocument(updatedDoc);
+    // For pre-rendering, inject site-level actions so buttons resolve
+    const renderDoc = { ...updatedDoc, actions: siteActions.length > 0 ? siteActions : (actions || existingDoc?.actions || []) };
+    renderedHtml = renderPageFromDocument(renderDoc);
   } else {
     // Legacy path
     documentJson = page.documentJson;

@@ -39,8 +39,12 @@ export default async function PublishedSubPage({ params }: Props) {
     }
   }
 
-  // Render on read
-  const html = renderOnRead(page.documentJson, page.renderedHtml);
+  // Render on read with site shell composition
+  let siteSettings = null;
+  if (project.siteSettings && project.siteSettings !== "{}") {
+    try { siteSettings = JSON.parse(project.siteSettings); } catch { /* ignore */ }
+  }
+  const html = renderOnRead(page.documentJson, page.renderedHtml, siteSettings);
   if (!html) notFound();
 
   return (

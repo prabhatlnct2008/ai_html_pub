@@ -6,6 +6,7 @@ import { normalizeDocumentActions } from "@/lib/actions/normalizer";
 import { normalizeVariant } from "@/lib/page/section-library";
 import type { PageDocument } from "@/lib/page/schema";
 import type { SiteSettings } from "@/lib/site/types";
+import { updateSiteNavigation } from "@/lib/site/navigation";
 
 /**
  * GET /api/projects/[id]/pages/[pageId]
@@ -170,6 +171,18 @@ export async function PUT(
       }
     }
 
+    // Brand snapshot from site settings for rendering; actions are empty
+    // because they live exclusively at site level. At render-on-read time,
+    // site brand/actions are injected into the doc before rendering.
+    const brandSnapshot = siteBrand || existingDoc?.brand || {
+      tone: "professional",
+      primaryColor: "#2563eb",
+      secondaryColor: "#1e40af",
+      accentColor: "#f59e0b",
+      fontHeading: "Inter",
+      fontBody: "Inter",
+    };
+
     const updatedDoc: PageDocument = {
       meta: meta || existingDoc?.meta || {
         title: page.title || project.name,
@@ -177,21 +190,24 @@ export async function PUT(
         pageType: page.pageType || "service-business",
         themeVariant: page.themeVariant || "clean",
       },
-      brand: siteBrand || existingDoc?.brand || {
-        tone: "professional",
-        primaryColor: "#2563eb",
-        secondaryColor: "#1e40af",
-        accentColor: "#f59e0b",
-        fontHeading: "Inter",
-        fontBody: "Inter",
-      },
+      brand: brandSnapshot,
       assets: assets || existingDoc?.assets || [],
-      actions: existingDoc?.actions || [], // Actions at site level, but keep doc reference
+      actions: [], // Actions live exclusively at site level
       sections,
     };
 
     const documentJson = JSON.stringify(updatedDoc);
-    const renderedHtml = renderPageFromDocument(updatedDoc);
+
+    // For pre-rendering, inject site-level actions so buttons resolve correctly
+    let siteActions: import("@/lib/page/schema").Action[] = [];
+    if (project.siteSettings && project.siteSettings !== "{}") {
+      try {
+        const ss = JSON.parse(project.siteSettings) as SiteSettings;
+        siteActions = ss.actions || [];
+      } catch { /* ignore */ }
+    }
+    const renderDoc = { ...updatedDoc, actions: siteActions };
+    const renderedHtml = renderPageFromDocument(renderDoc);
 
     // Version backup + update
     await prisma.$transaction(async (tx) => {
@@ -223,6 +239,17 @@ export async function PUT(
       where: { id: page.id },
       data: pageUpdates,
     });
+  }
+
+  // Sync site navigation if any nav-relevant fields changed
+  const navRelevantChanged =
+    title !== undefined ||
+    newSlug !== undefined ||
+    showInNav !== undefined ||
+    navOrder !== undefined ||
+    isHomepage !== undefined;
+  if (navRelevantChanged) {
+    await updateSiteNavigation(id);
   }
 
   return jsonResponse({
@@ -276,6 +303,9 @@ export async function DELETE(
   }
 
   await prisma.page.delete({ where: { id: pageId } });
+
+  // Rebuild site navigation after deletion
+  await updateSiteNavigation(id);
 
   return jsonResponse({ message: "Page deleted" });
 }

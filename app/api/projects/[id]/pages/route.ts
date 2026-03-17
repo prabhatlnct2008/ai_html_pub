@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
-import type { SiteSettings, NavItem } from "@/lib/site/types";
+import { updateSiteNavigation } from "@/lib/site/navigation";
 
 /**
  * GET /api/projects/[id]/pages
@@ -151,46 +151,5 @@ export async function POST(
     },
     201
   );
-}
-
-/**
- * Rebuild the navigation array in siteSettings from current pages.
- */
-async function updateSiteNavigation(projectId: string) {
-  const pages = await prisma.page.findMany({
-    where: { projectId },
-    orderBy: { navOrder: "asc" },
-    select: { id: true, slug: true, title: true, navOrder: true, showInNav: true },
-  });
-
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
-  if (!project) return;
-
-  let siteSettings: SiteSettings;
-  try {
-    siteSettings =
-      project.siteSettings && project.siteSettings !== "{}"
-        ? JSON.parse(project.siteSettings)
-        : null;
-  } catch {
-    siteSettings = null as unknown as SiteSettings;
-  }
-
-  if (!siteSettings) return;
-
-  siteSettings.navigation = pages.map(
-    (p): NavItem => ({
-      pageId: p.id,
-      label: p.title || p.slug,
-      slug: p.slug,
-      order: p.navOrder,
-      visible: p.showInNav,
-    })
-  );
-
-  await prisma.project.update({
-    where: { id: projectId },
-    data: { siteSettings: JSON.stringify(siteSettings) },
-  });
 }
 
