@@ -79,7 +79,7 @@ export async function runPageGeneratorAgent(
       // Post-generation normalization: enforce planned variants and apply styling
       normalizeGeneratedDocument(parsed, pagePlan, siteSettings.brand, effectiveThemeVariant);
 
-      const validation = validatePageDocument(parsed, siteActions);
+      const validation = validatePageDocument(parsed, siteActions, pagePlan);
       if (!validation.valid) {
         lastError = `Validation failed: ${validation.errors.join(", ")}`;
         continue;
@@ -100,6 +100,11 @@ export async function runPageGeneratorAgent(
  * Enforces that section variants match what the planner decided,
  * and applies context-aware styling using all brand colors + themeVariant.
  *
+ * Matching is done by section type (not array index) to handle cases where
+ * the LLM inserts, drops, or reorders sections vs. the plan. When multiple
+ * sections share the same type, planned variants are consumed in order
+ * (first match gets first planned variant of that type, etc.).
+ *
  * This is the "normalizer enforces" part of the pattern:
  * "planner decides, generator respects, normalizer enforces"
  */
@@ -109,18 +114,32 @@ function normalizeGeneratedDocument(
   brand: { primaryColor: string; secondaryColor: string; accentColor: string },
   themeVariant: string
 ): void {
+  // Build a per-type queue of planned variants so we can consume them in order.
+  // E.g., if the plan has two "cta-band" sections with different variants,
+  // the first generated cta-band gets the first planned variant, etc.
+  const plannedVariantQueues: Record<string, string[]> = {};
+  for (const planned of pagePlan.sections) {
+    if (!plannedVariantQueues[planned.type]) {
+      plannedVariantQueues[planned.type] = [];
+    }
+    if (planned.variant) {
+      plannedVariantQueues[planned.type].push(planned.variant);
+    }
+  }
+
   for (let i = 0; i < doc.sections.length; i++) {
     const section = doc.sections[i];
-    const plannedSection = pagePlan.sections[i];
+    const queue = plannedVariantQueues[section.type];
 
-    // Enforce planned variant (overrides whatever the LLM chose)
-    if (plannedSection?.variant) {
+    if (queue && queue.length > 0) {
+      // Consume the next planned variant for this section type
+      const plannedVariant = queue.shift()!;
       section.variant = normalizeVariantStrict(
         section.type as SectionType,
-        plannedSection.variant
+        plannedVariant
       );
     } else {
-      // Validate the generated variant
+      // No planned variant available — validate whatever the LLM chose
       section.variant = normalizeVariantStrict(
         section.type as SectionType,
         section.variant

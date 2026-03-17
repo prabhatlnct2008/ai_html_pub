@@ -151,7 +151,8 @@ export function validatePagePlan(
 
 export function validatePageDocument(
   doc: PageDocument,
-  availableActions: Action[]
+  availableActions: Action[],
+  pagePlan?: AgenticPagePlan
 ): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -176,6 +177,37 @@ export function validatePageDocument(
       warnings.push(
         `Section "${section.type}" has invalid variant "${section.variant}"`
       );
+    }
+  }
+
+  // Check document conforms to page plan (if provided)
+  if (pagePlan) {
+    const plannedTypes = pagePlan.sections.map((s) => s.type);
+    const generatedTypes = doc.sections.map((s) => s.type);
+
+    // Check for missing planned sections
+    const plannedCounts: Record<string, number> = {};
+    const generatedCounts: Record<string, number> = {};
+    for (const t of plannedTypes) plannedCounts[t] = (plannedCounts[t] || 0) + 1;
+    for (const t of generatedTypes) generatedCounts[t] = (generatedCounts[t] || 0) + 1;
+
+    for (const [type, count] of Object.entries(plannedCounts)) {
+      const genCount = generatedCounts[type] || 0;
+      if (genCount < count) {
+        warnings.push(
+          `Plan expected ${count} "${type}" section(s) but document has ${genCount}`
+        );
+      }
+    }
+
+    // Check for extra sections not in plan
+    for (const [type, count] of Object.entries(generatedCounts)) {
+      const planCount = plannedCounts[type] || 0;
+      if (count > planCount) {
+        warnings.push(
+          `Document has ${count} "${type}" section(s) but plan expected ${planCount}`
+        );
+      }
     }
   }
 
