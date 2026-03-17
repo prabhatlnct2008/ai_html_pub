@@ -227,23 +227,58 @@ export function getContextAwareSectionStyle(
     return { backgroundColor: "#111827", textColor: "#d1d5db", padding: getPadding(themeVariant, "footer") };
   }
 
-  // CTA and results use primary color (bold/attention sections)
-  const accentSections: SectionType[] = ["cta-band", "results"];
-  if (accentSections.includes(sectionType)) {
+  // Results/stats section: use accent color as background.
+  // This gives the stats section a distinct identity separate from primary CTA.
+  if (sectionType === "results") {
+    const accentIsDark = !isLightColor(accent);
+    return {
+      backgroundColor: accent,
+      textColor: accentIsDark ? "#ffffff" : "#1a1a1a",
+      padding: getPadding(themeVariant, "accent"),
+    };
+  }
+
+  // CTA band: use primary color
+  if (sectionType === "cta-band") {
     return { backgroundColor: primary, textColor: "#ffffff", padding: getPadding(themeVariant, "accent") };
   }
 
-  // Hero: use primary for bold/premium, white for clean/playful
+  // Hero: primary for bold/premium, accent tint for playful, white for clean
   if (sectionType === "hero") {
     if (themeVariant === "bold" || themeVariant === "premium") {
       return { backgroundColor: primary, textColor: "#ffffff", padding: getPadding(themeVariant, "hero") };
     }
+    if (themeVariant === "playful") {
+      // Playful hero uses a light tint of the accent color for warmth
+      return {
+        backgroundColor: tintColor(accent, 0.85),
+        textColor: "#1a1a1a",
+        padding: getPadding(themeVariant, "hero"),
+      };
+    }
     return { backgroundColor: "#ffffff", textColor: "#1a1a1a", padding: getPadding(themeVariant, "hero") };
   }
 
-  // Trust bar: use secondary color (subtle contrast)
+  // Trust bar: accent on bold/playful themes, secondary otherwise.
+  // This prevents it from blending into the same light gray as other sections.
   if (sectionType === "trust-bar") {
+    if (themeVariant === "bold" || themeVariant === "playful") {
+      return {
+        backgroundColor: tintColor(accent, 0.9),
+        textColor: "#374151",
+        padding: getPadding(themeVariant, "compact"),
+      };
+    }
     return { backgroundColor: secondary, textColor: "#374151", padding: getPadding(themeVariant, "compact") };
+  }
+
+  // Pricing section: accent tint background for visual distinction
+  if (sectionType === "pricing") {
+    return {
+      backgroundColor: tintColor(accent, 0.92),
+      textColor: "#1a1a1a",
+      padding: getPadding(themeVariant, "body"),
+    };
   }
 
   // Alternating white/light pattern for body sections using secondary color
@@ -285,6 +320,22 @@ function isLightColor(hex: string): boolean {
   const b = parseInt(c.substring(4, 6), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.6;
+}
+
+/**
+ * Create a tinted (lightened) version of a hex color by mixing with white.
+ * factor=0.0 → original color, factor=1.0 → pure white.
+ */
+function tintColor(hex: string, factor: number): string {
+  const c = hex.replace("#", "");
+  if (c.length < 6) return hex;
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  const tr = Math.round(r + (255 - r) * factor);
+  const tg = Math.round(g + (255 - g) * factor);
+  const tb = Math.round(b + (255 - b) * factor);
+  return `#${tr.toString(16).padStart(2, "0")}${tg.toString(16).padStart(2, "0")}${tb.toString(16).padStart(2, "0")}`;
 }
 
 /**

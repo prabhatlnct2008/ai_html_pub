@@ -265,7 +265,7 @@ export default function BuilderPage() {
 
   // ---- Flow mode detection ----
   const detectFlowMode = useCallback(async (): Promise<FlowMode> => {
-    // Step 1: Check for active agentic generation run
+    // Step 1: Check for active (running) agentic generation run
     try {
       const activeRes = await fetch(
         `/api/projects/${projectId}/active-generation`
@@ -280,8 +280,70 @@ export default function BuilderPage() {
       // No active run — continue checking
     }
 
-    // Step 2: Check for completed GenerationRun (agentic project that finished)
-    // We check the workflow state to detect legacy projects
+    // Step 2: Check for terminal GenerationRun (agentic project that already finished)
+    try {
+      const termRes = await fetch(
+        `/api/projects/${projectId}/active-generation?includeTerminal=true`
+      );
+      if (termRes.ok) {
+        const termData = await termRes.json();
+        if (termData.terminal) {
+          // Agentic project with a completed/failed/partial run
+          setAgenticRunId(termData.runId);
+          setAgenticStatus(termData.lastStatus || null);
+
+          if (termData.status === "complete") {
+            // Already done — show completion UI immediately
+            setAgenticStatus({
+              runId: termData.runId,
+              status: "complete",
+              currentPhase: "complete",
+              progress: { pagesPlanned: 0, pagesCompleted: 0, pagesFailed: 0 },
+              reviewScore: null,
+              startedAt: termData.startedAt,
+              completedAt: termData.completedAt,
+              updatedAt: termData.updatedAt,
+              error: null,
+              recentLogs: [],
+              summary: null,
+            });
+          } else if (termData.status === "partial_complete") {
+            setAgenticStatus({
+              runId: termData.runId,
+              status: "partial_complete",
+              currentPhase: "partial_complete",
+              progress: { pagesPlanned: 0, pagesCompleted: 0, pagesFailed: 0 },
+              reviewScore: null,
+              startedAt: termData.startedAt,
+              completedAt: termData.completedAt,
+              updatedAt: termData.updatedAt,
+              error: null,
+              recentLogs: [],
+              summary: null,
+            });
+          } else if (termData.status === "failed") {
+            setAgenticStatus({
+              runId: termData.runId,
+              status: "failed",
+              currentPhase: "failed",
+              progress: { pagesPlanned: 0, pagesCompleted: 0, pagesFailed: 0 },
+              reviewScore: null,
+              startedAt: termData.startedAt,
+              completedAt: termData.completedAt,
+              updatedAt: termData.updatedAt,
+              error: termData.error || "Generation failed",
+              recentLogs: [],
+              summary: null,
+            });
+          }
+          return "agentic";
+        }
+      }
+    } catch {
+      // No terminal run — continue checking
+    }
+
+    // Step 3: Check legacy workflow state
     try {
       const wfRes = await fetch(`/api/projects/${projectId}/workflow`);
       if (wfRes.ok) {
@@ -310,7 +372,7 @@ export default function BuilderPage() {
           return "legacy";
         }
 
-        // Completed legacy project
+        // Completed or failed legacy project
         if (wfState === "complete" || wfState === "failed") {
           return "legacy";
         }
@@ -319,7 +381,7 @@ export default function BuilderPage() {
       // ignore
     }
 
-    // Step 3: New project — will be determined by kickoff completion
+    // Step 4: New project — will be determined by kickoff completion
     return "agentic";
   }, [projectId, startAgenticPolling]);
 
