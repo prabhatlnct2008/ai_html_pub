@@ -196,6 +196,12 @@ export function renderOnRead(
     html = renderedHtml;
   }
 
+  // Newly created pages have no content yet — render a minimal placeholder
+  // so the published route doesn't 404 (owner can still preview the shell).
+  if (!html) {
+    html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page</title></head><body><div style="min-height:60vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;color:#9ca3af;"><p>This page has no content yet.</p></div></body></html>`;
+  }
+
   // Compose with site shell if siteSettings and context are provided
   if (siteSettings && ctx) {
     html = composePageWithSiteShell(html, siteSettings, ctx);

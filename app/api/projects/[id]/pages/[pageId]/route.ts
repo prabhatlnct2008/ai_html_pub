@@ -249,9 +249,15 @@ export async function PUT(
     await updateSiteNavigation(id);
   }
 
+  // Fetch updated page to return current slug/version
+  const updated = await prisma.page.findUnique({ where: { id: page.id } });
+
   return jsonResponse({
     message: "Page updated",
     pageId: page.id,
+    slug: updated?.slug ?? page.slug,
+    version: updated?.version ?? page.version,
+    isHomepage: updated?.isHomepage ?? page.isHomepage,
   });
 }
 
