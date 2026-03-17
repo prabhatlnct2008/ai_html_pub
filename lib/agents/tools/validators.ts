@@ -5,6 +5,7 @@
 
 import type { PageDocument, Action } from "@/lib/page/schema";
 import { SECTION_TYPES, type SectionType } from "@/lib/page/schema";
+import { SECTION_VARIANTS } from "@/lib/page/section-library";
 import type {
   SitePlan,
   SiteSettingsDraft,
@@ -118,11 +119,18 @@ export function validatePagePlan(
     return { valid: false, errors, warnings };
   }
 
-  // Validate section types
+  // Validate section types and variants
   const validTypes = new Set<string>(SECTION_TYPES);
   for (const section of plan.sections) {
     if (!validTypes.has(section.type)) {
       errors.push(`Invalid section type: ${section.type}`);
+    } else if (section.variant) {
+      const validVariants = SECTION_VARIANTS[section.type as SectionType];
+      if (validVariants && !validVariants.includes(section.variant)) {
+        warnings.push(
+          `Section "${section.type}" has invalid variant "${section.variant}". Valid: ${validVariants.join(", ")}`
+        );
+      }
     }
   }
 
@@ -159,6 +167,16 @@ export function validatePageDocument(
 
   if (!doc.brand) {
     errors.push("Page document missing brand");
+  }
+
+  // Check section variants are valid
+  for (const section of doc.sections) {
+    const validVariants = SECTION_VARIANTS[section.type as SectionType];
+    if (validVariants && !validVariants.includes(section.variant)) {
+      warnings.push(
+        `Section "${section.type}" has invalid variant "${section.variant}"`
+      );
+    }
   }
 
   // Check action references

@@ -3,6 +3,8 @@ import type { Section, SectionType, Brand, Action, ButtonRef } from "@/lib/page/
 import { getDefaultVariant } from "@/lib/page/section-library";
 import { validateSectionContent } from "@/lib/page/validators";
 import { createDefaultSection } from "@/lib/page/section-library";
+import { selectVariant, getContextAwareSectionStyle } from "@/lib/page/variant-selector";
+import type { VariantSelectionContext } from "@/lib/page/variant-selector";
 
 interface SectionPlan {
   type: SectionType;
@@ -14,13 +16,22 @@ export interface GenerationResult {
   actions: Action[];
 }
 
+/** Optional context for variant selection in the legacy generator. */
+export interface LegacyGenerationContext {
+  pageType?: string;
+  themeVariant?: string;
+  projectId?: string;
+  hasImages?: boolean;
+}
+
 // Generate content for all sections in sequence, collecting actions
 export async function generateAllSectionsV2(
   sectionSequence: SectionPlan[],
   businessContext: Record<string, unknown>,
-  brand: Brand
+  brand: Brand,
+  generationContext?: LegacyGenerationContext
 ): Promise<Section[]> {
-  const result = await generateAllSectionsWithActions(sectionSequence, businessContext, brand);
+  const result = await generateAllSectionsWithActions(sectionSequence, businessContext, brand, generationContext);
   return result.sections;
 }
 
@@ -28,7 +39,8 @@ export async function generateAllSectionsV2(
 export async function generateAllSectionsWithActions(
   sectionSequence: SectionPlan[],
   businessContext: Record<string, unknown>,
-  brand: Brand
+  brand: Brand,
+  generationContext?: LegacyGenerationContext
 ): Promise<GenerationResult> {
   const sections: Section[] = [];
   const actions: Action[] = [];
@@ -36,13 +48,31 @@ export async function generateAllSectionsWithActions(
 
   for (let i = 0; i < sectionSequence.length; i++) {
     const plan = sectionSequence[i];
+
+    // Context-aware variant selection (replaces getDefaultVariant for new generations)
+    let variant: string | undefined;
+    if (generationContext) {
+      const variantCtx: VariantSelectionContext = {
+        sectionType: plan.type,
+        pageType: generationContext.pageType || "service-business",
+        themeVariant: generationContext.themeVariant || "clean",
+        sectionPosition: i,
+        totalSections: sectionSequence.length,
+        hasImages: generationContext.hasImages,
+        seed: generationContext.projectId,
+      };
+      variant = selectVariant(variantCtx);
+    }
+
     const section = await generateSingleSection(
       plan.type,
       plan.description,
       businessContext,
       brand,
       generatedTypes,
-      i
+      i,
+      variant,
+      generationContext
     );
 
     // Extract actions from generated content and wire up buttonRefs
@@ -61,7 +91,9 @@ async function generateSingleSection(
   businessContext: Record<string, unknown>,
   brand: Brand,
   existingSections: string[],
-  order: number
+  order: number,
+  selectedVariant?: string,
+  generationContext?: LegacyGenerationContext
 ): Promise<Section> {
   const schema = SECTION_CONTENT_SCHEMAS[type];
   if (!schema) {
@@ -106,14 +138,28 @@ RULES:
     return createDefaultSection(type, undefined, brand);
   }
 
+  // Use context-aware variant if provided, else fall back to legacy default
+  const variant = selectedVariant || getDefaultVariant(type);
+
+  // Use context-aware styling if generation context available
+  const style = generationContext
+    ? getContextAwareSectionStyle(
+        type,
+        brand,
+        generationContext.themeVariant || "clean",
+        order,
+        existingSections.length + 1
+      )
+    : getSectionStyle(type, brand);
+
   const section: Section = {
     id: `section-${type}-${Math.random().toString(36).substring(2, 8)}`,
     type,
-    variant: getDefaultVariant(type),
+    variant,
     visible: true,
     order,
     content,
-    style: getSectionStyle(type, brand),
+    style,
   };
 
   // Validate and fall back if invalid

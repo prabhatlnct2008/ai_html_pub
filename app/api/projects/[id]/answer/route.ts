@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { runWorkflow } from "@/lib/workflow/engine";
+import { isAgenticGenerationEnabled } from "@/lib/config";
 
 /**
  * POST /api/projects/[id]/answer
@@ -61,10 +62,14 @@ export async function POST(
       data: { businessContext: JSON.stringify(businessContext) },
     });
 
-    // Transition workflow past intake and start engine
+    // Transition workflow past intake
     await transitionWorkflowPastIntake(projectId, businessContext);
-    const workflowStatus = await runWorkflow(projectId);
 
+    if (isAgenticGenerationEnabled()) {
+      return jsonResponse({ status: "complete", agenticReady: true, kickoff });
+    }
+
+    const workflowStatus = await runWorkflow(projectId);
     return jsonResponse({ status: "complete", kickoff, workflow: workflowStatus });
   }
 
@@ -118,10 +123,14 @@ export async function POST(
       data: { businessContext: JSON.stringify(businessContext) },
     });
 
-    // Transition workflow past intake and start engine
+    // Transition workflow past intake
     await transitionWorkflowPastIntake(projectId, businessContext);
-    const workflowStatus = await runWorkflow(projectId);
 
+    if (isAgenticGenerationEnabled()) {
+      return jsonResponse({ status: "complete", agenticReady: true, kickoff });
+    }
+
+    const workflowStatus = await runWorkflow(projectId);
     return jsonResponse({ status: "complete", kickoff, workflow: workflowStatus });
   }
 

@@ -57,11 +57,13 @@ export async function pageGenerationNode(
       level: "info",
     });
 
+    const themeVariant = state.siteSettingsDraft.themeVariant || "clean";
     const { document, error } = await runPageGeneratorAgent(
       pagePlan,
       state.siteSettingsDraft,
       state.businessContext,
-      state.siteSettingsDraft.actions
+      state.siteSettingsDraft.actions,
+      themeVariant
     );
 
     if (!document) {
