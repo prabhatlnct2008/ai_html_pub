@@ -26,19 +26,32 @@ export default function PublishedPageClient({ html, isOwner, projectId }: Props)
     doc.write(html);
     doc.close();
 
-    // Dynamically resize iframe to match content height
+    // Reset to 0 before measuring to break the circular dependency
+    // where scrollHeight is clamped by the iframe's current height.
     const resize = () => {
       if (doc.body) {
-        iframe.style.height = doc.body.scrollHeight + "px";
+        iframe.style.height = "0px";
+        iframe.style.height = doc.documentElement.scrollHeight + "px";
       }
     };
 
-    // Resize after load and on window resize
+    // Resize after content is written
     resize();
+
+    // Re-measure after images/fonts/scripts finish loading
+    if (doc.defaultView) {
+      doc.defaultView.addEventListener("load", resize);
+    }
+
     const observer = new ResizeObserver(resize);
     if (doc.body) observer.observe(doc.body);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (doc.defaultView) {
+        doc.defaultView.removeEventListener("load", resize);
+      }
+    };
   }, [html]);
 
   return (
@@ -50,7 +63,6 @@ export default function PublishedPageClient({ html, isOwner, projectId }: Props)
           width: "100%",
           border: "none",
           overflow: "hidden",
-          minHeight: "100vh",
         }}
         title="Published Page"
       />
