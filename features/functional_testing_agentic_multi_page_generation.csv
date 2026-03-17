@@ -107,7 +107,7 @@ A082,Background Execution,Generation continues if client disconnects,"1. Trigger
 ,=== GENERATION-RUN LOCKING ===,,,,,
 A083,Run Locking,Duplicate generation request returns 409,"1. Trigger generation 2. Immediately trigger generation again for same project","Second request returns 409 Conflict with message 'generation already in progress'",,
 A084,Run Locking,Different projects can generate concurrently,"1. Trigger generation for project A 2. Trigger generation for project B","Both return 202. Both run independently.",,
-A085,Run Locking,Stale run lock auto-expires after 15 minutes,"1. Create a GenerationRun with status: running and startedAt > 15 minutes ago 2. Trigger generation","New generation starts. Old run is marked as failed.",,
+A085,Run Locking,Stale run lock auto-expires based on updatedAt,"1. Create a GenerationRun with status: running and updatedAt > 15 minutes ago 2. Trigger generation","New generation starts. Old run is marked as failed. Detection is based on updatedAt (last DB write), not startedAt.",,
 A086,Run Locking,Completed run does not block new run,"1. Complete a generation 2. Trigger generation again","Second generation starts normally (no 409). New GenerationRun is created.",,
 A087,Run Locking,Failed run does not block new run,"1. Trigger generation that fails 2. Trigger generation again","Second generation starts normally. Previous failed run remains in DB for logs.",,
 ,,,,,,
