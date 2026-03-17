@@ -24,14 +24,16 @@ Build the first production-grade agentic website-generation layer using LangGrap
 - Deterministic validators for schema, navigation, and action references
 - Integration with existing Project/Page/SiteSettings models
 - New API route to trigger agentic site generation
+- Background execution model (fire-and-forget trigger, poll for status)
+- Incremental persistence (each page saved as soon as it is generated)
+- Generation-run locking (one active run per project, reject duplicates)
 
 **Out of scope:**
 
 - Editor Assistant Agent (post-generation editing help — later phase)
-- Background/autonomous agents
 - Code/runtime agents
 - Open-ended sandbox execution
-- Worker-based background queue (uses synchronous execution for now)
+- Durable external job queue (Redis/BullMQ) — uses in-process background execution
 - Custom domains, analytics, collaboration
 - Image generation pipeline changes (reuses existing)
 - UI/editor changes beyond wiring to the new generation API
@@ -165,14 +167,14 @@ document_assembly → rendering → saving → complete
 ### Graph Nodes
 
 ```
-START
+START (acquire generation-run lock)
   → site_planning
-  → shared_settings
-  → page_planning          (loops over all pages)
-  → page_generation        (loops over all pages, homepage first)
+  → shared_settings         (persist site settings incrementally)
+  → page_planning           (loops over all pages)
+  → page_generation         (loops over all pages, homepage first; persist each page to DB on success)
   → site_review
-  → repair                 (conditional: only if review found repairable issues)
-  → persist_results        (deterministic: save to DB)
+  → repair                  (conditional: only if review found repairable issues; persist patches)
+  → finalize                (deterministic: update nav, flip statuses, close generation run)
   → END (complete | partial_complete | failed)
 ```
 
@@ -181,6 +183,8 @@ START
 ```
 ┌─────────────────────────────────────────────────────┐
 │  START                                              │
+│  Acquire generation-run lock (409 if already running)│
+│  Create GenerationRun record (status: running)      │
 │  Initialize state from businessContext + projectId  │
 └──────────────┬──────────────────────────────────────┘
                ▼
@@ -197,6 +201,7 @@ START
 │  Validator: brand has required fields, actions   │
 │  have IDs, nav initialized                       │
 │  Retry: 2x, fallback: defaults                   │
+│  ** Persist: save SiteSettings to Project **     │
 └──────────────┬───────────────────────────────────┘
                ▼
 ┌──────────────────────────────────────────────────┐
@@ -214,6 +219,8 @@ START
 │    Page Generator Agent → PageDocument           │
 │    Validator: schema valid, actions exist         │
 │    Retry: 2x per page, mark failed if broken     │
+│    ** Persist: save Page.documentJson +          │
+│       Page.renderedHtml immediately on success ** │
 │  Produces: pageDocuments map + per-page statuses │
 └──────────────┬───────────────────────────────────┘
                ▼
@@ -244,12 +251,10 @@ START
          └──────┬──────┘
                 ▼
 ┌──────────────────────────────────────────────────┐
-│  persist_results (deterministic)                 │
-│  - Save SiteSettings to Project                  │
-│  - Save each PageDocument to Page records        │
-│  - Render HTML for each page                     │
-│  - Update navigation                             │
-│  - Set page statuses (published/draft/failed)    │
+│  finalize (deterministic — lightweight)          │
+│  - Update navigation (pages already in DB)       │
+│  - Flip page statuses: draft → published/failed  │
+│  - Close GenerationRun: set terminal status      │
 │  - Determine: complete | partial_complete        │
 └──────────────┬───────────────────────────────────┘
                ▼
@@ -399,18 +404,63 @@ interface LogEntry {
 }
 ```
 
-### Persistence Strategy
+### Persistence Strategy — Incremental
 
-The LangGraph state is **in-memory during execution**. On completion (or partial completion):
+The LangGraph state is in-memory during execution, but **results are persisted incrementally** as each milestone completes. This ensures that a crash after generating 4 of 5 pages does not lose those 4 pages.
 
-1. `SiteSettingsDraft` → `Project.siteSettings` (JSON)
-2. Each `PageDocument` → `Page.documentJson` (one Page record per page)
-3. Rendered HTML → `Page.renderedHtml` (via existing renderer)
-4. Navigation → updated via `updateSiteNavigation()`
-5. Page statuses → `Page.status` ("published" for complete, "draft" for failed)
-6. Workflow logs → stored in a new `workflowLog` field on WorkflowRun or a dedicated table
+**Incremental write points:**
 
-For this first implementation, we do NOT persist intermediate LangGraph state. The run is atomic — if the server crashes mid-run, the user retries. Durable state persistence is a future enhancement.
+| Milestone | What is persisted |
+|-----------|-------------------|
+| `shared_settings` completes | `SiteSettingsDraft` → `Project.siteSettings` (JSON) |
+| Each page plan completes | `PagePlan` row or JSON field written per page |
+| Each page generation completes | `Page.documentJson` + `Page.renderedHtml` written immediately, `Page.status = "draft"` |
+| `site_review` completes | Review result + repair queue persisted to `GenerationRun.reviewResult` |
+| Each repair completes | Patched `Page.documentJson` + `Page.renderedHtml` overwritten |
+| `persist_results` (final) | Navigation updated, page statuses finalized (`published` / `failed`), `GenerationRun.status` set to terminal state |
+
+**Why incremental:**
+
+- If the process dies after generating 4 of 5 pages, those 4 pages exist as `draft` records in the DB. The user (or a future retry mechanism) can pick up from there.
+- Logs are appended to `GenerationRun.logs` at each step, not buffered until the end.
+- The final `persist_results` node is now a lightweight "finalize" step: update navigation, flip page statuses from `draft` to `published`, and mark the run as complete.
+
+**What is NOT persisted incrementally:**
+
+- Full LangGraph checkpoint state (no durable checkpoint store). We persist *outputs* incrementally, not the graph execution pointer. A crashed run cannot auto-resume from the exact interrupted node — but its completed work is safe.
+
+### Generation Run Model
+
+A new `GenerationRun` record (or repurposed `WorkflowRun`) tracks each agentic generation attempt:
+
+```ts
+interface GenerationRun {
+  id: string;
+  projectId: string;
+  status: "running" | "complete" | "partial_complete" | "failed" | "cancelled";
+  currentPhase: string;
+  pagesPlanned: number;
+  pagesCompleted: number;
+  pagesFailed: number;
+  reviewScore: number | null;
+  logs: LogEntry[];
+  startedAt: Date;
+  completedAt: Date | null;
+  error: string | null;
+}
+```
+
+### Generation-Run Locking
+
+**One active run per project.** Before starting a new generation:
+
+1. Check for an existing `GenerationRun` with `status = "running"` for this project.
+2. If one exists and was started < 15 minutes ago → reject with `409 Conflict` ("generation already in progress").
+3. If one exists but is older than 15 minutes → mark it as `failed` (stale/crashed), allow new run.
+4. Create a new `GenerationRun` with `status = "running"` before launching the graph.
+5. On completion (any terminal state), update the run record.
+
+This prevents two concurrent requests from racing on the same project's pages and site settings.
 
 ---
 
@@ -423,12 +473,12 @@ lib/agents/                          # New directory for agentic system
     site-build-state.ts              # State type + annotations
     nodes/
       site-planning.ts               # site_planning node
-      shared-settings.ts             # shared_settings node
+      shared-settings.ts             # shared_settings node (persists settings)
       page-planning.ts               # page_planning node (loop)
-      page-generation.ts             # page_generation node (loop)
+      page-generation.ts             # page_generation node (loop, persists each page)
       site-review.ts                 # site_review node
-      repair.ts                      # repair node
-      persist-results.ts             # persist_results node (deterministic)
+      repair.ts                      # repair node (persists patches)
+      finalize.ts                    # finalize node (nav, statuses, close run)
     transitions.ts                   # Edge/conditional logic
 
   agents/
@@ -451,15 +501,19 @@ lib/agents/                          # New directory for agentic system
     validators.ts                    # Deterministic validation tools
     fallbacks.ts                     # Fallback generators (minimal sitemap, etc.)
 
+  run-lock.ts                        # Generation-run locking (acquire/release/stale check)
   types.ts                           # All agentic type definitions
 
 app/api/projects/[id]/generate-site/
-  route.ts                           # POST endpoint to trigger agentic generation
+  route.ts                           # POST endpoint: acquire lock, launch background, return 202
+app/api/projects/[id]/generation-status/
+  route.ts                           # GET endpoint: poll GenerationRun status + progress
 ```
 
 ### Integration Points
 
-- `app/api/projects/[id]/generate-site/route.ts` — new API endpoint
+- `app/api/projects/[id]/generate-site/route.ts` — POST: acquire lock, launch background run, return 202
+- `app/api/projects/[id]/generation-status/route.ts` — GET: poll GenerationRun status, progress, logs
 - Existing `lib/page/renderer.ts` — reused for rendering
 - Existing `lib/page/validators.ts` — reused and extended
 - Existing `lib/site/navigation.ts` — reused for nav updates
@@ -469,7 +523,82 @@ app/api/projects/[id]/generate-site/
 
 ---
 
-## 7. Tool Layer Design
+## 7. Background Execution Model
+
+### Why Not Synchronous
+
+A 3-6 page agentic build with planning, generation, review, and repair can run 2-5 minutes. This exceeds typical HTTP request timeouts (Vercel: 60s on hobby, 300s on pro; most reverse proxies: 30-120s). A synchronous request/response model would:
+
+- Time out on most hosting providers
+- Leave the user staring at a spinner with no progress feedback
+- Lose all work if the connection drops
+
+### Execution Flow
+
+```
+Client                              Server
+  │                                   │
+  │  POST /generate-site              │
+  │ ──────────────────────────────► │
+  │                                   │  1. Acquire run lock (409 if busy)
+  │                                   │  2. Create GenerationRun (status: running)
+  │                                   │  3. Launch graph in background (fire-and-forget)
+  │  ◄──────────────────────────────  │
+  │  202 Accepted { runId }           │
+  │                                   │
+  │  GET /generation-status           │
+  │ ──────────────────────────────► │
+  │  ◄──────────────────────────────  │
+  │  { status: "running",             │
+  │    currentPhase: "page_generation",│
+  │    pagesCompleted: 2,             │
+  │    pagesPlanned: 5 }             │
+  │                                   │
+  │  ... (poll every 3-5s) ...        │
+  │                                   │
+  │  GET /generation-status           │
+  │ ──────────────────────────────► │
+  │  ◄──────────────────────────────  │
+  │  { status: "complete",            │
+  │    pagesCompleted: 5 }           │
+```
+
+### Implementation
+
+The background execution uses **in-process async** — the API handler spawns the LangGraph run as an unresolved Promise and returns immediately. This is the simplest model that works:
+
+```ts
+// POST /api/projects/[id]/generate-site/route.ts
+export async function POST(req, { params }) {
+  const project = await getProject(params.id);
+  const run = await acquireRunLock(project.id); // throws 409 if locked
+
+  // Fire-and-forget: run graph in background
+  runSiteBuildGraph(project, run.id).catch(async (err) => {
+    await markRunFailed(run.id, err.message);
+  });
+
+  return NextResponse.json({ runId: run.id }, { status: 202 });
+}
+```
+
+**Trade-offs of in-process async:**
+
+| Pro | Con |
+|-----|-----|
+| Zero infrastructure (no Redis, no queue) | If the server process restarts, running jobs are lost |
+| Simple to implement and debug | No retry of the entire run on crash (only per-agent retries) |
+| Works in serverless with long function timeout | Requires serverless function timeout ≥ 10 min |
+
+**Mitigation for the cons:** Incremental persistence means a crash loses at most the *current step*, not all prior work. The `GenerationRun` record with `status: "running"` and `startedAt` > 15 min ago is detectable as stale, and the user can trigger a new run.
+
+### Hosting Requirement
+
+This feature requires a hosting environment that supports long-running server processes or serverless functions with ≥ 10 minute timeout. On Vercel, this means Pro plan with `maxDuration` configured. On a VPS/container, this works out of the box.
+
+---
+
+## 8. Tool Layer Design
 
 ### Deterministic Validator Tools
 
@@ -481,7 +610,7 @@ These run after each agent call. They are NOT LLM-powered — they are pure func
 | `validateSiteSettings` | Brand has required fields, actions have unique IDs, nav matches pages | shared_settings |
 | `validatePagePlan` | Sections non-empty, types are valid SectionTypes, no exact duplicate of another page's plan | page_planning |
 | `validatePageDocument` | Schema valid (reuse existing `validateDocumentQuality`), actions reference valid IDs from pool | page_generation |
-| `validateSiteNavigation` | Nav items match generated pages, homepage marked, no orphaned refs | persist_results |
+| `validateSiteNavigation` | Nav items match generated pages, homepage marked, no orphaned refs | finalize |
 
 ### Fallback Tools
 
@@ -503,7 +632,7 @@ These run after each agent call. They are NOT LLM-powered — they are pure func
 
 ---
 
-## 8. Deterministic Validators vs Agent Responsibilities
+## 9. Deterministic Validators vs Agent Responsibilities
 
 ### What Agents Own (LLM-powered)
 
@@ -532,7 +661,7 @@ Agents produce content. Validators verify structure. The orchestrator controls f
 
 ---
 
-## 9. Retry / Repair / Fallback Policy
+## 10. Retry / Repair / Fallback Policy
 
 ### Retry Ceilings
 
@@ -562,12 +691,12 @@ Agents produce content. Validators verify structure. The orchestrator controls f
 
 ---
 
-## 10. Partial Success Behavior
+## 11. Partial Success Behavior
 
 ### Rules
 
 1. **One page failure does NOT abort the entire run.** The workflow continues generating remaining pages.
-2. **Successful pages are persisted immediately** in the persist_results node, regardless of other pages' status.
+2. **Successful pages are persisted incrementally** — each page is saved to the DB as soon as it is generated, not at the end. If the process crashes, completed pages survive.
 3. **Failed pages are saved with `status: "draft"`** and empty/minimal content, so they appear in the editor as needing attention.
 4. **The workflow completes as `partial_complete`** if at least one page succeeded but some failed.
 5. **The workflow completes as `failed`** only if zero pages were generated (including homepage).
@@ -584,7 +713,7 @@ Agents produce content. Validators verify structure. The orchestrator controls f
 
 ---
 
-## 11. Workflow Logging and Observability
+## 12. Workflow Logging and Observability
 
 ### Log Structure
 
@@ -613,10 +742,9 @@ Every significant event is appended to `state.logs`:
 
 ### Persistence
 
-- Logs are collected in `state.logs` during execution
-- On completion, logs are serialized and stored:
-  - In `WorkflowRun.progressLog` (existing JSON field)
-  - Or in a new `agentLogs` field if the existing field is too overloaded
+- Logs are **appended incrementally** to `GenerationRun.logs` at each step (not buffered until end)
+- This ensures logs survive a crash mid-generation
+- Stored as JSON array in the `GenerationRun` record
 
 ### Observability for Solo Founder
 
@@ -630,16 +758,18 @@ Every significant event is appended to `state.logs`:
 
 ---
 
-## 12. Implementation Phases
+## 13. Implementation Phases
 
-### Phase 1: Foundation (LangGraph Setup + Types)
+### Phase 1: Foundation (LangGraph Setup + Types + Operational Infrastructure)
 
 1. Install `langchain` and `@langchain/langgraph` and `@langchain/openai`
-2. Create `lib/agents/types.ts` with all type definitions
+2. Create `lib/agents/types.ts` with all type definitions (including `GenerationRun`)
 3. Create `lib/agents/graph/site-build-state.ts` with state annotations
 4. Create `lib/agents/tools/validators.ts` with deterministic validators
 5. Create `lib/agents/tools/fallbacks.ts` with fallback generators
 6. Create LangChain model wrapper (replacing raw OpenAI calls for agents)
+7. Create `lib/agents/run-lock.ts` with generation-run locking logic (acquire/release/stale detection)
+8. Add `GenerationRun` model to Prisma schema (or extend `WorkflowRun`)
 
 ### Phase 2: Agent Implementations
 
@@ -650,22 +780,24 @@ Every significant event is appended to `state.logs`:
 5. Site Review Agent + prompt
 6. Repair Agent + prompt
 
-### Phase 3: Graph Nodes
+### Phase 3: Graph Nodes (with Incremental Persistence)
 
 1. `site-planning` node (calls Site Planner, validates, retries)
-2. `shared-settings` node (calls Settings Agent, validates, retries)
+2. `shared-settings` node (calls Settings Agent, validates, retries, **persists settings to DB**)
 3. `page-planning` node (loops pages, calls Planner per page)
-4. `page-generation` node (loops pages, calls Generator per page)
+4. `page-generation` node (loops pages, calls Generator per page, **persists each page to DB on success**)
 5. `site-review` node (calls Reviewer + deterministic checks)
-6. `repair` node (loops repair queue, calls Repair Agent)
-7. `persist-results` node (saves to DB, renders HTML)
+6. `repair` node (loops repair queue, calls Repair Agent, **persists patches to DB**)
+7. `finalize` node (update nav, flip page statuses, close generation run)
 
-### Phase 4: Graph Assembly + API
+### Phase 4: Graph Assembly + API + Background Execution
 
 1. Wire all nodes into LangGraph graph with conditional edges
-2. Create `app/api/projects/[id]/generate-site/route.ts`
-3. Integration testing: full flow from business context to saved multi-page site
-4. Error path testing: partial failures, retries, fallbacks
+2. Create `app/api/projects/[id]/generate-site/route.ts` (POST: acquire lock, fire-and-forget, return 202)
+3. Create `app/api/projects/[id]/generation-status/route.ts` (GET: poll run status + progress)
+4. Integration testing: full flow from business context to saved multi-page site
+5. Error path testing: partial failures, retries, fallbacks
+6. Concurrency testing: duplicate trigger returns 409, stale lock recovery works
 
 ### Phase 5: Polish + Testing
 
@@ -677,12 +809,15 @@ Every significant event is appended to `state.logs`:
 
 ---
 
-## 13. Risks and Mitigations
+## 14. Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | LLM output not valid JSON | High | Use structured output mode + JSON parse retry with error feedback |
-| Generation takes too long (>3 min) | Medium | Per-agent timeout (60s), per-node timeout (120s), total workflow timeout (10 min) |
+| Generation takes too long (>3 min) | Medium | Per-agent timeout (60s), per-node timeout (120s), total workflow timeout (10 min). Background execution avoids HTTP timeout. |
+| Server crash mid-generation | Medium | Incremental persistence saves completed pages immediately. Stale run lock auto-expires after 15 min. User can retry; completed work is preserved. |
+| Duplicate generation requests race | High | Generation-run lock (one active run per project). Second request gets 409 Conflict. |
+| Serverless function timeout too short | Medium | Requires ≥ 10 min function timeout. Documented as hosting requirement. |
 | Token cost too high for multi-page | Medium | Use focused prompts, pass summaries not full documents between agents, use GPT-4o-mini for planning/review |
 | Page Generator produces low-quality content | Medium | Review + repair loop catches weak content; bounded retries |
 | LangGraph/LangChain adds too much complexity | Medium | Keep LangGraph usage minimal — use it as a state machine, not for advanced features |
@@ -695,7 +830,7 @@ Every significant event is appended to `state.logs`:
 
 ---
 
-## 14. Acceptance Criteria
+## 15. Acceptance Criteria
 
 ### Must-Pass
 
@@ -713,6 +848,10 @@ Every significant event is appended to `state.logs`:
 12. Generated pages are viewable at published URLs
 13. Total generation time < 5 minutes for a 5-page site
 14. Workflow logs capture each agent step with timing
+15. POST /generate-site returns 202 immediately; status is polled via GET /generation-status
+16. Duplicate generation request while one is running returns 409
+17. Pages are persisted to DB incrementally (crash after 4/5 pages preserves those 4)
+18. Stale generation run (>15 min) is recoverable — new run can start
 
 ### Should-Pass
 
@@ -721,20 +860,22 @@ Every significant event is appended to `state.logs`:
 3. Partial complete state is distinguishable from full complete in API response
 4. Token usage is reasonable (< $0.50 per 5-page site with GPT-4o-mini)
 5. Error messages are actionable (not generic "something went wrong")
+6. Generation-status endpoint shows real-time progress (current phase, pages completed)
 
 ---
 
-## 15. Out-of-Scope Items
+## 16. Out-of-Scope Items
 
 - Editor Assistant Agent (interactive editing after generation)
-- Background/worker-based execution
-- Durable LangGraph state persistence (checkpoint/resume across server restarts)
+- Durable external job queue (Redis/BullMQ) — uses in-process background execution
+- Durable LangGraph checkpoint persistence (auto-resume from exact interrupted node)
 - Image generation for new pages (reuses existing asset pipeline)
 - Custom domain setup
 - A/B testing of generated variants
 - Multi-user collaboration
 - Competitor analysis integration (reuses existing if available)
 - UI for triggering site generation (can be wired later — API-first)
-- Streaming progress to frontend (initial version returns final result)
+- Server-Sent Events or WebSocket progress streaming (uses polling for now)
 - Migration of existing single-page workflows to agentic system
 - Rate limiting or cost controls (manual monitoring for now)
+- Auto-retry of entire crashed runs (user manually retries; completed pages are preserved)
