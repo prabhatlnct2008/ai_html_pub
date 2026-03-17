@@ -6,6 +6,7 @@
 import type { SiteSettings, SiteFooter } from "./types";
 import type { BrandSettings, PageDocument } from "@/lib/page/schema";
 import { renderPageFromDocument } from "@/lib/page/renderer";
+import { BRAND_SITE_MANAGED } from "./types";
 
 function esc(str: string): string {
   if (!str) return "";
@@ -17,32 +18,46 @@ function esc(str: string): string {
 }
 
 /**
+ * Context needed for generating correct published URLs in the site shell.
+ */
+export interface SiteShellContext {
+  /** The project's URL slug, used to build /p/{projectSlug}/... links */
+  projectSlug: string;
+}
+
+/**
  * Render site-level navigation header HTML.
+ * All links are absolute under /p/{projectSlug}.
  */
 function renderSiteHeader(
-  siteSettings: SiteSettings
+  siteSettings: SiteSettings,
+  ctx: SiteShellContext
 ): string {
   const { header, navigation, brand } = siteSettings;
   if (!header) return "";
 
   const visibleNav = navigation.filter((n) => n.visible);
   const siteName = header.siteName || siteSettings.siteName || "";
+  const homeHref = `/p/${esc(ctx.projectSlug)}`;
 
   const navHtml =
     header.showNav && visibleNav.length > 0
       ? `<nav style="display: flex; align-items: center; gap: 24px;">
         ${visibleNav
-          .map(
-            (item) =>
-              `<a href="/${esc(item.slug === "home" ? "" : item.slug)}" style="color: #374151; text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.2s;">${esc(item.label)}</a>`
-          )
+          .map((item) => {
+            // Homepage links to /p/{projectSlug}, sub-pages to /p/{projectSlug}/{pageSlug}
+            const href = item.isHomepage
+              ? homeHref
+              : `${homeHref}/${esc(item.slug)}`;
+            return `<a href="${href}" style="color: #374151; text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.2s;">${esc(item.label)}</a>`;
+          })
           .join("\n        ")}
       </nav>`
       : "";
 
   return `<header style="background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 16px 0;">
   <div class="container" style="display: flex; align-items: center; justify-content: space-between;">
-    <a href="/" style="text-decoration: none; font-size: 20px; font-weight: 700; color: ${esc(brand?.primaryColor || "#2563eb")};">${esc(siteName)}</a>
+    <a href="${homeHref}" style="text-decoration: none; font-size: 20px; font-weight: 700; color: ${esc(brand?.primaryColor || "#2563eb")};">${esc(siteName)}</a>
     ${navHtml}
   </div>
 </header>`;
@@ -101,16 +116,16 @@ function renderSiteFooter(
 
 /**
  * Compose a full page HTML with site header and footer injected.
- * The page body comes from pre-rendered or render-on-read HTML.
- * Header/footer come from siteSettings and are rendered at request time.
+ * Requires projectSlug context to generate correct published URLs.
  */
 export function composePageWithSiteShell(
   pageHtml: string,
-  siteSettings: SiteSettings | null
+  siteSettings: SiteSettings | null,
+  ctx: SiteShellContext
 ): string {
   if (!siteSettings) return pageHtml;
 
-  const headerHtml = renderSiteHeader(siteSettings);
+  const headerHtml = renderSiteHeader(siteSettings, ctx);
   const footerHtml = siteSettings.footer
     ? renderSiteFooter(siteSettings.footer, siteSettings.brand, siteSettings.siteName)
     : "";
@@ -141,14 +156,28 @@ export function composePageWithSiteShell(
 }
 
 /**
+ * Resolve brand for rendering: site settings is canonical, fall back to
+ * whatever is in the page doc, then to defaults.
+ */
+function resolveBrand(
+  siteSettings: SiteSettings | null | undefined,
+  docBrand: BrandSettings | undefined
+): BrandSettings {
+  if (siteSettings?.brand) return siteSettings.brand;
+  if (docBrand && docBrand.primaryColor !== BRAND_SITE_MANAGED.primaryColor) return docBrand;
+  return BRAND_SITE_MANAGED;
+}
+
+/**
  * Re-render a page from its documentJson on read (render-on-read pattern).
  * Falls back to pre-rendered HTML if documentJson is empty.
- * Composes with site shell (header/footer) when siteSettings is provided.
+ * Composes with site shell (header/footer) when siteSettings + context are provided.
  */
 export function renderOnRead(
   documentJson: string,
   renderedHtml: string,
-  siteSettings?: SiteSettings | null
+  siteSettings?: SiteSettings | null,
+  ctx?: SiteShellContext
 ): string {
   let html: string;
 
@@ -156,11 +185,9 @@ export function renderOnRead(
     try {
       const doc = JSON.parse(documentJson) as PageDocument;
       // Inject site-level brand and actions into the document for rendering.
-      // The page doc may have stale/empty brand/actions; site settings is canonical.
-      if (siteSettings) {
-        if (siteSettings.brand) doc.brand = siteSettings.brand;
-        if (siteSettings.actions?.length) doc.actions = siteSettings.actions;
-      }
+      // Page docs do not own brand or actions; site settings is canonical.
+      doc.brand = resolveBrand(siteSettings, doc.brand);
+      if (siteSettings?.actions?.length) doc.actions = siteSettings.actions;
       html = renderPageFromDocument(doc);
     } catch {
       html = renderedHtml;
@@ -169,9 +196,9 @@ export function renderOnRead(
     html = renderedHtml;
   }
 
-  // Compose with site shell if siteSettings provided
-  if (siteSettings) {
-    html = composePageWithSiteShell(html, siteSettings);
+  // Compose with site shell if siteSettings and context are provided
+  if (siteSettings && ctx) {
+    html = composePageWithSiteShell(html, siteSettings, ctx);
   }
 
   return html;

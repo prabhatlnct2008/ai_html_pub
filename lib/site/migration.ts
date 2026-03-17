@@ -7,28 +7,47 @@
  * 2. Build SiteSettings with extracted data
  * 3. Set the existing page as homepage with proper slug/title
  * 4. Remove footer section from page sections (moved to site-level)
- * 5. Update Project.siteSettings and Page fields atomically
+ * 5. Remove brand from page documentJson (site-level only)
+ * 6. Update Project.siteSettings and Page fields atomically
+ * 7. Stamp migrationVersion so we can detect stale migrations
  */
 
 import { prisma } from "@/lib/db";
-import type { PageDocument, Section } from "@/lib/page/schema";
+import type { PageDocument } from "@/lib/page/schema";
 import type { SiteSettings, NavItem } from "./types";
-import { DEFAULT_SITE_SETTINGS } from "./types";
+import { DEFAULT_SITE_SETTINGS, CURRENT_MIGRATION_VERSION, BRAND_SITE_MANAGED } from "./types";
 
 /**
  * Check if a project needs migration.
- * A fully migrated project has siteSettings with brand, navigation array,
- * and header object. Missing any of these indicates partial or no migration.
+ *
+ * Uses an explicit migrationVersion marker as the primary signal.
+ * Falls back to structural checks for projects that were partially
+ * migrated before versioning was introduced.
  */
 export function needsMigration(siteSettingsRaw: string): boolean {
   if (!siteSettingsRaw || siteSettingsRaw === "{}") return true;
   try {
     const parsed = JSON.parse(siteSettingsRaw);
-    // All required fields must be present for migration to be considered complete
+
+    // Primary check: explicit migration version must match current
+    if (
+      typeof parsed.migrationVersion === "number" &&
+      parsed.migrationVersion >= CURRENT_MIGRATION_VERSION
+    ) {
+      return false;
+    }
+
+    // If no version marker, this is either unmigrated or a pre-version migration.
+    // Require all structural fields for backward compat.
     if (!parsed.brand) return true;
     if (!Array.isArray(parsed.navigation)) return true;
     if (!parsed.header || typeof parsed.header !== "object") return true;
-    return false;
+    if (!Array.isArray(parsed.actions)) return true;
+
+    // If all structural checks pass but no version, it's a pre-version
+    // migration that needs re-running to get the version stamp and
+    // to clean up any remaining brand/actions in page docs.
+    return true;
   } catch {
     return true;
   }
@@ -56,6 +75,7 @@ export async function migrateProjectToMultiPage(
     JSON.stringify(DEFAULT_SITE_SETTINGS)
   );
   siteSettings.siteName = project.name;
+  siteSettings.migrationVersion = CURRENT_MIGRATION_VERSION;
 
   if (page) {
     // Parse documentJson if available
@@ -99,6 +119,7 @@ export async function migrateProjectToMultiPage(
       pageId: page.id,
       label: page.title || project.name || "Home",
       slug: page.slug || "home",
+      isHomepage: true,
       order: 0,
       visible: true,
     };
@@ -121,18 +142,14 @@ export async function migrateProjectToMultiPage(
       ).socialLinks as SiteSettings["socialLinks"];
     }
 
-    // Perform atomic update: set page as homepage + update siteSettings + clean page sections
-    // Brand and actions are REMOVED from page doc — they live exclusively at site level.
-    // The renderer will receive them from siteSettings at render time.
+    // Build updated page doc: brand replaced with site-managed sentinel,
+    // actions cleared, footer section removed.
     const updatedDoc = doc
       ? {
           meta: doc.meta,
-          // Provide a minimal brand stub so renderPageFromDocument still works
-          // (it reads brand.primaryColor etc. for CSS). At render time for
-          // published pages, the site-level brand is used instead.
-          brand: doc.brand, // kept read-only for rendering; canonical source is siteSettings
+          brand: BRAND_SITE_MANAGED,
           assets: doc.assets,
-          actions: [], // Actions are exclusively at site level
+          actions: [],
           sections: sectionsWithoutFooter.map((s, i) => ({
             ...s,
             order: i,
@@ -169,7 +186,7 @@ export async function migrateProjectToMultiPage(
       }),
     ]);
   } else {
-    // No page exists yet — just store defaults
+    // No page exists yet — just store defaults with version
     await prisma.project.update({
       where: { id: projectId },
       data: {

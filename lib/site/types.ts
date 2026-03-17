@@ -8,6 +8,7 @@ export interface NavItem {
   pageId: string;
   label: string;
   slug: string;
+  isHomepage: boolean;
   order: number;
   visible: boolean;
 }
@@ -44,6 +45,8 @@ export interface ContactInfo {
  * It holds all site-wide configuration that applies across pages.
  */
 export interface SiteSettings {
+  /** Explicit migration version. Incremented when migration logic changes. */
+  migrationVersion?: number;
   siteName?: string;
   logoAssetId?: string;
   faviconAssetId?: string;
@@ -55,6 +58,24 @@ export interface SiteSettings {
   socialLinks: SocialLink[];
   contactInfo: ContactInfo;
 }
+
+/** Current migration version. Bump this when migration logic changes. */
+export const CURRENT_MIGRATION_VERSION = 1;
+
+/**
+ * Sentinel brand value stored in page documents to indicate that brand
+ * is managed at the site level. The renderer will always overlay this
+ * with the real brand from siteSettings before rendering.
+ * Uses valid CSS defaults so rendering still works if site settings are missing.
+ */
+export const BRAND_SITE_MANAGED: BrandSettings = {
+  tone: "professional",
+  primaryColor: "#2563eb",
+  secondaryColor: "#1e40af",
+  accentColor: "#f59e0b",
+  fontHeading: "Inter",
+  fontBody: "Inter",
+};
 
 /** Default empty site settings for new or unmigrated projects */
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {

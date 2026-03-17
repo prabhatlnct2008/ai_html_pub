@@ -17,6 +17,7 @@ export async function updateSiteNavigation(projectId: string) {
       id: true,
       slug: true,
       title: true,
+      isHomepage: true,
       navOrder: true,
       showInNav: true,
     },
@@ -44,6 +45,7 @@ export async function updateSiteNavigation(projectId: string) {
       pageId: p.id,
       label: p.title || p.slug,
       slug: p.slug,
+      isHomepage: p.isHomepage,
       order: p.navOrder,
       visible: p.showInNav,
     })

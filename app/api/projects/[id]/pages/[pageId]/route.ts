@@ -6,6 +6,7 @@ import { normalizeDocumentActions } from "@/lib/actions/normalizer";
 import { normalizeVariant } from "@/lib/page/section-library";
 import type { PageDocument } from "@/lib/page/schema";
 import type { SiteSettings } from "@/lib/site/types";
+import { BRAND_SITE_MANAGED } from "@/lib/site/types";
 import { updateSiteNavigation } from "@/lib/site/navigation";
 
 /**
@@ -171,18 +172,9 @@ export async function PUT(
       }
     }
 
-    // Brand snapshot from site settings for rendering; actions are empty
-    // because they live exclusively at site level. At render-on-read time,
-    // site brand/actions are injected into the doc before rendering.
-    const brandSnapshot = siteBrand || existingDoc?.brand || {
-      tone: "professional",
-      primaryColor: "#2563eb",
-      secondaryColor: "#1e40af",
-      accentColor: "#f59e0b",
-      fontHeading: "Inter",
-      fontBody: "Inter",
-    };
-
+    // Page docs do NOT own brand or actions. Both live at site level.
+    // Store BRAND_SITE_MANAGED sentinel in doc; the renderer always
+    // overlays with real brand from siteSettings at render time.
     const updatedDoc: PageDocument = {
       meta: meta || existingDoc?.meta || {
         title: page.title || project.name,
@@ -190,15 +182,16 @@ export async function PUT(
         pageType: page.pageType || "service-business",
         themeVariant: page.themeVariant || "clean",
       },
-      brand: brandSnapshot,
+      brand: BRAND_SITE_MANAGED,
       assets: assets || existingDoc?.assets || [],
-      actions: [], // Actions live exclusively at site level
+      actions: [],
       sections,
     };
 
     const documentJson = JSON.stringify(updatedDoc);
 
-    // For pre-rendering, inject site-level actions so buttons resolve correctly
+    // For pre-rendering, inject site-level brand and actions so the
+    // stored renderedHtml is correct for non-render-on-read paths.
     let siteActions: import("@/lib/page/schema").Action[] = [];
     if (project.siteSettings && project.siteSettings !== "{}") {
       try {
@@ -206,7 +199,11 @@ export async function PUT(
         siteActions = ss.actions || [];
       } catch { /* ignore */ }
     }
-    const renderDoc = { ...updatedDoc, actions: siteActions };
+    const renderDoc = {
+      ...updatedDoc,
+      brand: siteBrand || BRAND_SITE_MANAGED,
+      actions: siteActions,
+    };
     const renderedHtml = renderPageFromDocument(renderDoc);
 
     // Version backup + update
