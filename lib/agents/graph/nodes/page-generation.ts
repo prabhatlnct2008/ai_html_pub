@@ -138,10 +138,10 @@ async function persistFailedPage(
   });
 
   if (existing) {
-    // Update existing row to reflect failure
+    // Update existing row to reflect failure and hide from nav
     await prisma.page.update({
       where: { id: existing.id },
-      data: { status: "failed" },
+      data: { status: "failed", showInNav: false },
     });
   } else {
     const pageCount = await prisma.page.count({ where: { projectId } });
