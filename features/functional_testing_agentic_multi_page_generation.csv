@@ -129,7 +129,7 @@ A099,Generation Status,updatedAt reflects last DB write,"1. Poll twice with a fe
 ,,,,,,
 ,=== GENERATION RUN HISTORY ===,,,,,
 A100,Run History,Multiple runs per project are preserved,"1. Complete a generation 2. Trigger and complete a second generation","Both GenerationRun records exist in DB with different IDs. Both are queryable.",,
-A101,Run History,New run after stale does not delete prior successful pages,"1. Complete a generation (5 pages published) 2. Simulate stale run (status: running, startedAt > 15 min ago) 3. Trigger new generation","Pages from the first completed run are NOT deleted. New run creates/updates pages independently.",,
+A101,Run History,New run after stale does not delete prior successful pages,"1. Complete a generation (5 pages published) 2. Simulate stale run (status: running, updatedAt > 15 min ago) 3. Trigger new generation","Pages from the first completed run are NOT deleted. New run creates/updates pages independently.",,
 A102,Run History,Stale run recovery marks stale run as failed and preserves its pages,"1. Start generation 2. Kill process after 3 pages saved 3. Trigger new generation","Stale GenerationRun is marked status: failed. 3 Page records from stale run still exist in DB with their content.",,
 A103,Run History,GET /generation-status with invalid runId returns 404,"1. GET /generation-status?runId=nonexistent-uuid","Response is 404 Not Found",,
 ,,,,,,
