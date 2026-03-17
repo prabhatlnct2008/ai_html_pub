@@ -454,3 +454,544 @@ The immediate goal is to build:
 `a safe, powerful, agentic website-building system`
 
 with the right layers introduced in the right order.
+
+---
+
+## Exact Design And Libraries To Use
+
+This section defines the practical implementation direction for the agentic system in this repo.
+
+The goal is to remove ambiguity and make the architecture concrete enough to build.
+
+## Core Stack Direction
+
+Use:
+
+- `LangChain` for model/tool orchestration primitives
+- `LangGraph` for stateful, retryable, graph-based agent workflows
+- `CrewAI` or “langcrew-style” role modeling only where role framing adds clarity, but keep the actual production orchestration centered on `LangGraph`
+
+### Recommended interpretation
+
+- `LangChain` = model wrappers, prompts, tools, output parsing
+- `LangGraph` = main execution engine for agent state transitions and loops
+- `Crew-style roles` = conceptual/organizational layer for defining agent responsibilities
+
+This gives the product:
+
+- explicit workflow graphs
+- persistent state
+- retries
+- branching
+- repair loops
+- easier debugging than loose multi-agent chats
+
+For this product, `LangGraph` should be the backbone.
+
+Do not build the core production system as:
+
+- agents freely chatting with each other without state control
+- ad hoc prompt chains with unclear ownership
+- uncontrolled multi-agent loops
+
+---
+
+## Recommended Libraries
+
+### Primary
+
+- `langchain`
+- `langgraph`
+- OpenAI SDK for model access where needed under LangChain wrappers
+
+### Optional / selective
+
+- `crewai` or equivalent role-definition pattern only if it stays thin and does not become a second orchestration runtime
+- `zod` for strict schema validation of agent inputs/outputs
+
+### Keep deterministic utilities in-house
+
+Do not outsource core validation logic to the agent framework.
+
+Keep these as application-owned tools/utilities:
+
+- schema validation
+- navigation consistency checks
+- action existence checks
+- slug uniqueness checks
+- page/site persistence
+- rendering
+- migration logic
+- retry counting
+- workflow logging
+
+---
+
+## Why LangGraph Should Be The Core
+
+This product needs:
+
+- multi-step planning
+- page-by-page execution
+- review and repair loops
+- bounded retries
+- explicit state
+- partial completion
+
+That maps cleanly to a graph/state-machine style orchestration system.
+
+`LangGraph` is the right fit because it gives:
+
+- explicit nodes
+- explicit state passing
+- conditional transitions
+- persistence compatibility
+- interrupt/resume patterns
+- easier inspection for a solo founder
+
+This is safer than a freeform “multi-agent conversation” architecture.
+
+---
+
+## Agent Model
+
+The product should use a small set of explicit agents.
+
+Each agent should have:
+
+- one responsibility
+- typed input
+- typed output
+- limited tools
+- bounded retry policy
+
+## Agent Set
+
+### 1. Site Planner Agent
+
+Purpose:
+
+- infer sitemap
+- define page purposes
+- choose the minimum viable useful set of pages
+
+Input:
+
+- business context
+- user answers
+- optional competitor/ref context
+
+Output:
+
+- `SitePlan`
+
+### 2. Shared Settings Agent
+
+Purpose:
+
+- create site-level theme
+- create shared actions
+- create header/footer defaults
+- initialize nav strategy
+
+Input:
+
+- business context
+- site plan
+
+Output:
+
+- `SiteSettingsDraft`
+
+### 3. Page Planner Agent
+
+Purpose:
+
+- create a page plan for one page
+- choose sections, variants, CTA path, SEO intent
+
+Input:
+
+- site plan
+- site settings
+- page goal
+- summaries of already-generated pages
+
+Output:
+
+- `PagePlan`
+
+### 4. Page Generator Agent
+
+Purpose:
+
+- generate a structured `PageDocument`
+
+Input:
+
+- page plan
+- site settings
+- business context
+- shared action pool
+
+Output:
+
+- `PageDocument`
+
+### 5. Site Review Agent
+
+Purpose:
+
+- review the whole generated site
+- identify duplication, weak messaging, CTA problems, missing contact path, etc.
+
+Input:
+
+- site plan
+- site settings
+- page summaries/documents
+
+Output:
+
+- `SiteReviewResult`
+
+### 6. Repair Agent
+
+Purpose:
+
+- apply targeted fixes to site/page/section scope
+
+Input:
+
+- review issue
+- current page/site state
+
+Output:
+
+- patched structured output
+
+### 7. Editor Assistant Agent
+
+Purpose:
+
+- help users modify site/page/section content after generation
+
+This comes after the first site-build loop is working.
+
+---
+
+## Agent Interaction Model
+
+Agents should not talk to each other freely in open chat.
+
+They should communicate through structured state passed by the orchestrator.
+
+The pattern should be:
+
+1. orchestrator calls agent
+2. agent returns typed output
+3. deterministic validators run
+4. orchestrator decides next node
+
+This keeps the system:
+
+- observable
+- testable
+- replayable
+- safer
+
+---
+
+## Proposed LangGraph Flow
+
+Recommended graph:
+
+1. `site_planning`
+2. `shared_settings_generation`
+3. `homepage_planning`
+4. `homepage_generation`
+5. `supporting_pages_planning`
+6. `supporting_pages_generation`
+7. `site_review`
+8. `site_repair`
+9. `rendering`
+10. `saving`
+11. `complete | partial_complete | failed`
+
+### Conditional branches
+
+- if site planner fails twice -> fallback site map
+- if page generation fails -> retry page
+- if review finds repairable issues -> go to repair node
+- if repair succeeds -> review once more
+- if one page remains broken -> continue as `partial_complete`
+
+---
+
+## State Shape For LangGraph
+
+Use one explicit state object for the site build run.
+
+Example:
+
+```ts
+type SiteBuildGraphState = {
+  projectId: string
+  workflowRunId: string
+  businessContext: Record<string, unknown>
+
+  sitePlan: SitePlan | null
+  siteSettingsDraft: SiteSettings | null
+
+  pagePlans: Record<string, PagePlan>
+  pageDocuments: Record<string, PageDocument>
+
+  pageStatuses: Record<
+    string,
+    {
+      state: "pending" | "planning" | "generating" | "reviewing" | "repairing" | "complete" | "failed"
+      retryCount: number
+      issues: string[]
+    }
+  >
+
+  reviewResult: SiteReviewResult | null
+  repairQueue: Array<{
+    scope: "site" | "page" | "section"
+    targetId: string
+    issue: string
+  }>
+
+  completedPages: string[]
+  failedPages: string[]
+  logs: Array<{
+    ts: string
+    step: string
+    type: string
+    message: string
+  }>
+}
+```
+
+This state should be serializable and persistable.
+
+---
+
+## Tool Layer
+
+Agents should use tools, but tools should be mostly deterministic application functions.
+
+## Recommended tool categories
+
+### Validation tools
+
+- `validate_page_schema`
+- `validate_site_navigation`
+- `validate_action_refs`
+- `validate_required_contact_path`
+- `validate_slug_uniqueness`
+
+### Analysis tools
+
+- `compare_page_summaries`
+- `detect_duplicate_copy`
+- `detect_missing_cta`
+- `detect_empty_sections`
+
+### Fallback tools
+
+- `build_fallback_page_plan`
+- `build_fallback_section`
+- `apply_safe_theme_defaults`
+
+### Persistence tools
+
+- `save_site_settings`
+- `save_page_document`
+- `save_review_result`
+- `append_workflow_log`
+
+These tools should be wrapped for LangChain/LangGraph use, but the business logic should stay in repo-owned code.
+
+---
+
+## File Structure Recommendation
+
+Recommended structure:
+
+```txt
+lib/ai/
+  agents/
+    site-planner.ts
+    shared-settings-agent.ts
+    page-planner.ts
+    page-generator.ts
+    site-review-agent.ts
+    repair-agent.ts
+    editor-assistant-agent.ts
+
+  graph/
+    site-build-graph.ts
+    site-build-state.ts
+    site-build-nodes.ts
+    site-build-transitions.ts
+
+  tools/
+    validate-page-schema.ts
+    validate-site-navigation.ts
+    validate-action-refs.ts
+    detect-duplicate-copy.ts
+    detect-missing-cta.ts
+    fallback-page-plan.ts
+    fallback-section.ts
+    workflow-log.ts
+
+  prompts/
+    site-planner.ts
+    shared-settings.ts
+    page-planner.ts
+    page-generator.ts
+    site-reviewer.ts
+    repair-agent.ts
+
+  parsers/
+    site-plan-parser.ts
+    page-plan-parser.ts
+    site-review-parser.ts
+```
+
+This should sit alongside the current workflow system, not replace everything at once.
+
+---
+
+## How Agents Should Work In Practice
+
+## Site Planner
+
+- one prompt
+- one typed output
+- deterministic validation
+- retry at most 2 times
+- fallback to minimal sitemap if still failing
+
+## Shared Settings Agent
+
+- uses site plan + business context
+- returns site-wide theme/actions/header/footer defaults
+- deterministic sanity check
+- retry at most 2 times
+
+## Page Planner
+
+- runs once per page
+- references site plan and already-generated page summaries
+- must avoid repetitive section plans
+
+## Page Generator
+
+- runs once per page
+- produces structured `PageDocument`
+- does not own site-level brand/actions
+- should reference them but not redefine them
+
+## Reviewer
+
+- runs after all required pages are generated
+- mixes deterministic checks + LLM quality review
+
+## Repair Agent
+
+- only touches flagged scope
+- never regenerates the whole site unless absolutely necessary
+- should prefer section/page fixes over site-wide reset
+
+---
+
+## Retry Boundaries
+
+Use strict retry ceilings.
+
+Recommended:
+
+- site planner: 2 attempts
+- shared settings: 2 attempts
+- page planner: 2 attempts per page
+- page generator: 2 attempts per page
+- repair pass: 2 attempts per page/section target
+- review loop: max 2 passes total
+
+This is essential for solo-founder operability.
+
+---
+
+## Memory And Context Strategy
+
+Do not treat long agent memory as magic.
+
+For this product, memory should initially be:
+
+- project business context
+- inferred site plan
+- generated page summaries
+- review issues
+- user edits
+
+Store these as structured project/workflow artifacts first.
+
+Later, if needed, add:
+
+- retrieval
+- durable long-term preferences
+- cross-session editor-assistant memory
+
+That later layer can move the system slightly closer to Base44-style persistent intelligence.
+
+---
+
+## What Remains Deterministic
+
+Even in an agentic system, keep these outside agent judgment:
+
+- database writes
+- migration rules
+- schema enforcement
+- route structure
+- publish state enforcement
+- nav/page consistency rules
+- retry counters
+- workflow transitions
+- permission checks
+
+That is not “going back.”
+That is correct system design.
+
+---
+
+## MVP Build Order
+
+Implement in this order:
+
+1. `site-planner`
+2. `shared-settings-agent`
+3. `page-planner`
+4. `page-generator`
+5. deterministic validators
+6. `site-review-agent`
+7. `repair-agent`
+8. LangGraph orchestration and persistence polish
+
+Do not start with background autonomy or code/runtime agents.
+
+---
+
+## Future Expansion
+
+After the structured website agent layer is stable:
+
+- add richer tool use
+- add memory
+- add background optimization agents
+- add integration agents
+- only later consider Bolt-like code/runtime agents if the product expands beyond structured websites
+
+This is how the system grows safely while still staying clearly agentic.
