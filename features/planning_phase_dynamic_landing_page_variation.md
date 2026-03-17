@@ -676,6 +676,9 @@ The **page planner** makes the initial variant decisions (it has business contex
 
 | File | Change |
 |------|--------|
+| `lib/agents/types.ts` | Ensure `SiteSettingsDraft` type includes `themeVariant: string` field so it's available downstream from shared settings |
+| `lib/agents/agents/shared-settings-agent.ts` | Ensure the shared settings agent outputs `themeVariant` as part of the site settings draft (e.g., derived from business type/tone) |
+| `lib/agents/prompts/shared-settings.ts` | Update prompt to instruct LLM to select a `themeVariant` value (`"clean"`, `"bold"`, `"editorial"`, `"premium"`) based on business context |
 | `lib/agents/prompts/page-planner.ts` | Make variant selection mandatory in system prompt; add full variant list with business-type rules |
 | `lib/agents/agents/page-planner.ts` | Add post-parse normalization: fill missing variants via `selectVariant()` |
 | `lib/agents/prompts/page-generator.ts` | Add variant enforcement rules to system prompt; add themeVariant + styling guidance to user prompt builder |

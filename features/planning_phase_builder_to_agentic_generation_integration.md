@@ -492,11 +492,14 @@ No changes needed in the editor itself.
 
 ## 12. How Legacy Workflow Should Be Gated from New Projects
 
-### Gating strategy: project-level flag
+### Gating strategy: environment variable
 
-**Decision:** Use the presence of a `GenerationRun` record (or absence of a completed `WorkflowRun` past intake) to determine which flow to use.
+**Decision:** Use the environment variable `AGENTIC_GENERATION_ENABLED` (default `true`) to gate whether new projects use the agentic generation flow or the legacy workflow flow. This is a global kill-switch, not a per-project flag.
 
-**Simpler alternative (recommended):** Add an environment variable `AGENTIC_GENERATION_ENABLED=true` (default `true`) and always use the agentic flow for new projects unless disabled.
+- When `true` (default): kickoff completion returns `agenticReady: true` and does NOT call `runWorkflow()`. The builder client then triggers `POST /generate-site`.
+- When `false`: kickoff completion calls `runWorkflow()` as before. The builder uses the legacy workflow polling flow.
+
+**Note:** The builder's `detectFlowMode()` (section 7a) still uses project-level state (GenerationRun / WorkflowRun presence) to determine which polling flow to use for *already-started* projects (e.g., after page reload). The env var controls whether *new* generations use the agentic path; project state detection handles resuming in-progress work regardless of the env var's current value.
 
 ### Where gating applies
 
