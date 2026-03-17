@@ -5,14 +5,18 @@ import { useEditor, type PreviewMode } from "./EditorContext";
 interface EditorToolbarProps {
   onSave: () => Promise<void>;
   saving: boolean;
-  slug: string;
+  projectSlug: string;
+  pageSlug: string;
+  isHomepage: boolean;
   version: number;
 }
 
 export default function EditorToolbar({
   onSave,
   saving,
-  slug,
+  projectSlug,
+  pageSlug,
+  isHomepage,
   version,
 }: EditorToolbarProps) {
   const { isDirty, isPreview, setPreview, previewMode, setPreviewMode } = useEditor();
@@ -70,7 +74,7 @@ export default function EditorToolbar({
         </button>
 
         <a
-          href={`/p/${slug}`}
+          href={isHomepage ? `/p/${projectSlug}` : `/p/${projectSlug}/${pageSlug}`}
           target="_blank"
           className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
         >
