@@ -123,8 +123,8 @@ BuilderPage stores runId → starts polling GET /generation-status?runId=...
 [NO plan_review gate — agentic system plans internally]
   ↓
 Polling detects terminal status:
-  → "completed": redirect to /projects/{id}/editor
-  → "partial_completed": redirect to editor with warning banner
+  → "complete": redirect to /projects/{id}/editor
+  → "partial_complete": redirect to editor with warning banner
   → "failed": show error + retry button
   ↓
 Editor loads pages via GET /api/projects/{id}/pages [existing multi-page support]
@@ -229,7 +229,69 @@ async function handleAgenticGeneration() {
 }
 ```
 
-**On builder page mount:** If the project already has a `GenerationRun` in progress (detected via a check), resume polling immediately instead of re-triggering kickoff.
+**On builder page mount:** If the project already has a `GenerationRun` in progress, the builder must recover the `runId` and resume polling. See section 7a for the recovery mechanism.
+
+### 7a. How the builder recovers `runId` after a page reload
+
+The `GET /generation-status` endpoint requires `runId` — there is no "latest run" fallback. After a page reload, the builder has lost its in-memory `runId`. Three options were considered:
+
+**Option A (chosen): New lightweight lookup endpoint**
+
+Add `GET /api/projects/[id]/active-generation` that returns the most recent `running` GenerationRun for the project, or 404 if none exists:
+
+```typescript
+// app/api/projects/[id]/active-generation/route.ts
+export async function GET(request, { params }) {
+  const { id } = await params;
+  const run = await prisma.generationRun.findFirst({
+    where: { projectId: id, status: "running" },
+    orderBy: { startedAt: "desc" },
+    select: { id: true, currentPhase: true, startedAt: true },
+  });
+  if (!run) return errorResponse("No active generation", 404);
+  return jsonResponse({ runId: run.id, currentPhase: run.currentPhase });
+}
+```
+
+The builder calls this on mount. If a running generation exists, it stores the `runId` and resumes polling `/generation-status?runId=...`. If 404, no active generation — proceed with normal kickoff flow.
+
+**Why not Option B (localStorage):** `runId` in localStorage is fragile — stale across sessions, wrong if user opens a different project, not cleared on completion in another tab.
+
+**Why not Option C (project field):** Adding `activeRunId` to the Project model creates a migration and couples the project to generation state that already lives in GenerationRun.
+
+**Builder mount flow with recovery:**
+
+```typescript
+// On builder page mount:
+async function detectFlowMode() {
+  // 1. Check for active agentic generation (handles reload case)
+  const activeGenRes = await fetch(`/api/projects/${projectId}/active-generation`);
+  if (activeGenRes.ok) {
+    const { runId, currentPhase } = await activeGenRes.json();
+    setRunId(runId);
+    setFlowMode("agentic");
+    startAgenticPolling(runId);
+    return;
+  }
+
+  // 2. Check legacy workflow state
+  const workflowRes = await fetch(`/api/projects/${projectId}/workflow`);
+  const workflowData = await workflowRes.json();
+  if (workflowData.workflow?.state &&
+      workflowData.workflow.state !== "intake" &&
+      workflowData.workflow.state !== "kickoff_inferring") {
+    setFlowMode("legacy");
+    return;
+  }
+
+  // 3. New or early-stage project → agentic flow (will go through kickoff first)
+  setFlowMode("agentic");
+}
+```
+
+**Files affected by this decision:**
+- New: `app/api/projects/[id]/active-generation/route.ts` (~20 lines)
+- Changed: `builder/page.tsx` (mount detection logic)
 
 ---
 
@@ -259,14 +321,14 @@ async function pollAgenticStatus(runId: string) {
   if (data.reviewScore !== null) setReviewScore(data.reviewScore);
 
   // Handle terminal states
-  if (data.status === "completed") {
+  if (data.status === "complete" || data.status === "partial_complete") {
     stopPolling();
     handleGenerationComplete(data);
   } else if (data.status === "failed") {
     stopPolling();
     handleGenerationFailed(data);
   }
-  // "running" / "pending" → continue polling
+  // "running" → continue polling
 }
 ```
 
@@ -308,15 +370,15 @@ Replace the legacy linear progress bar with a phase-aware progress component for
 | `currentPhase` | Display Text | Icon |
 |----------------|-------------|------|
 | `planning` | "Planning site structure..." | 📋 |
-| `shared_settings` | "Setting up brand & navigation..." | 🎨 |
+| `settings` | "Setting up brand & navigation..." | 🎨 |
 | `page_planning` | "Planning pages..." | 📝 |
 | `page_generation` | "Generating pages (X of Y)..." | ⚡ |
-| `site_review` | "Reviewing quality..." | 🔍 |
-| `repair` | "Fixing issues..." | 🔧 |
-| `finalize` | "Finalizing..." | ✅ |
-| `completed` | "Your website is ready!" | 🎉 |
+| `reviewing` | "Reviewing quality..." | 🔍 |
+| `repairing` | "Fixing issues..." | 🔧 |
+| `finalizing` | "Finalizing..." | ✅ |
+| `complete` | "Your website is ready!" | 🎉 |
 | `failed` | "Generation failed" | ❌ |
-| `partial_completed` | "Website partially generated" | ⚠️ |
+| `partial_complete` | "Website partially generated" | ⚠️ |
 
 ### Progress percentage calculation
 
@@ -324,14 +386,14 @@ Replace the legacy linear progress bar with a phase-aware progress component for
 function calculateProgress(data: GenerationStatusResponse): number {
   const phaseWeights: Record<string, number> = {
     planning: 10,
-    shared_settings: 20,
+    settings: 20,
     page_planning: 30,
     page_generation: 40, // + per-page increment
-    site_review: 75,
-    repair: 85,
-    finalize: 95,
-    completed: 100,
-    partial_completed: 100,
+    reviewing: 75,
+    repairing: 85,
+    finalizing: 95,
+    complete: 100,
+    partial_complete: 100,
     failed: 100,
   };
 
@@ -362,14 +424,14 @@ These can be derived from `recentLogs` in the generation-status response.
 
 ## 10. How Completion / Partial Completion / Failure Should Be Handled
 
-### `status === "completed"`
+### `status === "complete"`
 
 1. Show success message in chat: "Your website is ready! X pages generated."
 2. Show completion state in progress component
 3. After 1500ms delay (same as legacy), redirect to `/projects/{id}/editor`
 4. Editor loads all pages via `GET /api/projects/{id}/pages`
 
-### `status === "partial_completed"`
+### `status === "partial_complete"`
 
 1. Show warning message in chat: "Your website is partially ready. X of Y pages generated successfully. Z pages could not be generated."
 2. Show partial completion state with warning styling
@@ -401,12 +463,12 @@ function handleGenerationComplete(data: GenerationStatusResponse) {
   const totalPages = (summary?.pagesGenerated ?? 0) + (summary?.pagesFailed ?? 0);
   const successPages = summary?.pagesGenerated ?? 0;
 
-  if (data.status === "completed") {
+  if (data.status === "complete") {
     addChatMessage("assistant", `Your ${successPages}-page website is ready!`);
     setTimeout(() => {
       router.push(`/projects/${projectId}/editor`);
     }, 1500);
-  } else if (data.status === "partial_completed") {
+  } else if (data.status === "partial_complete") {
     addChatMessage("assistant",
       `${successPages} of ${totalPages} pages generated. Some pages had issues.`
     );
@@ -479,24 +541,17 @@ if (isAgenticGenerationEnabled()) {
 
 ### Rule: old projects with existing `WorkflowRun` records past intake continue using the legacy flow
 
-**Detection logic on builder mount:**
+**Detection logic on builder mount** (see section 7a for the full `detectFlowMode()` implementation):
 
-```typescript
-// On builder page mount:
-const workflowRes = await fetch(`/api/projects/${projectId}/workflow`);
-const workflowData = await workflowRes.json();
+1. **First:** Check `GET /api/projects/{id}/active-generation` — if 200, an agentic run is active. Resume polling with returned `runId`.
+2. **Second:** Check `GET /api/projects/{id}/workflow` — if WorkflowRun state is past intake (e.g., `plan_review`, `generation_running`, `complete`), this is a legacy project. Use `flowMode = "legacy"`.
+3. **Third:** If neither condition matches, this is a new or early-stage project. Use `flowMode = "agentic"` and proceed through kickoff.
 
-if (workflowData.workflow?.state &&
-    workflowData.workflow.state !== "intake" &&
-    workflowData.workflow.state !== "kickoff_inferring") {
-  // Legacy project already in workflow — use old polling
-  setFlowMode("legacy");
-} else {
-  // New or early-stage project — check for existing generation run
-  // or proceed with kickoff → agentic flow
-  setFlowMode("agentic");
-}
-```
+### Decision: agentic projects stop showing WorkflowRun state after intake completes
+
+For agentic projects, the WorkflowRun is created by `transitionWorkflowPastIntake()` and stays at `intake_complete` permanently. The builder never polls `/workflow` for agentic projects after that point — all progress comes from `/generation-status`. The WorkflowRun row exists purely so that `flowMode` detection can distinguish "legacy project already in workflow" from "new project at intake stage."
+
+The builder does NOT show any legacy workflow steps, progress bar, or plan review for agentic projects. The `AgenticProgress` component fully replaces `WorkflowProgress` when `flowMode === "agentic"`.
 
 ### Rule: the builder page supports both flows in the same component
 
@@ -525,14 +580,20 @@ This avoids breaking existing projects while enabling the new flow for new ones.
 | File | Purpose |
 |------|---------|
 | `app/projects/[id]/builder/AgenticProgress.tsx` | Progress component for agentic generation (phases, page count, logs) |
+| `app/api/projects/[id]/active-generation/route.ts` | Lightweight endpoint to recover `runId` for active generation (used on builder page reload) |
 | `lib/config.ts` (or add to existing) | `isAgenticGenerationEnabled()` helper |
 
 ### May need minor changes
 
 | File | Why |
 |------|-----|
-| `app/api/projects/[id]/workflow/route.ts` | May need to return an indicator if project has an active GenerationRun |
-| `app/projects/[id]/editor/page.tsx` | May need a banner for partial_completed projects |
+| `app/projects/[id]/editor/page.tsx` | May need a banner for partial_complete projects |
+
+### No longer needed
+
+| File | Why |
+|------|-----|
+| `app/api/projects/[id]/workflow/route.ts` | NOT modified — agentic projects do not show WorkflowRun state after intake. The builder's `flowMode` detection reads WorkflowRun to classify legacy projects, but does not need new fields. |
 
 ### No changes needed
 
@@ -561,15 +622,17 @@ This avoids breaking existing projects while enabling the new flow for new ones.
 
 ### Phase 2: Builder page agentic trigger + basic polling
 
-**Files:** `builder/page.tsx`
+**Files:** `builder/page.tsx`, `app/api/projects/[id]/active-generation/route.ts`
 
-1. Add `flowMode` state with detection logic on mount
-2. When `agenticReady: true` received, call `POST /generate-site`
-3. Store `runId`, start polling `/generation-status?runId=...` at 2000ms
-4. Display raw status in a simple text element (temporary UI)
-5. Handle terminal states: redirect on complete, show error on failed
+1. Create `GET /active-generation` endpoint (returns runId of active GenerationRun or 404)
+2. Add `flowMode` state with `detectFlowMode()` on mount (see section 7a)
+3. When `agenticReady: true` received, call `POST /generate-site`
+4. Store `runId`, start polling `/generation-status?runId=...` at 2000ms
+5. Display raw status in a simple text element (temporary UI)
+6. Handle terminal states: redirect on complete, show error on failed
+7. Handle page reload: `detectFlowMode()` checks `/active-generation` first, resumes polling if active
 
-**Test:** Verify new project goes through kickoff → generate-site → polling → redirect to editor.
+**Test:** Verify new project goes through kickoff → generate-site → polling → redirect to editor. Verify page reload during generation resumes polling.
 
 ### Phase 3: Agentic progress component
 
@@ -578,7 +641,7 @@ This avoids breaking existing projects while enabling the new flow for new ones.
 1. Build `AgenticProgress` component with phase steps, page counter, progress bar
 2. Integrate into builder's right panel (replaces `WorkflowProgress` for agentic mode)
 3. Add chat messages derived from `recentLogs`
-4. Handle partial_completed with warning banner
+4. Handle partial_complete with warning banner
 
 **Test:** Verify progress UI updates correctly through all phases.
 
@@ -591,7 +654,7 @@ This avoids breaking existing projects while enabling the new flow for new ones.
 3. Handle 409 from generate-site (existing run — resume polling with `existingRunId`)
 4. Add retry button for failed generation
 5. Confirm editor shows all generated pages correctly
-6. Add partial_completed banner in editor if applicable
+6. Add partial_complete banner in editor if applicable
 
 **Test:** Full flow regression including edge cases.
 
@@ -606,7 +669,7 @@ This avoids breaking existing projects while enabling the new flow for new ones.
 | Agentic generation takes very long (>5 min) | User thinks it's stuck | Show incremental progress via logs and page count; add "still working..." messages |
 | Race condition: user closes tab, reopens, triggers second generation | Duplicate run attempt | Run lock in `generate-site` prevents this — returns 409 with existing runId |
 | Legacy projects accidentally routed to agentic flow | Broken experience | `flowMode` detection on builder mount checks WorkflowRun state; projects past intake stay in legacy |
-| `partial_completed` state confuses users | User doesn't understand failed pages | Clear messaging: "X pages generated, Y could not be created. You can edit what was generated." |
+| `partial_complete` state confuses users | User doesn't understand failed pages | Clear messaging: "X pages generated, Y could not be created. You can edit what was generated." |
 | Editor doesn't show multiple pages properly | User only sees one page | Editor already has multi-page support via `loadSite()` + page list; verify it works with agentic output |
 | Both WorkflowRun and GenerationRun exist for same project | State confusion | WorkflowRun stays at `intake_complete`; GenerationRun tracks agentic progress. They don't conflict because they track different things. |
 | `transitionWorkflowPastIntake()` fails | Neither flow starts | Wrap in try/catch; if it fails, still return `agenticReady: true` — the WorkflowRun is just for state tracking, not critical path |
@@ -621,9 +684,9 @@ This avoids breaking existing projects while enabling the new flow for new ones.
 2. `runId` is returned and stored in builder state
 3. Builder polls `GET /generation-status?runId=...` and displays progress
 4. Progress UI shows current phase, page count, and percentage
-5. On `completed`: builder redirects to editor within 2 seconds
+5. On `complete`: builder redirects to editor within 2 seconds
 6. Editor loads and displays all generated pages in the page list
-7. On `partial_completed`: builder redirects to editor with a warning message
+7. On `partial_complete`: builder redirects to editor with a warning message
 8. On `failed`: builder shows error message and retry button
 9. Retry button calls `POST /generate-site` again and resumes polling
 10. Existing legacy projects (with WorkflowRun past intake) still use the old workflow flow
@@ -637,7 +700,7 @@ This avoids breaking existing projects while enabling the new flow for new ones.
 1. Chat panel shows phase transition messages during generation
 2. Progress component shows recent log entries
 3. Multiple generated pages appear in editor page list with correct titles and types
-4. Failed pages (from partial_completed) are visible in editor with `status="failed"` indicator
+4. Failed pages (from partial_complete) are visible in editor with `status="failed"` indicator
 5. Navigation items in the editor reflect only successfully generated pages
 
 ---

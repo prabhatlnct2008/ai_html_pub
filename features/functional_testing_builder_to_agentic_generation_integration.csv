@@ -11,15 +11,15 @@ BT-003,Trigger,Duplicate generation attempt returns 409,"Active GenerationRun ex
 BT-004,Polling,Builder polls generation-status with runId,"Generation triggered, runId stored in builder state","1. Trigger generation
 2. Observe network requests","Builder polls GET /generation-status?runId=<runId> every ~2000ms. Each response contains status, currentPhase, progress, recentLogs.",Must-pass,"builder/page.tsx, generation-status/route.ts"
 BT-005,Polling,Progress updates display in UI during generation,"Generation running, polling active","1. Trigger generation
-2. Watch progress component through all phases","Progress component shows phase transitions: planning → shared_settings → page_planning → page_generation → site_review → finalize. Page count updates during page_generation phase.",Must-pass,"builder/page.tsx, AgenticProgress.tsx"
+2. Watch progress component through all phases","Progress component shows phase transitions: planning → settings → page_planning → page_generation → reviewing → finalizing. Page count updates during page_generation phase.",Must-pass,"builder/page.tsx, AgenticProgress.tsx"
 BT-006,Polling,Page generation progress shows correct counts,"Generation in page_generation phase","1. Observe progress during page generation phase","Progress shows 'Generating pages (X of Y)' with X incrementing as pages complete. Y matches pagesPlanned from response.",Must-pass,"builder/page.tsx, AgenticProgress.tsx"
-BT-007,Completion,Completed generation redirects to editor,"Generation completes with status='completed'","1. Wait for generation to complete
-2. Observe builder behavior","Builder detects status='completed'. Shows success message. Redirects to /projects/{id}/editor within 2 seconds.",Must-pass,"builder/page.tsx"
+BT-007,Completion,Completed generation redirects to editor,"Generation completes with status='complete'","1. Wait for generation to complete
+2. Observe builder behavior","Builder detects status='complete'. Shows success message. Redirects to /projects/{id}/editor within 2 seconds.",Must-pass,"builder/page.tsx"
 BT-008,Completion,Editor shows all generated pages after redirect,"Generation complete, redirected to editor","1. Complete generation (multiple pages)
 2. Arrive at editor
 3. Check page list","Editor page list shows all generated pages (e.g., Home, About, Services, Contact). First page (homepage) is loaded in canvas. Pages are clickable and switchable.",Must-pass,"editor/page.tsx"
-BT-009,Partial,Partial completion redirects with warning,"Generation completes with status='partial_completed'","1. Wait for generation with some page failures
-2. Observe builder behavior","Builder detects status='partial_completed'. Shows warning message about failed pages. Redirects to editor. Editor shows only successfully generated pages in nav.",Must-pass,"builder/page.tsx, editor/page.tsx"
+BT-009,Partial,Partial completion redirects with warning,"Generation completes with status='partial_complete'","1. Wait for generation with some page failures
+2. Observe builder behavior","Builder detects status='partial_complete'. Shows warning message about failed pages. Redirects to editor. Editor shows only successfully generated pages in nav.",Must-pass,"builder/page.tsx, editor/page.tsx"
 BT-010,Failure,Failed generation shows retry option,"Generation fails with status='failed'","1. Wait for generation failure
 2. Observe builder behavior","Builder detects status='failed'. Shows error message with description. Displays 'Retry' button. Does NOT redirect to editor.",Must-pass,"builder/page.tsx"
 BT-011,Failure,Retry button triggers new generation,"Failed generation, retry button visible","1. Click retry button after generation failure","Builder calls POST /generate-site again. New runId received. Polling resumes with new runId. Progress component resets.",Must-pass,"builder/page.tsx, generate-site/route.ts"
@@ -33,7 +33,7 @@ BT-014,Gating,AGENTIC_GENERATION_ENABLED=false uses legacy flow,"Environment var
 3. Complete kickoff","Kickoff completion calls runWorkflow() as before. No agenticReady signal returned. Builder uses old workflow polling. Plan review gate works normally.",Must-pass,"kickoff/route.ts, answer/route.ts, builder/page.tsx"
 BT-015,Resume,Page reload during generation resumes polling,"Generation in progress, builder page reloaded","1. Start generation
 2. Reload browser page
-3. Observe builder behavior on remount","Builder detects active GenerationRun on mount. Resumes polling /generation-status with existing runId. Progress component shows current state.",Must-pass,"builder/page.tsx"
+3. Observe builder behavior on remount","Builder calls GET /active-generation on mount. Receives runId of active run. Resumes polling /generation-status?runId=... with recovered runId. Progress component shows current state.",Must-pass,"builder/page.tsx, active-generation/route.ts"
 BT-016,Kickoff,Kickoff questioning flow unchanged,"New project, kickoff has questions","1. Create project
 2. Trigger kickoff
 3. Answer questions one by one","Kickoff questions appear normally. Each answer updates businessContext. Skip and SkipAll work. Only after all questions resolved does agenticReady signal appear.",Must-pass,"kickoff/route.ts, answer/route.ts, builder/page.tsx"

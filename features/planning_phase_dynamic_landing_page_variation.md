@@ -15,7 +15,7 @@ Stop generated landing pages from collapsing into the same visual structure, sec
 - Making section styling use secondaryColor, accentColor, and themeVariant
 - Connecting themeVariant to layout and spacing decisions
 - Relaxing rigid section count constraints
-- Making these changes in both the legacy section generator AND the agentic page generator agent
+- Making these changes in both the legacy section generator AND the agentic page generator agent (different strategies: legacy uses `selectVariant()` at generation time; agentic uses planner-chosen variants with post-generation normalization as enforcement)
 
 **Out of scope:**
 
@@ -455,13 +455,16 @@ function deterministicPick(variants: string[], seed: string): string {
 | `lib/ai/section-generator.ts:134-149` | Replace `getSectionStyle()` with `getContextAwareSectionStyle()` that uses all 3 brand colors + themeVariant |
 | `lib/page/renderer.ts` (global CSS section) | Add theme-variant-specific CSS overrides for typography, card styling, spacing |
 
-### Phase 4 files (agentic pipeline integration)
+### Phase 5 files (agentic pipeline integration)
 
 | File | Change |
 |------|--------|
-| `lib/agents/agents/page-generator.ts` | Use `selectVariant()` instead of `getDefaultVariant()` when building page sections |
-| `lib/agents/agents/shared-settings-agent.ts` | Ensure themeVariant is included in shared settings output |
-| `lib/agents/graph/nodes/page-generation.ts` | Pass pageType and themeVariant to section generation |
+| `lib/agents/prompts/page-planner.ts` | Make variant selection mandatory; add full variant list with business-type rules |
+| `lib/agents/agents/page-planner.ts` | Add post-parse normalization: fill missing variants via `selectVariant()` |
+| `lib/agents/prompts/page-generator.ts` | Add variant enforcement to system prompt; add themeVariant + styling guidance to user prompt |
+| `lib/agents/agents/page-generator.ts` | Accept themeVariant; add post-generation normalization to enforce planned variants and apply `getContextAwareSectionStyle()` |
+| `lib/agents/graph/nodes/page-generation.ts` | Pass themeVariant from site settings to `runPageGeneratorAgent()` |
+| `lib/agents/tools/validators.ts` | Validate section variants against `SECTION_VARIANTS` |
 
 ### New files
 
@@ -530,12 +533,157 @@ function deterministicPick(variants: string[], seed: string): string {
 
 **Impact:** The new agentic multi-page generator also produces varied output (not just the legacy generator).
 
-1. Update `lib/agents/agents/page-generator.ts` to use `selectVariant()`
-2. Ensure `themeVariant` flows from shared settings through page generation
-3. Update agentic page planner prompt to include variant guidance
-4. Test: Full agentic generation produces varied sections across pages
+**Why this phase requires a different approach than Phases 1-3:**
 
-**Estimated scope:** ~30 lines across 2-3 agent files.
+The agentic page generator (`lib/agents/agents/page-generator.ts`) does NOT use `generateSingleSection()`, `getDefaultVariant()`, or `getSectionStyle()` from the legacy path. Instead, it sends a full page plan to the LLM via `buildPageGeneratorUserPrompt()` and gets back a complete `PageDocument` with all sections, variants, and styles already populated by the AI. This means:
+
+- Changing `getDefaultVariant()` in `section-generator.ts` fixes the **legacy** path only
+- The agentic path needs its own variant enforcement strategy
+
+**Concrete implementation for the agentic path:**
+
+**Step 1: Page planner agent selects variants (`lib/agents/agents/page-planner.ts` + `lib/agents/prompts/page-planner.ts`)**
+
+The `AgenticPagePlan` type already has an optional `variant` field per section:
+```typescript
+// lib/agents/types.ts:62-66 (already exists)
+sections: Array<{
+  type: SectionType;
+  purpose: string;
+  variant?: string;  // ← this field exists but is rarely populated by the AI
+}>;
+```
+
+Changes needed:
+1. **`lib/agents/prompts/page-planner.ts`** — Update `PAGE_PLANNER_SYSTEM` to require (not just allow) variant selection. Add the full variant list per section type and rules for choosing them:
+   ```
+   You MUST specify a variant for every section. Available variants:
+   - hero: centered, split-image, background-image, offer-focused
+   - features: icon-grid, image-cards, list-with-icons
+   ... etc
+
+   Variant selection rules:
+   - Photographers/visual businesses: prefer split-image or background-image hero
+   - SaaS: prefer centered hero, icon-grid features
+   - Local businesses with locations: prefer form-with-info contact
+   - Do NOT always pick the first variant in each list
+   ```
+
+2. **`lib/agents/agents/page-planner.ts`** — Add post-processing after the AI returns a plan: if any section is missing a variant, fill it using `selectVariant()` from `lib/page/variant-selector.ts`. This ensures the plan always has complete variant information even if the AI omits some:
+   ```typescript
+   // After parsing and validation, normalize variants:
+   for (const section of parsed.sections) {
+     if (!section.variant || !SECTION_VARIANTS[section.type]?.includes(section.variant)) {
+       section.variant = selectVariant(section.type, {
+         pageType: parsed.pageType,
+         themeVariant: state.siteSettingsDraft?.brand?.tone || "clean",
+         sectionPosition: parsed.sections.indexOf(section),
+         totalSections: parsed.sections.length,
+       });
+     }
+   }
+   ```
+
+**Step 2: Page generator agent respects planner-chosen variants (`lib/agents/agents/page-generator.ts` + `lib/agents/prompts/page-generator.ts`)**
+
+The page generator prompt already includes variant info when the plan provides it (line 73):
+```typescript
+`${i}. ${s.type}${s.variant ? ` (variant: ${s.variant})` : ""} — ${s.purpose}`
+```
+
+Changes needed:
+1. **`lib/agents/prompts/page-generator.ts`** — Strengthen the system prompt to enforce variant compliance:
+   ```
+   - Every section's "variant" field MUST match the variant specified in the page plan
+   - Use the variant to guide layout: "split-image" hero needs a two-column layout,
+     "background-image" hero needs a full-width image, etc.
+   ```
+
+2. **`lib/agents/prompts/page-generator.ts`** — Update `buildPageGeneratorUserPrompt()` to pass `themeVariant` and styling guidance:
+   ```typescript
+   Theme Variant: ${themeVariant}
+   Style rules for ${themeVariant} theme:
+   - Use secondaryColor (${brand.secondaryColor}) for alternating section backgrounds
+   - Use accentColor (${brand.accentColor}) for highlights and badges
+   - Padding: ${themeVariant === "premium" ? "100px 0" : themeVariant === "bold" ? "64px 0" : "80px 0"}
+   ```
+
+**Step 3: Post-generation validation and normalization (`lib/agents/agents/page-generator.ts`)**
+
+After the AI returns a `PageDocument`, add a normalization pass before validation:
+```typescript
+// After parsing, before validation:
+if (parsed.sections) {
+  for (let i = 0; i < parsed.sections.length; i++) {
+    const section = parsed.sections[i];
+    const plannedSection = pagePlan.sections[i];
+
+    // Enforce planned variant (AI may ignore prompt instructions)
+    if (plannedSection?.variant) {
+      section.variant = plannedSection.variant;
+    }
+
+    // If variant is still missing or invalid, use selectVariant()
+    if (!section.variant || !SECTION_VARIANTS[section.type]?.includes(section.variant)) {
+      section.variant = selectVariant(section.type, {
+        pageType: pagePlan.pageType,
+        themeVariant: parsed.meta?.themeVariant || "clean",
+        sectionPosition: i,
+        totalSections: parsed.sections.length,
+      });
+    }
+
+    // Apply theme-aware styling (override AI-chosen styles)
+    section.style = getContextAwareSectionStyle(
+      section.type,
+      siteSettings.brand,
+      parsed.meta?.themeVariant || "clean",
+      i,
+      parsed.sections.length
+    );
+  }
+}
+```
+
+This normalization is the critical safeguard: even if the LLM ignores variant/style instructions (which it often does), the post-processing enforces the planner's choices deterministically.
+
+**Step 4: Thread themeVariant through the agentic pipeline**
+
+1. **`lib/agents/graph/nodes/shared-settings.ts`** — The shared settings node already generates brand settings. Ensure `themeVariant` is stored in the site settings draft (it's generated by the shared settings agent but needs to be accessible downstream).
+
+2. **`lib/agents/graph/nodes/page-generation.ts`** — When calling `runPageGeneratorAgent()`, pass the themeVariant from site settings:
+   ```typescript
+   const themeVariant = state.siteSettingsDraft?.brand?.tone || "clean";
+   // Pass to page generator agent so it can include in prompt
+   ```
+
+3. **`lib/agents/agents/page-generator.ts`** — Update `runPageGeneratorAgent()` signature to accept `themeVariant`:
+   ```typescript
+   export async function runPageGeneratorAgent(
+     pagePlan: AgenticPagePlan,
+     siteSettings: SiteSettingsDraft,
+     businessContext: Record<string, unknown>,
+     siteActions: Action[],
+     themeVariant: string  // ← new parameter
+   ): Promise<{ document: PageDocument | null; error?: string }>
+   ```
+
+**Decision on open question: Who owns variant decisions?**
+
+The **page planner** makes the initial variant decisions (it has business context + site plan). The **page generator** must respect those decisions. If the generator's LLM output deviates, post-generation normalization enforces the planner's choices. This is a "planner decides, generator respects, normalizer enforces" pattern.
+
+**Files for Phase 5 (concrete list):**
+
+| File | Change |
+|------|--------|
+| `lib/agents/prompts/page-planner.ts` | Make variant selection mandatory in system prompt; add full variant list with business-type rules |
+| `lib/agents/agents/page-planner.ts` | Add post-parse normalization: fill missing variants via `selectVariant()` |
+| `lib/agents/prompts/page-generator.ts` | Add variant enforcement rules to system prompt; add themeVariant + styling guidance to user prompt builder |
+| `lib/agents/agents/page-generator.ts` | Accept themeVariant parameter; add post-generation normalization to enforce planned variants and apply `getContextAwareSectionStyle()` |
+| `lib/agents/graph/nodes/page-generation.ts` | Pass themeVariant from site settings when calling `runPageGeneratorAgent()` |
+| `lib/agents/tools/validators.ts` | Update `validatePageDocument()` to check that section variants are valid members of `SECTION_VARIANTS` |
+
+**Estimated scope:** ~80 lines of normalization logic in page-planner.ts and page-generator.ts, ~30 lines of prompt changes, ~10 lines threading themeVariant.
 
 ---
 
