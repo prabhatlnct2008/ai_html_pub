@@ -29,17 +29,7 @@ export async function GET(
   const runId = url.searchParams.get("runId");
 
   if (!runId) {
-    // If no runId, return the latest run for this project
-    const latestRun = await prisma.generationRun.findFirst({
-      where: { projectId: id },
-      orderBy: { startedAt: "desc" },
-    });
-
-    if (!latestRun) {
-      return errorResponse("No generation runs found", 404);
-    }
-
-    return jsonResponse(buildStatusResponse(latestRun));
+    return errorResponse("runId query parameter is required", 400);
   }
 
   const run = await prisma.generationRun.findUnique({

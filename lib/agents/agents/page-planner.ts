@@ -4,7 +4,7 @@
  * Retries: 2x per page, Fallback: default template per page type
  */
 
-import { chatCompletion, parseJSON } from "@/lib/ai/openai-client";
+import { agentChatCompletion, parseAgentJSON } from "../model";
 import { PAGE_PLANNER_SYSTEM, buildPagePlannerUserPrompt } from "../prompts/page-planner";
 import { validatePagePlan } from "../tools/validators";
 import { buildFallbackPagePlan } from "../tools/fallbacks";
@@ -23,13 +23,13 @@ export async function runPagePlannerAgent(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await chatCompletion(PAGE_PLANNER_SYSTEM, userPrompt, {
+      const response = await agentChatCompletion(PAGE_PLANNER_SYSTEM, userPrompt, {
         temperature: 0.7,
         maxTokens: 2000,
         timeoutMs: 30_000,
       });
 
-      const parsed = parseJSON<AgenticPagePlan>(response);
+      const parsed = parseAgentJSON<AgenticPagePlan>(response);
       if (!parsed) {
         lastError = "Failed to parse page plan JSON";
         continue;

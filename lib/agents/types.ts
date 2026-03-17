@@ -156,6 +156,10 @@ export interface SiteBuildState {
   reviewPassCount: number;
   repairPassCount: number;
 
+  // Repair metrics
+  repairsAttempted: number;
+  repairsSucceeded: number;
+
   // Completion tracking
   completedPages: string[];
   failedPages: string[];

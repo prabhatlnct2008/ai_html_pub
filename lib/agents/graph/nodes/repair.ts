@@ -120,6 +120,8 @@ export async function repairNode(
     pageDocuments: updatedDocuments,
     repairQueue: [],
     repairPassCount: state.repairPassCount + 1,
+    repairsAttempted: repairsSucceeded + repairsFailed,
+    repairsSucceeded: repairsSucceeded,
     currentPhase: "reviewing", // re-review after repair
     logs,
   };

@@ -4,7 +4,7 @@
  * Retries: 1x, Fallback: skip review
  */
 
-import { chatCompletion, parseJSON } from "@/lib/ai/openai-client";
+import { agentChatCompletion, parseAgentJSON } from "../model";
 import { SITE_REVIEWER_SYSTEM, buildSiteReviewerUserPrompt } from "../prompts/site-reviewer";
 import type { SiteReviewResult, SiteSettingsDraft } from "../types";
 import type { PageDocument } from "@/lib/page/schema";
@@ -39,13 +39,13 @@ export async function runSiteReviewerAgent(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await chatCompletion(SITE_REVIEWER_SYSTEM, userPrompt, {
+      const response = await agentChatCompletion(SITE_REVIEWER_SYSTEM, userPrompt, {
         temperature: 0.3,
         maxTokens: 3000,
         timeoutMs: 45_000,
       });
 
-      const parsed = parseJSON<SiteReviewResult>(response);
+      const parsed = parseAgentJSON<SiteReviewResult>(response);
       if (!parsed) {
         lastError = "Failed to parse review JSON";
         continue;

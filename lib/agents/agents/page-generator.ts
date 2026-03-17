@@ -4,7 +4,7 @@
  * Retries: 2x per page, Fallback: mark page as failed
  */
 
-import { chatCompletion, parseJSON } from "@/lib/ai/openai-client";
+import { agentChatCompletion, parseAgentJSON } from "../model";
 import { PAGE_GENERATOR_SYSTEM, buildPageGeneratorUserPrompt } from "../prompts/page-generator";
 import { validatePageDocument } from "../tools/validators";
 import type { PageDocument, Action } from "@/lib/page/schema";
@@ -33,13 +33,13 @@ export async function runPageGeneratorAgent(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await chatCompletion(PAGE_GENERATOR_SYSTEM, userPrompt, {
+      const response = await agentChatCompletion(PAGE_GENERATOR_SYSTEM, userPrompt, {
         temperature: 0.7,
         maxTokens: 4000,
         timeoutMs: 60_000,
       });
 
-      const parsed = parseJSON<PageDocument>(response);
+      const parsed = parseAgentJSON<PageDocument>(response);
       if (!parsed) {
         lastError = "Failed to parse page document JSON";
         continue;

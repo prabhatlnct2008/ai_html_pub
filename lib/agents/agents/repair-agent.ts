@@ -4,7 +4,7 @@
  * Retries: 2x per target, Fallback: skip repair for target
  */
 
-import { chatCompletion, parseJSON } from "@/lib/ai/openai-client";
+import { agentChatCompletion, parseAgentJSON } from "../model";
 import { REPAIR_AGENT_SYSTEM, buildRepairUserPrompt } from "../prompts/repair";
 import type { ReviewIssue } from "../types";
 import type { Section, PageDocument } from "@/lib/page/schema";
@@ -42,13 +42,13 @@ export async function runRepairAgent(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await chatCompletion(REPAIR_AGENT_SYSTEM, userPrompt, {
+      const response = await agentChatCompletion(REPAIR_AGENT_SYSTEM, userPrompt, {
         temperature: 0.5,
         maxTokens: 3000,
         timeoutMs: 30_000,
       });
 
-      const parsed = parseJSON<Record<string, unknown>>(response);
+      const parsed = parseAgentJSON<Record<string, unknown>>(response);
       if (!parsed) {
         lastError = "Failed to parse repair JSON";
         continue;
