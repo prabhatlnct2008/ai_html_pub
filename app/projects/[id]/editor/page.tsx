@@ -20,7 +20,9 @@ function EditorContent({ projectId }: { projectId: string }) {
   } = useEditor();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [slug, setSlug] = useState("");
+  const [projectSlug, setProjectSlug] = useState("");
+  const [pageSlug, setPageSlug] = useState("");
+  const [isCurrentPageHomepage, setIsCurrentPageHomepage] = useState(false);
   const [version, setVersion] = useState(1);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -36,6 +38,7 @@ function EditorContent({ projectId }: { projectId: string }) {
       const data = await res.json();
       setSiteSettings(data.siteSettings);
       setPages(data.pages || []);
+      if (data.projectSlug) setProjectSlug(data.projectSlug);
       return data.pages as Array<{ id: string; isHomepage: boolean }>;
     } catch {
       return null;
@@ -55,7 +58,8 @@ function EditorContent({ projectId }: { projectId: string }) {
             meta: data.meta || {},
             brand: data.brand || {},
           });
-          setSlug(data.slug || "");
+          setPageSlug(data.slug || "");
+          setIsCurrentPageHomepage(!!data.isHomepage);
           setVersion(data.version || 1);
           setCurrentPageId(pageId);
           return;
@@ -78,7 +82,10 @@ function EditorContent({ projectId }: { projectId: string }) {
         meta: data.meta || {},
         brand: data.brand || {},
       });
-      setSlug(data.slug || "");
+      // Legacy endpoint returns project slug as data.slug
+      if (!projectSlug && data.slug) setProjectSlug(data.slug);
+      setPageSlug("home"); // Legacy single-page is always the homepage
+      setIsCurrentPageHomepage(true);
       setVersion(data.version || 1);
       if (data.pageId) setCurrentPageId(data.pageId);
     } catch {
@@ -119,7 +126,7 @@ function EditorContent({ projectId }: { projectId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sections, globalStyles, actions, assets, meta, brand,
-          slug: meta.slug || slug,
+          slug: meta.slug || pageSlug,
         }),
       });
       if (!res.ok) {
@@ -128,7 +135,7 @@ function EditorContent({ projectId }: { projectId: string }) {
       }
       const data = await res.json();
       if (data.version) setVersion(data.version);
-      if (data.slug) setSlug(data.slug);
+      if (data.slug) setPageSlug(data.slug);
       markClean();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -160,7 +167,9 @@ function EditorContent({ projectId }: { projectId: string }) {
       <EditorToolbar
         onSave={handleSave}
         saving={saving}
-        slug={slug}
+        projectSlug={projectSlug}
+        pageSlug={pageSlug}
+        isHomepage={isCurrentPageHomepage}
         version={version}
       />
       <div className="flex flex-1 overflow-hidden">
