@@ -32,6 +32,7 @@ model Project {
   pagePlan        PagePlan?
   pages           Page[]
   workflowRun     WorkflowRun?
+  generationRuns  GenerationRun[]
   assets          Asset[]
 }
 
@@ -104,6 +105,26 @@ model PageVersion {
   versionNumber Int
   createdAt     DateTime @default(now())
   page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model GenerationRun {
+  id             String    @id @default(uuid())
+  projectId      String
+  status         String    @default("running")    // running | complete | partial_complete | failed | cancelled
+  currentPhase   String    @default("planning")   // planning | settings | page_planning | page_generation | reviewing | repairing | finalizing | complete | partial_complete | failed
+  pagesPlanned   Int       @default(0)
+  pagesCompleted Int       @default(0)
+  pagesFailed    Int       @default(0)
+  reviewScore    Float?
+  logs           String    @default("[]")          // JSON array of LogEntry
+  error          String?
+  executionMode  String    @default("local_in_process")
+  triggeredBy    String    @default("api")         // api | retry | manual
+  summaryJson    String?                           // terminal summary JSON
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Asset {
