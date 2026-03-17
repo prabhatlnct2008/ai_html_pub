@@ -26,7 +26,10 @@ export default async function PublishedPage({ params }: Props) {
   const auth = await getCurrentUser();
   const isOwner = auth?.userId === project.userId;
 
-  // Enforce publish gating: draft pages only visible to owner
+  // Draft gating: page.status is canonical, doc.meta.publishStatus as fallback
+  if (page.status === "draft" && !isOwner) {
+    notFound();
+  }
   if (page.documentJson && page.documentJson !== "{}") {
     const doc = JSON.parse(page.documentJson);
     if (doc.meta?.publishStatus === "draft" && !isOwner) {
@@ -68,8 +71,14 @@ export async function generateMetadata({ params }: Props) {
 
   const homePage = project.pages.find((p) => p.isHomepage) || project.pages[0];
 
-  // Enforce publish gating for metadata too
-  if (homePage?.documentJson && homePage.documentJson !== "{}") {
+  // Draft gating for metadata: page.status is canonical, doc.meta as fallback
+  if (homePage?.status === "draft") {
+    const auth = await getCurrentUser();
+    const isOwner = auth?.userId === project.userId;
+    if (!isOwner) {
+      return { title: "Page Not Found" };
+    }
+  } else if (homePage?.documentJson && homePage.documentJson !== "{}") {
     const doc = JSON.parse(homePage.documentJson);
     if (doc.meta?.publishStatus === "draft") {
       const auth = await getCurrentUser();
