@@ -87,6 +87,7 @@ export async function releaseRunLock(
     where: { id: runId },
     data: {
       status,
+      currentPhase: status,
       completedAt: new Date(),
       error: options?.error,
       summaryJson: options?.summaryJson,
