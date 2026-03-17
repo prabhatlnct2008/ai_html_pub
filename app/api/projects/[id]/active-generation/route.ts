@@ -71,6 +71,7 @@ export async function GET(
       where: { id: activeRun.id },
       data: {
         status: "failed",
+        currentPhase: "failed",
         error: "Marked as failed: stale run (no update in 15+ minutes)",
         completedAt: new Date(),
       },
