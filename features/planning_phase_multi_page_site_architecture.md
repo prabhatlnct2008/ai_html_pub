@@ -107,6 +107,8 @@ type SiteSettings = {
   siteName: string
   logoAssetId?: string
   faviconAssetId?: string
+  brand: BrandSettings              // single canonical source of brand (colors, fonts, tone)
+  actions: Action[]                 // site-wide reusable actions, shared across all pages
   navigation: NavigationConfig
   header: HeaderConfig
   footer: FooterConfig
@@ -188,10 +190,34 @@ The existing `PageDocument` structure remains largely intact per page. What chan
 
 - `meta.slug` becomes per-page (already exists)
 - `meta.publishStatus` becomes per-page `status`
-- `brand` stays at site level (shared across pages via `SiteSettings` or project-level brand)
-- `actions` can be site-wide or per-page (start with per-page, consider site-wide later)
-- Footer section type is deprecated as a page section; footer moves to site-level `FooterConfig`
+- `brand` is removed from per-page `PageDocument`; the single canonical source is `Project.siteSettings.brand` (see section 3a below)
+- `actions` are site-scoped: stored in `Project.siteSettings.actions[]`, shared across all pages, referenced by `actionId` from any page's buttons (see section 3b below)
+- Footer section type is **removed** from page sections during migration (not kept for backward compat); the extracted content moves to `siteSettings.footer` which is the sole footer source of truth (see section 7)
 - Header/nav become site-level shared regions rendered by the shell
+
+### 3a. Brand: Single Source of Truth
+
+**Decision:** Brand lives exclusively in `Project.siteSettings.brand`.
+
+- `PageDocument.brand` is dropped. Pages do not carry their own brand.
+- The editor loads brand from `siteSettings` and passes it to the canvas renderer.
+- The published page renderer reads brand from the project's `siteSettings`.
+- During migration, the existing `PageDocument.brand` is copied into `siteSettings.brand`, then removed from the page document.
+
+This avoids sync bugs where brand in `siteSettings` and `PageDocument.brand` drift apart.
+
+### 3b. Actions: Site-Scoped
+
+**Decision:** Actions are site-scoped from day one.
+
+- `Project.siteSettings.actions[]` is the single actions array.
+- `PageDocument.actions` is dropped. Pages reference actions by `actionId` only.
+- The editor loads actions from `siteSettings` and makes them available to all pages.
+- Buttons on any page reference `actionId` into the shared pool.
+- The Actions panel in the left rail operates on the site-level actions array.
+- During migration, actions from the existing `PageDocument.actions` are copied into `siteSettings.actions`, then removed from the page document.
+
+This prevents the ambiguity of per-page vs site-wide action pools and avoids the "which copy is canonical?" problem.
 
 ---
 
@@ -359,30 +385,35 @@ The initial generation workflow stays largely the same — it generates the home
 When an existing project is opened in the new editor:
 
 1. **Lazy migration on first load:**
-   - If `project.siteSettings` is empty/default, run migration
+   - If `project.siteSettings` is empty/default (`"{}"` or missing `brand`), run migration
    - The existing single `Page` record becomes the homepage (`isHomepage: true`, `slug: ""`)
-   - Extract footer section from page document → populate `siteSettings.footer`
-   - Generate default `siteSettings.navigation` from the homepage
-   - Generate default `siteSettings.header` (simple variant)
+   - **Footer extraction:** Find the footer section in the page's `documentJson.sections`, extract its content into `siteSettings.footer`, then **remove the footer section from the page's sections array**. The page document is re-saved without the footer section. This prevents duplicate footer rendering.
+   - **Brand extraction:** Copy `documentJson.brand` into `siteSettings.brand`, then remove `brand` from the page document.
+   - **Actions extraction:** Copy `documentJson.actions` into `siteSettings.actions`, then remove `actions` from the page document. Section buttons keep their `actionId` references — those now resolve against `siteSettings.actions`.
+   - Generate default `siteSettings.navigation` from the homepage (one nav item: "Home")
+   - Generate default `siteSettings.header` (simple variant, sticky: true)
    - Set `siteSettings.siteName` from project name
 
-2. **No destructive changes:**
-   - The existing `Page` record is preserved as-is
-   - `documentJson` remains valid
+2. **What is preserved vs changed:**
+   - The existing `Page` record is preserved (same ID, same projectId)
+   - `documentJson` is updated in-place: footer section removed, brand removed, actions removed
+   - `renderedHtml` is re-generated for the page body only (without footer)
    - Legacy `/api/projects/[id]/page` route continues working (operates on homepage)
-   - Published `/p/[slug]` continues working
+   - Published `/p/[slug]` continues working (render-on-read now composes header + body + footer)
 
 3. **Database migration:**
    - Remove `@unique` constraint from `Page.projectId`
-   - Add new columns to `Page`: `slug`, `title`, `pageType`, `isHomepage`, `showInNav`, `navOrder`
+   - Add new columns to `Page`: `slug`, `title`, `pageType`, `isHomepage`, `showInNav`, `navOrder`, `status`
    - Add `siteSettings` column to `Project`
    - Run `prisma db push` or create migration
 
 ### Data Integrity
 
-- Existing pages are never deleted during migration
-- Footer duplication: footer section stays in page (for backward compat) AND is copied to site settings
-- On subsequent saves, the site-level footer is the source of truth; page-level footer section is deprecated
+- Existing page content (sections minus footer) is preserved
+- Footer, brand, and actions are moved — not duplicated — to site settings
+- After migration, exactly one footer renders (from `siteSettings.footer`), zero footer sections exist in page documents
+- After migration, exactly one brand exists (`siteSettings.brand`), zero brand objects in page documents
+- If migration fails partway, the next load re-runs it (idempotent: check for `siteSettings.brand` presence)
 
 ---
 
@@ -416,6 +447,22 @@ When an existing project is opened in the new editor:
 | `/p/[slug]` | Find project by slug → render homepage with header/footer |
 | `/p/[slug]/[pageSlug]` | Find project by slug → find page by pageSlug → render with header/footer |
 
+### Draft Page Access Model
+
+**Decision:** Draft pages on public URLs return 404 to anonymous visitors. Authenticated owners see a preview with a "Draft" banner.
+
+**How it works:**
+
+1. Public route handler (`/p/[slug]` or `/p/[slug]/[pageSlug]`) checks `page.status`.
+2. If `status === "published"` → render normally for everyone.
+3. If `status === "draft"`:
+   a. Check if the current request has a valid auth session.
+   b. If authenticated AND the session user owns the project → render the page with a visible "Draft — only you can see this" banner at the top.
+   c. If not authenticated or not the owner → return 404 (page not found).
+4. This matches the existing behavior in the current `/p/[slug]` route, which already checks `project.status` and `project.userId`.
+
+**Why not a separate preview URL:** A separate `/preview/[slug]` route adds complexity. The simpler model is: public URLs work for published pages, and the same URLs show a draft banner for the owner. This is how most website builders work (Squarespace, Wix, etc.).
+
 ---
 
 ## 9. Persistence Changes
@@ -432,20 +479,48 @@ When an existing project is opened in the new editor:
 
 1. Editor sends PUT to `/api/projects/[id]/site` with updated site settings
 2. Server validates and persists `siteSettings` JSON on Project
-3. If header/footer/nav changed, re-render all published pages (or mark dirty)
-4. Returns updated settings
+3. Returns updated settings
+4. **No eager re-render of page HTML.** See render strategy below.
+
+### Render Strategy: Render-on-Read for Published Pages
+
+**Decision:** Published pages are rendered on read (at request time), not stored as pre-rendered HTML that must be eagerly invalidated.
+
+**Rationale:** Eager re-rendering every page's `renderedHtml` when site settings change (header, footer, nav, brand) is fragile — it creates a fan-out problem where saving one field must rewrite N pages, any of which could fail. It also means `renderedHtml` is stale until the next re-render completes, causing drift.
+
+**How it works:**
+
+1. Each `Page` stores its own `renderedHtml` for the **page body sections only** (not header/footer).
+2. The published page route (`/p/[slug]` and `/p/[slug]/[pageSlug]`) assembles the full page at request time:
+   - Read `siteSettings` from Project (header, footer, nav, brand, actions)
+   - Read `renderedHtml` from the specific Page (body sections only)
+   - Compose: `renderHeader(siteSettings) + page.renderedHtml + renderFooter(siteSettings)`
+3. Header and footer are rendered from `siteSettings` on every request — always fresh.
+4. Page body `renderedHtml` is re-rendered only when that specific page is saved.
+
+**Performance note:** Header/footer rendering is deterministic and fast (no AI calls). The cost of rendering them per-request is negligible. If performance becomes an issue later, a cache layer can be added, but eager fan-out re-rendering is avoided from the start.
+
+**This means:**
+- Editing the header/footer/nav/brand in the editor and saving site settings takes effect immediately on all published pages — no need to "republish" each page.
+- Page body content is still pre-rendered and stored, so the expensive part (section rendering) is not repeated on every request.
 
 ### Render Pipeline
 
-Published pages must now include shared header and footer:
-
 ```
-renderSitePage(siteSettings, pageDocument) {
+// Published page route handler (render-on-read)
+serveSitePage(project, page) {
+  const siteSettings = JSON.parse(project.siteSettings)
   return [
-    renderHeader(siteSettings.header, siteSettings.navigation, siteSettings.siteName, brand),
-    renderPageSections(pageDocument.sections, pageDocument.actions, pageDocument.assets),
-    renderFooter(siteSettings.footer, brand),
+    renderHeader(siteSettings.header, siteSettings.navigation, siteSettings.siteName, siteSettings.brand),
+    page.renderedHtml,   // pre-rendered page body sections
+    renderFooter(siteSettings.footer, siteSettings.brand),
   ].join("")
+}
+
+// Editor save (per-page) — only re-renders page body
+savePage(pageId, pageDocument) {
+  const bodyHtml = renderPageSections(pageDocument.sections, siteSettings.actions, assets)
+  await updatePage(pageId, { renderedHtml: bodyHtml, ... })
 }
 ```
 
@@ -461,21 +536,23 @@ The `EditorContext` currently holds state for one page. It needs to expand to ho
 
 ```ts
 type EditorState = {
-  // Site-level (shared)
+  // Site-level (shared, persisted to Project.siteSettings)
   projectId: string
-  siteSettings: SiteSettings
+  siteSettings: SiteSettings        // contains brand, actions, header, footer, nav, contact, social
   pages: PageSummary[]              // { id, title, slug, pageType, isHomepage, showInNav, navOrder }
-  brand: BrandSettings              // promoted from page-level to site-level
-  actions: Action[]                 // site-wide reusable actions
-  assets: Asset[]                   // site-wide asset library
+  assets: Asset[]                   // site-wide asset library (persisted to Asset table)
 
-  // Page-level (changes when switching pages)
+  // Convenience accessors (derived from siteSettings, not duplicated)
+  // brand → siteSettings.brand
+  // actions → siteSettings.actions
+
+  // Page-level (changes when switching pages, persisted to Page record)
   currentPageId: string
-  sections: Section[]
+  sections: Section[]               // page body sections (no footer, no header)
   pageMeta: PageMeta                // title, slug, seoDescription, pageType, status
   pageStyles: Record<string, unknown>
 
-  // Editor state
+  // Editor state (not persisted)
   selectedSectionId: string | null
   selectionScope: "site" | "page" | "header" | "footer" | "section" | "element"
   isDirty: boolean
@@ -593,13 +670,16 @@ UPDATE_BRAND                        // existing, now site-scoped
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Breaking existing projects during migration | High | Lazy migration, no destructive changes, keep legacy API routes |
+| Breaking existing projects during migration | High | Lazy idempotent migration on first load; legacy API routes preserved; migration tested explicitly |
 | Editor performance with many pages loaded | Medium | Only load current page's document; page list is lightweight summary |
 | Complexity of shared header/footer rendering | Medium | Start with simple variants; don't over-engineer initial header/footer |
-| Footer section duplication (page-level vs site-level) | Medium | Deprecate page-level footer section; site-level is source of truth after migration |
-| Brand settings split between site and page | Low | Brand is site-level from day one; pages inherit |
+| Footer section duplication (page-level vs site-level) | **Resolved** | Migration removes footer from page sections and moves to siteSettings.footer. No duplication. |
+| Brand/actions ownership ambiguity | **Resolved** | Brand and actions are exclusively site-scoped in `siteSettings`. Removed from per-page `PageDocument`. |
+| Stale published pages after site settings change | **Resolved** | Render-on-read: header/footer rendered per-request from live `siteSettings`; no eager re-render needed. |
+| Draft page visibility on public URLs | **Resolved** | 404 for anonymous visitors; owner sees draft banner via auth check. Same model as existing `/p/[slug]`. |
 | Published page URL changes breaking existing links | High | Keep `/p/[slug]` working as-is; only add `/p/[slug]/[pageSlug]` for new pages |
 | Dirty state tracking across page switches | Medium | Save-or-discard prompt before switching pages |
+| Render-on-read performance at scale | Low | Header/footer are deterministic HTML templates (no AI); negligible cost. Cache layer can be added later if needed. |
 | Workflow does not generate multi-page sites | Low (deferred) | Manual page creation is sufficient for this phase |
 | AI generation of additional pages | Low (deferred) | Out of scope; can be added as a "Generate About Page" action later |
 
