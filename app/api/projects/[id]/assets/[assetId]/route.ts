@@ -49,11 +49,13 @@ export async function DELETE(
 
   const project = await prisma.project.findUnique({
     where: { id },
-    include: { page: true },
+    include: { pages: true },
   });
   if (!project || project.userId !== auth.user.userId) {
     return errorResponse("Project not found", 404);
   }
+  // Legacy compat: find homepage or first page
+  const page = project.pages.find((p) => p.isHomepage) || project.pages[0];
 
   const asset = await prisma.asset.findFirst({
     where: { id: assetId, projectId: id },
@@ -73,9 +75,9 @@ export async function DELETE(
   }
 
   // Clean references from documentJson if it exists
-  if (project.page?.documentJson && project.page.documentJson !== "{}") {
+  if (page?.documentJson && page.documentJson !== "{}") {
     try {
-      const doc = JSON.parse(project.page.documentJson);
+      const doc = JSON.parse(page.documentJson);
       let changed = false;
 
       if (doc.sections) {
@@ -140,7 +142,7 @@ export async function DELETE(
 
       if (changed) {
         await prisma.page.update({
-          where: { id: project.page!.id },
+          where: { id: page!.id },
           data: { documentJson: JSON.stringify(doc) },
         });
       }

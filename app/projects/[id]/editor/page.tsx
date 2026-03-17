@@ -10,9 +10,14 @@ import EditorCanvas from "@/components/editor/EditorCanvas";
 import EditorToolbar from "@/components/editor/EditorToolbar";
 import SectionListPanel from "@/components/editor/SectionListPanel";
 import SectionInspector from "@/components/editor/SectionInspector";
+import PageListPanel from "@/components/editor/PageListPanel";
 
 function EditorContent({ projectId }: { projectId: string }) {
-  const { setSections, sections, globalStyles, actions, assets, meta, brand, markClean, isPreview, previewWidth } = useEditor();
+  const {
+    setSections, sections, globalStyles, actions, assets, meta, brand,
+    markClean, isPreview, previewWidth,
+    setSiteSettings, setPages, setCurrentPageId, currentPageId, pages,
+  } = useEditor();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [slug, setSlug] = useState("");
@@ -20,8 +25,44 @@ function EditorContent({ projectId }: { projectId: string }) {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const loadPage = useCallback(async () => {
+  // Load site data (settings + page list), then load the current page
+  const loadSite = useCallback(async () => {
     try {
+      const res = await fetch(`/api/projects/${projectId}/site`);
+      if (!res.ok) {
+        // Fallback: try legacy page endpoint for pre-migration projects
+        return null;
+      }
+      const data = await res.json();
+      setSiteSettings(data.siteSettings);
+      setPages(data.pages || []);
+      return data.pages as Array<{ id: string; isHomepage: boolean }>;
+    } catch {
+      return null;
+    }
+  }, [projectId, setSiteSettings, setPages]);
+
+  const loadPage = useCallback(async (pageId?: string) => {
+    try {
+      // Try new multi-page endpoint first
+      if (pageId) {
+        const res = await fetch(`/api/projects/${projectId}/pages/${pageId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSections(data.sections, data.globalStyles, {
+            actions: data.actions || [],
+            assets: data.assets || [],
+            meta: data.meta || {},
+            brand: data.brand || {},
+          });
+          setSlug(data.slug || "");
+          setVersion(data.version || 1);
+          setCurrentPageId(pageId);
+          return;
+        }
+      }
+
+      // Fallback: legacy single-page endpoint
       const res = await fetch(`/api/projects/${projectId}/page`);
       if (!res.ok) {
         if (res.status === 404) {
@@ -37,24 +78,43 @@ function EditorContent({ projectId }: { projectId: string }) {
         meta: data.meta || {},
         brand: data.brand || {},
       });
-      setSlug(data.slug);
-      setVersion(data.version);
+      setSlug(data.slug || "");
+      setVersion(data.version || 1);
+      if (data.pageId) setCurrentPageId(data.pageId);
     } catch {
       setError("Failed to load page data");
-    } finally {
-      setLoading(false);
     }
-  }, [projectId, setSections, router]);
+  }, [projectId, setSections, setCurrentPageId, router]);
 
   useEffect(() => {
-    loadPage();
-  }, [loadPage]);
+    (async () => {
+      const sitePages = await loadSite();
+      // Find homepage or first page
+      const homepage = sitePages?.find((p) => p.isHomepage) || sitePages?.[0];
+      await loadPage(homepage?.id);
+      setLoading(false);
+    })();
+  }, [loadSite, loadPage]);
+
+  // Handle page switching
+  const handlePageSwitch = useCallback(async (pageId: string) => {
+    if (pageId === currentPageId) return;
+    setLoading(true);
+    setError("");
+    await loadPage(pageId);
+    setLoading(false);
+  }, [currentPageId, loadPage]);
 
   const handleSave = async () => {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/projects/${projectId}/page`, {
+      // Use new per-page endpoint if we have a pageId
+      const url = currentPageId
+        ? `/api/projects/${projectId}/pages/${currentPageId}`
+        : `/api/projects/${projectId}/page`;
+
+      const res = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -67,7 +127,7 @@ function EditorContent({ projectId }: { projectId: string }) {
         throw new Error(data.error || "Save failed");
       }
       const data = await res.json();
-      setVersion(data.version);
+      if (data.version) setVersion(data.version);
       if (data.slug) setSlug(data.slug);
       markClean();
     } catch (err: unknown) {
@@ -86,7 +146,7 @@ function EditorContent({ projectId }: { projectId: string }) {
       <div className="mx-auto mt-20 max-w-md rounded-lg bg-red-50 p-6 text-center">
         <p className="mb-4 text-red-600">{error}</p>
         <button
-          onClick={loadPage}
+          onClick={() => loadPage(currentPageId || undefined)}
           className="rounded-lg bg-primary-600 px-4 py-2 text-sm text-white hover:bg-primary-700"
         >
           Retry
@@ -104,9 +164,12 @@ function EditorContent({ projectId }: { projectId: string }) {
         version={version}
       />
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar — Section list */}
+        {/* Left sidebar — Page list + Section list */}
         {!isPreview && (
-          <div className="w-56 flex-shrink-0 overflow-y-auto">
+          <div className="w-56 flex-shrink-0 overflow-y-auto border-r border-gray-200">
+            {pages.length > 0 && (
+              <PageListPanel onPageSwitch={handlePageSwitch} />
+            )}
             <SectionListPanel />
           </div>
         )}

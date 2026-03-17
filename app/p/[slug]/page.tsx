@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import PublishedPageClient from "./PublishedPageClient";
+import { renderOnRead } from "@/lib/site/render-helpers";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -12,10 +13,13 @@ export default async function PublishedPage({ params }: Props) {
 
   const project = await prisma.project.findUnique({
     where: { slug },
-    include: { page: true },
+    include: { pages: true },
   });
 
-  if (!project || !project.page || !project.page.renderedHtml) {
+  // Find homepage or first page
+  const page = project?.pages.find((p) => p.isHomepage) || project?.pages[0];
+
+  if (!project || !page) {
     notFound();
   }
 
@@ -23,16 +27,20 @@ export default async function PublishedPage({ params }: Props) {
   const isOwner = auth?.userId === project.userId;
 
   // Enforce publish gating: draft pages only visible to owner
-  if (project.page.documentJson && project.page.documentJson !== "{}") {
-    const doc = JSON.parse(project.page.documentJson);
+  if (page.documentJson && page.documentJson !== "{}") {
+    const doc = JSON.parse(page.documentJson);
     if (doc.meta?.publishStatus === "draft" && !isOwner) {
       notFound();
     }
   }
 
+  // Render on read: re-render from documentJson for freshest output
+  const html = renderOnRead(page.documentJson, page.renderedHtml);
+  if (!html) notFound();
+
   return (
     <PublishedPageClient
-      html={project.page.renderedHtml}
+      html={html}
       isOwner={isOwner}
       projectId={project.id}
     />
@@ -43,14 +51,16 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const project = await prisma.project.findUnique({
     where: { slug },
-    include: { page: true, pagePlan: true },
+    include: { pages: true, pagePlan: true },
   });
 
   if (!project) return { title: "Page Not Found" };
 
+  const homePage = project.pages.find((p) => p.isHomepage) || project.pages[0];
+
   // Enforce publish gating for metadata too
-  if (project.page?.documentJson && project.page.documentJson !== "{}") {
-    const doc = JSON.parse(project.page.documentJson);
+  if (homePage?.documentJson && homePage.documentJson !== "{}") {
+    const doc = JSON.parse(homePage.documentJson);
     if (doc.meta?.publishStatus === "draft") {
       const auth = await getCurrentUser();
       const isOwner = auth?.userId === project.userId;
