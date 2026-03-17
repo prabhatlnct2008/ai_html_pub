@@ -44,7 +44,12 @@ export default async function PublishedSubPage({ params }: Props) {
   if (project.siteSettings && project.siteSettings !== "{}") {
     try { siteSettings = JSON.parse(project.siteSettings); } catch { /* ignore */ }
   }
-  const html = renderOnRead(page.documentJson, page.renderedHtml, siteSettings);
+  const html = renderOnRead(
+    page.documentJson,
+    page.renderedHtml,
+    siteSettings,
+    { projectSlug: slug }
+  );
   if (!html) notFound();
 
   return (

@@ -6,6 +6,7 @@ import { renderPageFromDocument } from "@/lib/page/renderer";
 import { normalizeDocumentActions } from "@/lib/actions/normalizer";
 import { normalizeVariant } from "@/lib/page/section-library";
 import type { PageDocument } from "@/lib/page/schema";
+import { BRAND_SITE_MANAGED } from "@/lib/site/types";
 
 // Get page data
 export async function GET(
@@ -134,18 +135,7 @@ export async function PUT(
   }
 
   if (existingDoc || actions || meta || brand) {
-    // Build/update the PageDocument
-    // Brand is a snapshot from site settings for rendering;
-    // actions are empty in the doc (canonical source is siteSettings)
-    const brandSnapshot = siteBrand || brand || existingDoc?.brand || {
-      tone: "professional",
-      primaryColor: "#2563eb",
-      secondaryColor: "#1e40af",
-      accentColor: "#f59e0b",
-      fontHeading: "Inter",
-      fontBody: "Inter",
-    };
-
+    // Page docs do NOT own brand or actions. Both live at site level.
     const updatedDoc: PageDocument = {
       meta: meta || existingDoc?.meta || {
         title: project.name,
@@ -153,14 +143,18 @@ export async function PUT(
         pageType: page.pageType || "service-business",
         themeVariant: page.themeVariant || "clean",
       },
-      brand: brandSnapshot,
+      brand: BRAND_SITE_MANAGED,
       assets: assets || existingDoc?.assets || [],
-      actions: [], // Actions live exclusively at site level
+      actions: [],
       sections,
     };
     documentJson = JSON.stringify(updatedDoc);
-    // For pre-rendering, inject site-level actions so buttons resolve
-    const renderDoc = { ...updatedDoc, actions: siteActions.length > 0 ? siteActions : (actions || existingDoc?.actions || []) };
+    // For pre-rendering, inject site-level brand and actions
+    const renderDoc = {
+      ...updatedDoc,
+      brand: siteBrand || BRAND_SITE_MANAGED,
+      actions: siteActions.length > 0 ? siteActions : (actions || existingDoc?.actions || []),
+    };
     renderedHtml = renderPageFromDocument(renderDoc);
   } else {
     // Legacy path
