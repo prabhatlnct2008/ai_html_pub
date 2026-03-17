@@ -1,11 +1,18 @@
 /**
  * Layout for published pages — overrides the root layout's
- * min-h-screen / bg-gray-50 so the iframe can size to its content.
+ * min-h-screen / bg-gray-50 so the iframe sizes to its content
+ * without extra background space.
  */
 export default function PublishedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="min-h-0 bg-white">{children}</div>;
+  return (
+    <>
+      {/* Override body styles from root layout for published pages */}
+      <style>{`body { min-height: 0 !important; background: #fff !important; }`}</style>
+      {children}
+    </>
+  );
 }

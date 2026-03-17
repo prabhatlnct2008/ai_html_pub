@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   html: string;
@@ -9,60 +9,63 @@ interface Props {
 }
 
 /**
+ * Resize script injected into the iframe HTML.
+ * Posts the document height to the parent via postMessage
+ * so the parent can size the iframe without needing same-origin access.
+ */
+const RESIZE_SCRIPT = `<script>
+(function(){
+  function postHeight(){
+    var h = document.documentElement.scrollHeight;
+    window.parent.postMessage({type:'iframe-resize',height:h},'*');
+  }
+  window.addEventListener('load', postHeight);
+  window.addEventListener('resize', postHeight);
+  new ResizeObserver(postHeight).observe(document.body);
+  postHeight();
+})();
+</script>`;
+
+function injectResizeScript(html: string): string {
+  const idx = html.lastIndexOf("</body>");
+  if (idx !== -1) {
+    return html.slice(0, idx) + RESIZE_SCRIPT + html.slice(idx);
+  }
+  return html + RESIZE_SCRIPT;
+}
+
+/**
  * Renders generated HTML in a sandboxed iframe to prevent XSS.
- * The iframe has no access to the parent page's cookies, JS context, or DOM.
+ * Uses srcdoc (no allow-same-origin) so the iframe cannot access
+ * the parent page's cookies, JS context, or DOM.
  */
 export default function PublishedPageClient({ html, isOwner, projectId }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [height, setHeight] = useState<number>(0);
+
+  const srcdoc = injectResizeScript(html);
 
   useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    const doc = iframe.contentDocument;
-    if (!doc) return;
-
-    doc.open();
-    doc.write(html);
-    doc.close();
-
-    // Reset to 0 before measuring to break the circular dependency
-    // where scrollHeight is clamped by the iframe's current height.
-    const resize = () => {
-      if (doc.body) {
-        iframe.style.height = "0px";
-        iframe.style.height = doc.documentElement.scrollHeight + "px";
+    function onMessage(e: MessageEvent) {
+      if (e.data?.type === "iframe-resize" && typeof e.data.height === "number") {
+        setHeight(e.data.height);
       }
-    };
-
-    // Resize after content is written
-    resize();
-
-    // Re-measure after images/fonts/scripts finish loading
-    if (doc.defaultView) {
-      doc.defaultView.addEventListener("load", resize);
     }
-
-    const observer = new ResizeObserver(resize);
-    if (doc.body) observer.observe(doc.body);
-
-    return () => {
-      observer.disconnect();
-      if (doc.defaultView) {
-        doc.defaultView.removeEventListener("load", resize);
-      }
-    };
-  }, [html]);
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
   return (
     <div style={{ position: "relative" }}>
       <iframe
         ref={iframeRef}
-        sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        srcDoc={srcdoc}
+        sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         style={{
           width: "100%",
           border: "none",
           overflow: "hidden",
+          height: height > 0 ? height : undefined,
         }}
         title="Published Page"
       />

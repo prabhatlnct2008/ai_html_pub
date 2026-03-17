@@ -49,7 +49,7 @@ function renderSiteHeader(
             const href = item.isHomepage
               ? homeHref
               : `${homeHref}/${esc(item.slug)}`;
-            return `<a href="${href}" style="color: #374151; text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.2s;">${esc(item.label)}</a>`;
+            return `<a href="${href}" target="_top" style="color: #374151; text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.2s;">${esc(item.label)}</a>`;
           })
           .join("\n        ")}
       </nav>`
@@ -57,7 +57,7 @@ function renderSiteHeader(
 
   return `<header style="background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 16px 0;">
   <div class="container" style="display: flex; align-items: center; justify-content: space-between;">
-    <a href="${homeHref}" style="text-decoration: none; font-size: 20px; font-weight: 700; color: ${esc(brand?.primaryColor || "#2563eb")};">${esc(siteName)}</a>
+    <a href="${homeHref}" target="_top" style="text-decoration: none; font-size: 20px; font-weight: 700; color: ${esc(brand?.primaryColor || "#2563eb")};">${esc(siteName)}</a>
     ${navHtml}
   </div>
 </header>`;
@@ -75,11 +75,11 @@ function renderSiteFooter(
   const copyrightYear = footer.copyrightYear || String(new Date().getFullYear());
 
   const socialHtml = footer.socialLinks?.length
-    ? `<div style="display: flex; gap: 12px; margin-top: 16px;">${footer.socialLinks.map((sl) => `<a href="${esc(sl.url)}" style="color: inherit; opacity: 0.6; text-decoration: none; font-size: 14px;">${esc(sl.platform)}</a>`).join("\n          ")}</div>`
+    ? `<div style="display: flex; gap: 12px; margin-top: 16px;">${footer.socialLinks.map((sl) => `<a href="${esc(sl.url)}" target="_top" style="color: inherit; opacity: 0.6; text-decoration: none; font-size: 14px;">${esc(sl.platform)}</a>`).join("\n          ")}</div>`
     : "";
 
   const legalHtml = footer.legalLinks?.length
-    ? `<div style="display: flex; gap: 24px;">${footer.legalLinks.map((l) => `<a href="${esc(l.href || "#")}" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("")}</div>`
+    ? `<div style="display: flex; gap: 24px;">${footer.legalLinks.map((l) => `<a href="${esc(l.href || "#")}" target="_top" style="color: inherit; text-decoration: none;">${esc(l.text)}</a>`).join("")}</div>`
     : "";
 
   const columnsHtml =
@@ -89,7 +89,7 @@ function renderSiteFooter(
             (col) => `<div style="min-width: 140px;">
         <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 16px;">${esc(col.title)}</h4>
         <ul style="list-style: none;">
-          ${col.links.map((link) => `<li style="margin-bottom: 8px;"><a href="${esc(link.href || "#")}" style="color: inherit; text-decoration: none; opacity: 0.7;">${esc(link.text)}</a></li>`).join("\n          ")}
+          ${col.links.map((link) => `<li style="margin-bottom: 8px;"><a href="${esc(link.href || "#")}" target="_top" style="color: inherit; text-decoration: none; opacity: 0.7;">${esc(link.text)}</a></li>`).join("\n          ")}
         </ul>
       </div>`
           )
