@@ -408,7 +408,9 @@ async function executeSectionGeneration(
     font_family: plan.branding.font_family,
   };
 
-  const existingPage = await prisma.page.findUnique({ where: { projectId } });
+  const existingPage = await prisma.page.findFirst({
+    where: { projectId, isHomepage: true },
+  }) || await prisma.page.findFirst({ where: { projectId } });
   if (existingPage) {
     await prisma.page.update({
       where: { id: existingPage.id },
@@ -423,6 +425,9 @@ async function executeSectionGeneration(
     await prisma.page.create({
       data: {
         projectId,
+        slug: "home",
+        title: project.name || "Home",
+        isHomepage: true,
         sectionsJson: JSON.stringify(sections),
         globalStyles: JSON.stringify(globalStyles),
         pageType: rawCtx._strategy?.pageType || "",
@@ -456,17 +461,18 @@ async function executeDocumentAssembly(
 ): Promise<{ nextState: WorkflowState; error?: string }> {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { page: true, pagePlan: true, assets: true },
+    include: { pages: true, pagePlan: true, assets: true },
   });
 
-  if (!project?.page) return { nextState: "failed", error: "No page data found" };
+  const page = project?.pages.find((p) => p.isHomepage) || project?.pages[0];
+  if (!project || !page) return { nextState: "failed", error: "No page data found" };
 
   const rawCtx = JSON.parse(project.businessContext);
   const theme = rawCtx._theme;
   const strategy = rawCtx._strategy;
   const plan = project.pagePlan ? JSON.parse(project.pagePlan.planData) : null;
 
-  const sections = JSON.parse(project.page.sectionsJson) as Section[];
+  const sections = JSON.parse(page.sectionsJson) as Section[];
 
   // Build asset list from DB
   const docAssets = project.assets.map((a) => ({
@@ -524,7 +530,7 @@ async function executeDocumentAssembly(
 
   // Store PageDocument as canonical source
   await prisma.page.update({
-    where: { id: project.page.id },
+    where: { id: page.id },
     data: { documentJson: JSON.stringify(finalDoc) },
   });
 
@@ -534,7 +540,7 @@ async function executeDocumentAssembly(
 async function executeRendering(
   projectId: string
 ): Promise<{ nextState: WorkflowState; error?: string }> {
-  const page = await prisma.page.findUnique({ where: { projectId } });
+  const page = await prisma.page.findFirst({ where: { projectId, isHomepage: true } }).then(p => p || prisma.page.findFirst({ where: { projectId } }));
   const plan = await prisma.pagePlan.findUnique({ where: { projectId } });
 
   if (!page) return { nextState: "failed", error: "No page data found" };
@@ -565,7 +571,7 @@ async function executeRendering(
 async function executeSaving(
   projectId: string
 ): Promise<{ nextState: WorkflowState; error?: string }> {
-  const page = await prisma.page.findUnique({ where: { projectId } });
+  const page = await prisma.page.findFirst({ where: { projectId, isHomepage: true } }).then(p => p || prisma.page.findFirst({ where: { projectId } }));
   if (!page) return { nextState: "failed", error: "No page to save" };
 
   // Increment version
@@ -573,6 +579,17 @@ async function executeSaving(
     where: { id: page.id },
     data: { version: { increment: 1 } },
   });
+
+  // Initialize site settings if not already set
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (project && (!project.siteSettings || project.siteSettings === "{}")) {
+    try {
+      const { migrateProjectToMultiPage } = await import("@/lib/site/migration");
+      await migrateProjectToMultiPage(projectId);
+    } catch {
+      // Non-fatal: migration will happen lazily on next editor load
+    }
+  }
 
   // Update project status
   await prisma.project.update({

@@ -16,7 +16,7 @@ export async function GET(
     include: {
       conversation: true,
       pagePlan: true,
-      page: true,
+      pages: true,
     },
   });
 

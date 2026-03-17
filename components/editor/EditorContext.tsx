@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Action, Asset, ButtonRef } from "@/lib/page/schema";
+import type { SiteSettings, PageSummary } from "@/lib/site/types";
 
 export interface SectionData {
   id: string;
@@ -274,6 +275,13 @@ interface EditorContextType {
   previewMode: PreviewMode;
   previewWidth: string;
   activePanel: InspectorPanel;
+  // Site-level state
+  siteSettings: SiteSettings | null;
+  pages: PageSummary[];
+  currentPageId: string | null;
+  setSiteSettings: (settings: SiteSettings) => void;
+  setPages: (pages: PageSummary[]) => void;
+  setCurrentPageId: (pageId: string) => void;
   setPreview: (v: boolean) => void;
   setPreviewMode: (mode: PreviewMode) => void;
   setActivePanel: (panel: InspectorPanel) => void;
@@ -323,6 +331,11 @@ export function EditorProvider({ children, projectId = "" }: { children: ReactNo
   const [isPreview, setPreview] = useState(false);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
   const [activePanel, setActivePanel] = useState<InspectorPanel>("section");
+
+  // Site-level state
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  const [pages, setPages] = useState<PageSummary[]>([]);
+  const [currentPageId, setCurrentPageId] = useState<string | null>(null);
 
   const setSections = useCallback(
     (sections: SectionData[], globalStyles: Record<string, string>, extra?: { actions?: Action[]; assets?: Asset[]; meta?: Partial<MetaData>; brand?: Partial<BrandData> }) =>
@@ -429,6 +442,12 @@ export function EditorProvider({ children, projectId = "" }: { children: ReactNo
         previewMode,
         previewWidth: PREVIEW_WIDTHS[previewMode],
         activePanel,
+        siteSettings,
+        pages,
+        currentPageId,
+        setSiteSettings,
+        setPages,
+        setCurrentPageId,
         setPreview,
         setPreviewMode,
         setActivePanel,

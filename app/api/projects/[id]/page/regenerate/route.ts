@@ -15,14 +15,16 @@ export async function POST(
 
   const project = await prisma.project.findUnique({
     where: { id },
-    include: { page: true },
+    include: { pages: true },
   });
 
   if (!project || project.userId !== auth.user.userId) {
     return errorResponse("Project not found", 404);
   }
 
-  if (!project.page) {
+  // Legacy compat: find homepage or first page
+  const page = project.pages.find((p) => p.isHomepage) || project.pages[0];
+  if (!page) {
     return errorResponse("No page found", 404);
   }
 
@@ -33,7 +35,7 @@ export async function POST(
     return errorResponse("Section ID is required");
   }
 
-  const sections = JSON.parse(project.page.sectionsJson) as SectionData[];
+  const sections = JSON.parse(page.sectionsJson) as SectionData[];
   const sectionIndex = sections.findIndex((s) => s.id === sectionId);
 
   if (sectionIndex === -1) {

@@ -18,20 +18,22 @@ export async function GET(
 
   const project = await prisma.project.findUnique({
     where: { id },
-    include: { page: true, pagePlan: true, assets: true },
+    include: { pages: true, pagePlan: true, assets: true },
   });
 
   if (!project || project.userId !== auth.user.userId) {
     return errorResponse("Project not found", 404);
   }
 
-  if (!project.page) {
+  // Legacy compat: find homepage or first page
+  const page = project.pages.find((p) => p.isHomepage) || project.pages[0];
+  if (!page) {
     return errorResponse("No page generated yet", 404);
   }
 
   // Parse document if available, normalize legacy actions
-  let doc = project.page.documentJson && project.page.documentJson !== "{}"
-    ? JSON.parse(project.page.documentJson) as PageDocument
+  let doc = page.documentJson && page.documentJson !== "{}"
+    ? JSON.parse(page.documentJson) as PageDocument
     : null;
   if (doc) {
     doc = normalizeDocumentActions(doc);
@@ -43,11 +45,11 @@ export async function GET(
   }
 
   // V2: prefer documentJson sections as canonical source; fall back to sectionsJson for legacy
-  const canonicalSections = doc?.sections || JSON.parse(project.page.sectionsJson);
+  const canonicalSections = doc?.sections || JSON.parse(page.sectionsJson);
 
   return jsonResponse({
     sections: canonicalSections,
-    globalStyles: JSON.parse(project.page.globalStyles),
+    globalStyles: JSON.parse(page.globalStyles),
     // V2 fields from PageDocument
     actions: doc?.actions || [],
     assets: doc?.assets || project.assets.map((a) => ({
@@ -60,15 +62,16 @@ export async function GET(
     meta: doc?.meta || {
       title: project.name,
       description: "",
-      pageType: project.page.pageType || "service-business",
-      themeVariant: project.page.themeVariant || "clean",
+      pageType: page.pageType || "service-business",
+      themeVariant: page.themeVariant || "clean",
     },
     brand: doc?.brand || null,
     hasDocument: !!doc,
-    pageType: project.page.pageType || null,
-    themeVariant: project.page.themeVariant || null,
-    version: project.page.version,
+    pageType: page.pageType || null,
+    themeVariant: page.themeVariant || null,
+    version: page.version,
     slug: project.slug,
+    pageId: page.id,
     plan: project.pagePlan
       ? JSON.parse(project.pagePlan.planData)
       : null,
@@ -86,14 +89,16 @@ export async function PUT(
 
   const project = await prisma.project.findUnique({
     where: { id },
-    include: { page: true, pagePlan: true, assets: true },
+    include: { pages: true, pagePlan: true, assets: true },
   });
 
   if (!project || project.userId !== auth.user.userId) {
     return errorResponse("Project not found", 404);
   }
 
-  if (!project.page) {
+  // Legacy compat: find homepage or first page
+  const page = project.pages.find((p) => p.isHomepage) || project.pages[0];
+  if (!page) {
     return errorResponse("No page to save", 404);
   }
 
@@ -104,14 +109,14 @@ export async function PUT(
     return errorResponse("Sections array is required");
   }
 
-  const stylesObj = globalStyles || JSON.parse(project.page.globalStyles);
+  const stylesObj = globalStyles || JSON.parse(page.globalStyles);
   const planData = project.pagePlan
     ? JSON.parse(project.pagePlan.planData)
     : { page_meta: { title: project.name, description: "" } };
 
   // Check if we have a PageDocument
-  const existingDoc = project.page.documentJson && project.page.documentJson !== "{}"
-    ? JSON.parse(project.page.documentJson) as PageDocument
+  const existingDoc = page.documentJson && page.documentJson !== "{}"
+    ? JSON.parse(page.documentJson) as PageDocument
     : null;
 
   let renderedHtml: string;
@@ -123,8 +128,8 @@ export async function PUT(
       meta: meta || existingDoc?.meta || {
         title: project.name,
         description: "",
-        pageType: project.page.pageType || "service-business",
-        themeVariant: project.page.themeVariant || "clean",
+        pageType: page.pageType || "service-business",
+        themeVariant: page.themeVariant || "clean",
       },
       brand: brand || existingDoc?.brand || {
         tone: "professional",
@@ -142,7 +147,7 @@ export async function PUT(
     renderedHtml = renderPageFromDocument(updatedDoc);
   } else {
     // Legacy path
-    documentJson = project.page.documentJson;
+    documentJson = page.documentJson;
     renderedHtml = renderPageHtml(sections, stylesObj, planData.page_meta);
   }
 
@@ -150,11 +155,11 @@ export async function PUT(
   const updated = await prisma.$transaction(async (tx) => {
     await tx.pageVersion.create({
       data: {
-        pageId: project.page!.id,
-        sectionsJson: project.page!.sectionsJson,
-        globalStyles: project.page!.globalStyles,
-        documentJson: project.page!.documentJson,
-        versionNumber: project.page!.version,
+        pageId: page.id,
+        sectionsJson: page.sectionsJson,
+        globalStyles: page.globalStyles,
+        documentJson: page.documentJson,
+        versionNumber: page.version,
       },
     });
 
@@ -167,7 +172,7 @@ export async function PUT(
     }
 
     return tx.page.update({
-      where: { id: project.page!.id },
+      where: { id: page.id },
       data: {
         // sectionsJson kept as backward-compat mirror
         sectionsJson: JSON.stringify(sections),
