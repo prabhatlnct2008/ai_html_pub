@@ -68,6 +68,16 @@ export const SiteBuildStateAnnotation = Annotation.Root({
     default: () => 0,
   }),
 
+  // Repair metrics (cumulative across passes)
+  repairsAttempted: Annotation<number>({
+    reducer: (prev, next) => prev + next,
+    default: () => 0,
+  }),
+  repairsSucceeded: Annotation<number>({
+    reducer: (prev, next) => prev + next,
+    default: () => 0,
+  }),
+
   // Completion tracking
   completedPages: Annotation<string[]>({
     reducer: (_, next) => next,

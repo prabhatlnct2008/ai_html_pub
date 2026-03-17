@@ -77,6 +77,10 @@ export async function pageGenerationNode(
         message: `Failed: ${page.title} — ${error}`,
         level: "error",
       });
+
+      // Persist a placeholder row so the page appears in editor with failed status
+      await persistFailedPage(state.projectId, page);
+
       continue;
     }
 
@@ -123,6 +127,37 @@ export async function pageGenerationNode(
     currentPhase: nextPhase,
     logs,
   };
+}
+
+async function persistFailedPage(
+  projectId: string,
+  page: { slug: string; title: string; isHomepage: boolean; pageType: string }
+): Promise<void> {
+  const existing = await prisma.page.findUnique({
+    where: { projectId_slug: { projectId, slug: page.slug } },
+  });
+
+  if (existing) {
+    // Update existing row to reflect failure
+    await prisma.page.update({
+      where: { id: existing.id },
+      data: { status: "failed" },
+    });
+  } else {
+    const pageCount = await prisma.page.count({ where: { projectId } });
+    await prisma.page.create({
+      data: {
+        projectId,
+        slug: page.slug,
+        title: page.title,
+        pageType: page.pageType,
+        isHomepage: page.isHomepage,
+        showInNav: false,
+        navOrder: page.isHomepage ? 0 : pageCount,
+        status: "failed",
+      },
+    });
+  }
 }
 
 async function persistPage(

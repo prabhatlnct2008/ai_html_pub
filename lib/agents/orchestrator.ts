@@ -63,6 +63,8 @@ export async function runSiteBuildOrchestrator(
       repairQueue: [],
       reviewPassCount: 0,
       repairPassCount: 0,
+      repairsAttempted: 0,
+      repairsSucceeded: 0,
       completedPages: [],
       failedPages: [],
       logs: [],

@@ -4,7 +4,7 @@
  * Retries: 2x, Fallback: DEFAULT_SITE_SETTINGS
  */
 
-import { chatCompletion, parseJSON } from "@/lib/ai/openai-client";
+import { agentChatCompletion, parseAgentJSON } from "../model";
 import {
   SHARED_SETTINGS_SYSTEM,
   buildSharedSettingsUserPrompt,
@@ -24,13 +24,13 @@ export async function runSharedSettingsAgent(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await chatCompletion(SHARED_SETTINGS_SYSTEM, userPrompt, {
+      const response = await agentChatCompletion(SHARED_SETTINGS_SYSTEM, userPrompt, {
         temperature: 0.7,
         maxTokens: 3000,
         timeoutMs: 45_000,
       });
 
-      const parsed = parseJSON<SiteSettingsDraft>(response);
+      const parsed = parseAgentJSON<SiteSettingsDraft>(response);
       if (!parsed) {
         lastError = "Failed to parse site settings JSON";
         continue;

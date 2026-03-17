@@ -47,12 +47,6 @@ export async function finalizeNode(
     log(`Failed to update navigation: ${err}`, "error");
   }
 
-  // Update project status
-  await prisma.project.update({
-    where: { id: state.projectId },
-    data: { status: "generated" },
-  });
-
   // Determine terminal status
   let terminalStatus: "complete" | "partial_complete" | "failed";
   let terminalPhase: BuildPhase;
@@ -67,6 +61,19 @@ export async function finalizeNode(
     terminalStatus = "failed";
     terminalPhase = "failed";
   }
+
+  // Update project status based on terminal outcome
+  const projectStatus =
+    terminalStatus === "complete"
+      ? "generated"
+      : terminalStatus === "partial_complete"
+        ? "partial_generated"
+        : "generation_failed";
+
+  await prisma.project.update({
+    where: { id: state.projectId },
+    data: { status: projectStatus },
+  });
 
   // Build summary
   const startedAt = await prisma.generationRun.findUnique({
@@ -91,8 +98,8 @@ export async function finalizeNode(
     ],
     totalDurationMs: startedAt ? Date.now() - startedAt.startedAt.getTime() : 0,
     reviewScore: state.reviewResult?.overallScore ?? null,
-    repairsAttempted: state.repairPassCount,
-    repairsSucceeded: state.repairPassCount > 0 ? state.repairPassCount : 0,
+    repairsAttempted: state.repairsAttempted,
+    repairsSucceeded: state.repairsSucceeded,
     warnings: state.logs.filter((l) => l.level === "warn").map((l) => l.message),
   };
 
