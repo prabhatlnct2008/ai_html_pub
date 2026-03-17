@@ -23,17 +23,19 @@ Build the first production-grade agentic website-generation layer using LangGrap
 - Workflow logging and observability
 - Deterministic validators for schema, navigation, and action references
 - Integration with existing Project/Page/SiteSettings models
-- New API route to trigger agentic site generation
-- Background execution model (fire-and-forget trigger, poll for status)
+- New API routes to trigger agentic site generation and poll status
+- Dedicated `GenerationRun` Prisma model (new table, separate from legacy `WorkflowRun`)
+- Background execution model (async trigger, poll for status via `GET /generation-status`)
 - Incremental persistence (each page saved as soon as it is generated)
 - Generation-run locking (one active run per project, reject duplicates)
+- Worker-ready orchestrator architecture (execution-environment independent)
 
 **Out of scope:**
 
 - Editor Assistant Agent (post-generation editing help — later phase)
 - Code/runtime agents
 - Open-ended sandbox execution
-- Durable external job queue (Redis/BullMQ) — uses in-process background execution
+- Durable external job queue (Redis, BullMQ, SQS) — Phase 1 uses in-process execution; architecture is designed so a queue consumer can replace the caller later
 - Custom domains, analytics, collaboration
 - Image generation pipeline changes (reuses existing)
 - UI/editor changes beyond wiring to the new generation API
@@ -325,7 +327,7 @@ interface SiteBuildState {
   // Workflow phase
   currentPhase: "planning" | "settings" | "page_planning" |
                 "page_generation" | "reviewing" | "repairing" |
-                "persisting" | "complete" | "partial_complete" | "failed";
+                "finalizing" | "complete" | "partial_complete" | "failed";
 }
 ```
 
@@ -417,13 +419,13 @@ The LangGraph state is in-memory during execution, but **results are persisted i
 | Each page generation completes | `Page.documentJson` + `Page.renderedHtml` written immediately, `Page.status = "draft"` |
 | `site_review` completes | Review result + repair queue persisted to `GenerationRun.reviewResult` |
 | Each repair completes | Patched `Page.documentJson` + `Page.renderedHtml` overwritten |
-| `persist_results` (final) | Navigation updated, page statuses finalized (`published` / `failed`), `GenerationRun.status` set to terminal state |
+| `finalize` (final) | Navigation updated, page statuses finalized (`published` / `failed`), `GenerationRun.status` set to terminal state |
 
 **Why incremental:**
 
 - If the process dies after generating 4 of 5 pages, those 4 pages exist as `draft` records in the DB. The user (or a future retry mechanism) can pick up from there.
 - Logs are appended to `GenerationRun.logs` at each step, not buffered until the end.
-- The final `persist_results` node is now a lightweight "finalize" step: update navigation, flip page statuses from `draft` to `published`, and mark the run as complete.
+- The `finalize` node is a lightweight close-out step: update navigation, flip page statuses from `draft` to `published`, and mark the run as complete.
 
 **What is NOT persisted incrementally:**
 
@@ -431,24 +433,62 @@ The LangGraph state is in-memory during execution, but **results are persisted i
 
 ### Generation Run Model
 
-A new `GenerationRun` record (or repurposed `WorkflowRun`) tracks each agentic generation attempt:
+A **dedicated `GenerationRun` table** tracks each agentic generation attempt. This is a new Prisma model, separate from the legacy `WorkflowRun` (which remains for the single-page deterministic workflow). A project may have **multiple `GenerationRun` records** over its lifetime (re-generations, retries after failure, etc.).
 
 ```ts
 interface GenerationRun {
-  id: string;
-  projectId: string;
+  id: string;                     // UUID primary key
+  projectId: string;              // FK to Project (not @unique — multiple runs per project)
   status: "running" | "complete" | "partial_complete" | "failed" | "cancelled";
-  currentPhase: string;
+  currentPhase: string;           // matches SiteBuildState.currentPhase
   pagesPlanned: number;
   pagesCompleted: number;
   pagesFailed: number;
   reviewScore: number | null;
-  logs: LogEntry[];
+  logs: LogEntry[];               // JSON array, appended incrementally
+  error: string | null;
+  executionMode: string;          // "local_in_process" for Phase 1; future: "worker", "container"
+  triggeredBy: string;            // "api" | "retry" | "manual" — tracks how the run started
+  summaryJson: string | null;     // terminal summary payload (set on completion), see Section 7
   startedAt: Date;
   completedAt: Date | null;
-  error: string | null;
+  updatedAt: Date;                // @updatedAt — tracks last DB write (used for stale detection)
 }
 ```
+
+**Prisma model (to be added to `prisma/schema.prisma`):**
+
+```prisma
+model GenerationRun {
+  id              String    @id @default(uuid())
+  projectId       String
+  status          String    @default("running")
+  currentPhase    String    @default("planning")
+  pagesPlanned    Int       @default(0)
+  pagesCompleted  Int       @default(0)
+  pagesFailed     Int       @default(0)
+  reviewScore     Float?
+  logs            String    @default("[]")
+  error           String?
+  executionMode   String    @default("local_in_process")
+  triggeredBy     String    @default("api")
+  summaryJson     String?
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  updatedAt       DateTime  @updatedAt
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+```
+
+**Key differences from `WorkflowRun`:**
+
+| | `WorkflowRun` (legacy) | `GenerationRun` (new) |
+|---|---|---|
+| Scope | Single-page deterministic workflow | Multi-page agentic generation |
+| Cardinality | 1:1 with Project (`@unique projectId`) | Many:1 with Project (run history) |
+| State model | Linear state machine (intake → complete) | Phase-based (planning → finalizing) |
+| Persistence | Updated at each state transition | Incremental (pages saved as generated) |
+| Execution | Synchronous within request | Async, execution-environment independent |
 
 ### Generation-Run Locking
 
@@ -501,29 +541,30 @@ lib/agents/                          # New directory for agentic system
     validators.ts                    # Deterministic validation tools
     fallbacks.ts                     # Fallback generators (minimal sitemap, etc.)
 
+  orchestrator.ts                    # Execution-environment-independent entry point (see Section 7)
   run-lock.ts                        # Generation-run locking (acquire/release/stale check)
   types.ts                           # All agentic type definitions
 
 app/api/projects/[id]/generate-site/
-  route.ts                           # POST endpoint: acquire lock, launch background, return 202
+  route.ts                           # POST endpoint: acquire lock, invoke orchestrator, return 202
 app/api/projects/[id]/generation-status/
-  route.ts                           # GET endpoint: poll GenerationRun status + progress
+  route.ts                           # GET endpoint: poll GenerationRun status + progress + terminal summary
 ```
 
 ### Integration Points
 
-- `app/api/projects/[id]/generate-site/route.ts` — POST: acquire lock, launch background run, return 202
-- `app/api/projects/[id]/generation-status/route.ts` — GET: poll GenerationRun status, progress, logs
+- `app/api/projects/[id]/generate-site/route.ts` — POST: acquire lock, invoke orchestrator, return 202
+- `app/api/projects/[id]/generation-status/route.ts` — GET: poll GenerationRun status, progress, terminal summary
 - Existing `lib/page/renderer.ts` — reused for rendering
 - Existing `lib/page/validators.ts` — reused and extended
 - Existing `lib/site/navigation.ts` — reused for nav updates
 - Existing `lib/site/render-helpers.ts` — reused for site shell
 - Existing `lib/ai/openai-client.ts` — replaced by LangChain model wrapper
-- Existing `prisma/schema.prisma` — no changes needed (models already support multi-page)
+- `prisma/schema.prisma` — **add `GenerationRun` model + `generationRuns` relation on Project** (see Section 5)
 
 ---
 
-## 7. Background Execution Model
+## 7. Execution Model and API Contract
 
 ### Why Not Synchronous
 
@@ -533,68 +574,201 @@ A 3-6 page agentic build with planning, generation, review, and repair can run 2
 - Leave the user staring at a spinner with no progress feedback
 - Lose all work if the connection drops
 
-### Execution Flow
+### Architecture: Orchestrator / Executor Separation
+
+The core design principle is that **the orchestration logic is execution-environment independent**. The LangGraph graph, agents, validators, and incremental persistence logic live in a reusable orchestrator module (`lib/agents/orchestrator.ts`) that:
+
+- Takes a `projectId` and `runId` as input
+- Reads business context from the DB
+- Runs the graph nodes in sequence
+- Writes results incrementally to the DB
+- Updates the `GenerationRun` record at each step
+- Returns nothing — all output is in the DB
+
+The orchestrator does NOT know how it was invoked. It could be called from:
+
+- A Next.js route handler (Phase 1 — local/dev)
+- A serverless function with extended timeout (Vercel Pro)
+- A queue consumer (future — BullMQ, SQS, Azure Queue)
+- A standalone container process (future — ECS, Cloud Run)
+
+**Phase 1 executor: in-process async.** The API route handler creates the `GenerationRun` record, then calls the orchestrator as a detached async function. This is the simplest executor that works for local development and testing. It is **not** treated as durable infrastructure — it is explicitly a convenience executor with known limitations.
+
+```
+┌────────────────────────────┐      ┌──────────────────────────┐
+│  Executor (Phase 1)        │      │  Orchestrator            │
+│  Next.js route handler     │─────▶│  lib/agents/orchestrator │
+│  Detached async call       │      │  (env-independent)       │
+│  NOT durable               │      │  Reads/writes DB only    │
+└────────────────────────────┘      └──────────────────────────┘
+        │                                      │
+        │  Future executors:                   │  Same orchestrator,
+        │  - Queue consumer                    │  different caller
+        │  - Container process                 │
+        │  - Serverless w/ long timeout        │
+```
+
+### Client / Server Flow
 
 ```
 Client                              Server
   │                                   │
   │  POST /generate-site              │
-  │ ──────────────────────────────► │
+  │ ──────────────────────────────►   │
   │                                   │  1. Acquire run lock (409 if busy)
   │                                   │  2. Create GenerationRun (status: running)
-  │                                   │  3. Launch graph in background (fire-and-forget)
+  │                                   │  3. Invoke orchestrator (detached async)
   │  ◄──────────────────────────────  │
   │  202 Accepted { runId }           │
   │                                   │
-  │  GET /generation-status           │
-  │ ──────────────────────────────► │
+  │  GET /generation-status?runId=... │
+  │ ──────────────────────────────►   │
   │  ◄──────────────────────────────  │
-  │  { status: "running",             │
-  │    currentPhase: "page_generation",│
-  │    pagesCompleted: 2,             │
-  │    pagesPlanned: 5 }             │
+  │  { status: "running", ... }       │
   │                                   │
   │  ... (poll every 3-5s) ...        │
   │                                   │
-  │  GET /generation-status           │
-  │ ──────────────────────────────► │
+  │  GET /generation-status?runId=... │
+  │ ──────────────────────────────►   │
   │  ◄──────────────────────────────  │
-  │  { status: "complete",            │
-  │    pagesCompleted: 5 }           │
+  │  { status: "complete", ... }      │  ← includes terminal summary
 ```
 
-### Implementation
+### POST /generate-site — Request / Response
 
-The background execution uses **in-process async** — the API handler spawns the LangGraph run as an unresolved Promise and returns immediately. This is the simplest model that works:
+**Request:** `POST /api/projects/{id}/generate-site`
 
-```ts
-// POST /api/projects/[id]/generate-site/route.ts
-export async function POST(req, { params }) {
-  const project = await getProject(params.id);
-  const run = await acquireRunLock(project.id); // throws 409 if locked
+No body required (uses project's existing `businessContext`).
 
-  // Fire-and-forget: run graph in background
-  runSiteBuildGraph(project, run.id).catch(async (err) => {
-    await markRunFailed(run.id, err.message);
-  });
+**Response (success):** `202 Accepted`
 
-  return NextResponse.json({ runId: run.id }, { status: 202 });
+```json
+{
+  "runId": "uuid-of-generation-run"
 }
 ```
 
-**Trade-offs of in-process async:**
+**Response (locked):** `409 Conflict`
 
-| Pro | Con |
-|-----|-----|
-| Zero infrastructure (no Redis, no queue) | If the server process restarts, running jobs are lost |
-| Simple to implement and debug | No retry of the entire run on crash (only per-agent retries) |
-| Works in serverless with long function timeout | Requires serverless function timeout ≥ 10 min |
+```json
+{
+  "error": "generation already in progress",
+  "existingRunId": "uuid-of-running-generation"
+}
+```
 
-**Mitigation for the cons:** Incremental persistence means a crash loses at most the *current step*, not all prior work. The `GenerationRun` record with `status: "running"` and `startedAt` > 15 min ago is detectable as stale, and the user can trigger a new run.
+### GET /generation-status — Response Contract
 
-### Hosting Requirement
+**Request:** `GET /api/projects/{id}/generation-status?runId={runId}`
 
-This feature requires a hosting environment that supports long-running server processes or serverless functions with ≥ 10 minute timeout. On Vercel, this means Pro plan with `maxDuration` configured. On a VPS/container, this works out of the box.
+The `runId` query parameter is required. This endpoint serves both in-progress polling and terminal summary retrieval.
+
+**Response shape (all statuses):**
+
+```ts
+interface GenerationStatusResponse {
+  runId: string;
+  status: "running" | "complete" | "partial_complete" | "failed" | "cancelled";
+  currentPhase: string;                    // e.g., "page_generation", "finalizing", "complete"
+  progress: {
+    pagesPlanned: number;
+    pagesCompleted: number;
+    pagesFailed: number;
+  };
+  reviewScore: number | null;              // null until review completes
+  startedAt: string;                       // ISO timestamp
+  completedAt: string | null;              // set when terminal
+  updatedAt: string;                       // last DB write timestamp
+  error: string | null;                    // set on failure
+  recentLogs: LogEntry[];                  // last N log entries (e.g., last 20)
+  summary: GenerationSummary | null;       // set only when status is terminal
+}
+
+interface GenerationSummary {
+  pages: Array<{
+    slug: string;
+    title: string;
+    status: "published" | "failed";
+    sectionCount: number;
+  }>;
+  totalDurationMs: number;
+  reviewScore: number | null;
+  repairsAttempted: number;
+  repairsSucceeded: number;
+  warnings: string[];                      // non-fatal issues for user awareness
+}
+```
+
+**Example — running:**
+
+```json
+{
+  "runId": "abc-123",
+  "status": "running",
+  "currentPhase": "page_generation",
+  "progress": { "pagesPlanned": 5, "pagesCompleted": 2, "pagesFailed": 0 },
+  "reviewScore": null,
+  "startedAt": "2026-03-17T10:30:00Z",
+  "completedAt": null,
+  "updatedAt": "2026-03-17T10:31:15Z",
+  "error": null,
+  "recentLogs": [ ... ],
+  "summary": null
+}
+```
+
+**Example — complete:**
+
+```json
+{
+  "runId": "abc-123",
+  "status": "complete",
+  "currentPhase": "complete",
+  "progress": { "pagesPlanned": 5, "pagesCompleted": 5, "pagesFailed": 0 },
+  "reviewScore": 85,
+  "startedAt": "2026-03-17T10:30:00Z",
+  "completedAt": "2026-03-17T10:33:45Z",
+  "updatedAt": "2026-03-17T10:33:45Z",
+  "error": null,
+  "recentLogs": [ ... ],
+  "summary": {
+    "pages": [
+      { "slug": "home", "title": "Home", "status": "published", "sectionCount": 8 },
+      { "slug": "services", "title": "Services", "status": "published", "sectionCount": 6 }
+    ],
+    "totalDurationMs": 225000,
+    "reviewScore": 85,
+    "repairsAttempted": 2,
+    "repairsSucceeded": 1,
+    "warnings": []
+  }
+}
+```
+
+### Phase 1 Limitations (Accepted)
+
+The in-process executor has known limitations that are **intentionally accepted** for Phase 1:
+
+| Limitation | Impact | Mitigation |
+|------------|--------|------------|
+| Server restart kills running generation | Running step is lost | Incremental persistence preserves completed pages. Stale run detectable via `updatedAt`. User can start new run. |
+| No automatic retry of entire run | User must manually trigger retry | Completed pages survive; retry only re-generates what's missing (future enhancement) |
+| Requires long process lifetime | Won't work on Vercel hobby (60s limit) | Documented as hosting requirement. Works on VPS, containers, Vercel Pro. |
+
+These limitations are acceptable because:
+1. The orchestrator architecture does not depend on the executor — swapping to a queue consumer later requires zero changes to the graph, agents, or persistence logic.
+2. Incremental persistence ensures the worst-case data loss from a crash is one step, not the entire run.
+3. The `GenerationRun` table with `updatedAt` provides the detection mechanism for stale runs.
+
+### Future Executor Migration Path
+
+When moving beyond Phase 1:
+
+1. Add a queue (BullMQ, SQS, etc.) and a consumer process
+2. `POST /generate-site` enqueues a job instead of calling orchestrator directly
+3. Consumer calls the same `runSiteBuildOrchestrator(projectId, runId)` function
+4. `GET /generation-status` remains unchanged — it reads from the same `GenerationRun` table
+5. No changes needed to: orchestrator, graph, agents, prompts, validators, persistence logic
 
 ---
 
@@ -763,13 +937,14 @@ Every significant event is appended to `state.logs`:
 ### Phase 1: Foundation (LangGraph Setup + Types + Operational Infrastructure)
 
 1. Install `langchain` and `@langchain/langgraph` and `@langchain/openai`
-2. Create `lib/agents/types.ts` with all type definitions (including `GenerationRun`)
-3. Create `lib/agents/graph/site-build-state.ts` with state annotations
-4. Create `lib/agents/tools/validators.ts` with deterministic validators
-5. Create `lib/agents/tools/fallbacks.ts` with fallback generators
-6. Create LangChain model wrapper (replacing raw OpenAI calls for agents)
-7. Create `lib/agents/run-lock.ts` with generation-run locking logic (acquire/release/stale detection)
-8. Add `GenerationRun` model to Prisma schema (or extend `WorkflowRun`)
+2. Add `GenerationRun` model to `prisma/schema.prisma` (new table, add `generationRuns` relation on Project). Run migration.
+3. Create `lib/agents/types.ts` with all type definitions
+4. Create `lib/agents/graph/site-build-state.ts` with state annotations
+5. Create `lib/agents/tools/validators.ts` with deterministic validators
+6. Create `lib/agents/tools/fallbacks.ts` with fallback generators
+7. Create LangChain model wrapper (replacing raw OpenAI calls for agents)
+8. Create `lib/agents/run-lock.ts` with generation-run locking logic (acquire/release/stale detection)
+9. Create `lib/agents/orchestrator.ts` — execution-environment-independent entry point (takes projectId + runId, reads/writes DB only)
 
 ### Phase 2: Agent Implementations
 
@@ -790,14 +965,15 @@ Every significant event is appended to `state.logs`:
 6. `repair` node (loops repair queue, calls Repair Agent, **persists patches to DB**)
 7. `finalize` node (update nav, flip page statuses, close generation run)
 
-### Phase 4: Graph Assembly + API + Background Execution
+### Phase 4: Graph Assembly + API + Execution
 
 1. Wire all nodes into LangGraph graph with conditional edges
-2. Create `app/api/projects/[id]/generate-site/route.ts` (POST: acquire lock, fire-and-forget, return 202)
-3. Create `app/api/projects/[id]/generation-status/route.ts` (GET: poll run status + progress)
+2. Create `app/api/projects/[id]/generate-site/route.ts` (POST: acquire lock, invoke orchestrator via in-process executor, return 202)
+3. Create `app/api/projects/[id]/generation-status/route.ts` (GET: poll run status + progress + terminal summary)
 4. Integration testing: full flow from business context to saved multi-page site
 5. Error path testing: partial failures, retries, fallbacks
 6. Concurrency testing: duplicate trigger returns 409, stale lock recovery works
+7. Verify orchestrator is callable standalone (not coupled to route handler)
 
 ### Phase 5: Polish + Testing
 
@@ -815,9 +991,9 @@ Every significant event is appended to `state.logs`:
 |------|--------|------------|
 | LLM output not valid JSON | High | Use structured output mode + JSON parse retry with error feedback |
 | Generation takes too long (>3 min) | Medium | Per-agent timeout (60s), per-node timeout (120s), total workflow timeout (10 min). Background execution avoids HTTP timeout. |
-| Server crash mid-generation | Medium | Incremental persistence saves completed pages immediately. Stale run lock auto-expires after 15 min. User can retry; completed work is preserved. |
+| Server crash mid-generation | Medium | Incremental persistence saves completed pages immediately. Stale run detectable via `updatedAt`. User can start new run; completed pages are preserved. |
 | Duplicate generation requests race | High | Generation-run lock (one active run per project). Second request gets 409 Conflict. |
-| Serverless function timeout too short | Medium | Requires ≥ 10 min function timeout. Documented as hosting requirement. |
+| Process lifetime too short for generation | Medium | Phase 1 requires long-lived process or ≥ 10 min serverless timeout. Architecture is worker-ready for future queue-based execution. |
 | Token cost too high for multi-page | Medium | Use focused prompts, pass summaries not full documents between agents, use GPT-4o-mini for planning/review |
 | Page Generator produces low-quality content | Medium | Review + repair loop catches weak content; bounded retries |
 | LangGraph/LangChain adds too much complexity | Medium | Keep LangGraph usage minimal — use it as a state machine, not for advanced features |
@@ -852,6 +1028,8 @@ Every significant event is appended to `state.logs`:
 16. Duplicate generation request while one is running returns 409
 17. Pages are persisted to DB incrementally (crash after 4/5 pages preserves those 4)
 18. Stale generation run (>15 min) is recoverable — new run can start
+19. GenerationRun is a dedicated Prisma model (not WorkflowRun); multiple runs per project are supported
+20. Orchestrator is callable standalone — not coupled to route handler or any specific execution environment
 
 ### Should-Pass
 
@@ -864,18 +1042,62 @@ Every significant event is appended to `state.logs`:
 
 ---
 
-## 16. Out-of-Scope Items
+## 16. Repo Alignment — What Changes, What Stays
+
+### Current Repo State
+
+- SQLite database via Prisma ORM
+- `WorkflowRun` model: 1:1 with Project, `@unique` on projectId, powers the legacy single-page deterministic workflow
+- `PagePlan` model: 1:1 with Project, stores one page plan
+- `Page` model: supports multi-page (projectId + slug unique constraint, isHomepage, navOrder)
+- `Project.siteSettings`: JSON string storing site-level brand, actions, nav, header, footer
+- Next.js 14 API routes
+- No LangChain/LangGraph dependencies
+
+### What Gets Added
+
+| Item | Description |
+|------|-------------|
+| `GenerationRun` Prisma model | New table — many:1 with Project (run history). See Section 5 for schema. |
+| `generationRuns` relation on Project | `Project` model gets a new `generationRuns GenerationRun[]` relation |
+| `lib/agents/` directory | All agentic system code: graph, agents, prompts, tools, orchestrator, run-lock, types |
+| `POST /generate-site` route | Trigger endpoint — acquire lock, invoke orchestrator, return 202 |
+| `GET /generation-status` route | Poll endpoint — returns progress and terminal summary |
+| LangChain + LangGraph npm deps | `langchain`, `@langchain/langgraph`, `@langchain/openai` |
+
+### What Remains Unchanged
+
+| Item | Reason |
+|------|--------|
+| `WorkflowRun` model and table | Powers legacy single-page workflow. Not touched. Both systems coexist. |
+| `PagePlan` model | Used by legacy workflow. Agentic system stores plans in `SiteBuildState` / incremental DB writes. |
+| All existing `lib/ai/` modules | Legacy workflow continues to use them. Agentic system uses new LangChain-based agents. |
+| All existing `lib/workflow/` modules | Legacy workflow engine. Untouched. |
+| `lib/page/renderer.ts` | Reused by agentic system (rendering is shared). |
+| `lib/page/validators.ts` | Reused and extended by agentic system. |
+| `lib/site/` modules | Reused for navigation updates and site shell composition. |
+| Published page routes (`/p/[slug]`) | Unchanged — agentic pages use the same Page model. |
+
+### Migration Path (Future)
+
+1. **Phase 1 (this plan):** Both systems coexist. Legacy workflow creates single pages. Agentic system creates multi-page sites. No migration of existing projects.
+2. **Future:** Once agentic system is stable, new projects default to agentic flow. Legacy workflow remains for existing projects.
+3. **Eventually:** Legacy workflow can be deprecated. `WorkflowRun` table becomes read-only historical data.
+
+---
+
+## 17. Out-of-Scope Items
 
 - Editor Assistant Agent (interactive editing after generation)
-- Durable external job queue (Redis/BullMQ) — uses in-process background execution
-- Durable LangGraph checkpoint persistence (auto-resume from exact interrupted node)
+- Durable external job queue (Redis, BullMQ, SQS) — Phase 1 uses in-process execution; orchestrator is worker-ready for future migration
+- Durable LangGraph checkpoint persistence (auto-resume from exact interrupted graph node)
 - Image generation for new pages (reuses existing asset pipeline)
 - Custom domain setup
 - A/B testing of generated variants
 - Multi-user collaboration
 - Competitor analysis integration (reuses existing if available)
 - UI for triggering site generation (can be wired later — API-first)
-- Server-Sent Events or WebSocket progress streaming (uses polling for now)
-- Migration of existing single-page workflows to agentic system
+- Server-Sent Events or WebSocket progress streaming (uses polling via GET /generation-status for now)
+- Migration of existing single-page `WorkflowRun` workflows to agentic system (both coexist)
 - Rate limiting or cost controls (manual monitoring for now)
-- Auto-retry of entire crashed runs (user manually retries; completed pages are preserved)
+- Auto-retry of entire crashed runs (user manually triggers new run; completed pages from prior run are preserved)
