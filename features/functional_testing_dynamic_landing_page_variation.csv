@@ -1,0 +1,52 @@
+Test ID,Category,Test Name,Preconditions,Steps,Expected Result,Priority,Files Involved
+DV-001,Variant Selection,Different business types produce different section structures,"selectVariant() implemented, strategist prompts updated","1. Generate page for 'local-business' (plumber)
+2. Generate page for 'saas' (project management tool)
+3. Compare section sequences","Plumber page includes services/service-area/testimonials. SaaS page includes features/pricing/how-it-works. Section sequences are visibly different.",Must-pass,"variant-selector.ts, strategist.ts, section-generator.ts"
+DV-002,Variant Selection,Different business types produce different hero variants,"selectVariant() preference table populated","1. Generate page for photographer (local-business, bold theme)
+2. Generate page for SaaS startup (saas, clean theme)
+3. Compare hero section variant","Photographer hero uses 'split-image' or 'background-image'. SaaS hero uses 'centered'. Variants are different and appropriate for business type.",Must-pass,"variant-selector.ts, section-generator.ts, renderer.ts"
+DV-003,Section Vocabulary,Gallery section appears for visual businesses,"gallery added to strategist allowed types","1. Generate page for photography business
+2. Generate page for construction contractor
+3. Check section types in output","At least one of the generated pages includes a 'gallery' section type. Gallery renders correctly via renderer.",Must-pass,"strategist.ts, prompts/planner.ts, section-generator.ts, renderer.ts"
+DV-004,Section Vocabulary,Service-area section appears for local businesses,"service-area added to strategist allowed types","1. Generate page for local plumbing business with city info
+2. Check section types in output","Output includes 'service-area' section. Section renders with area names and descriptions.",Must-pass,"strategist.ts, prompts/planner.ts, section-generator.ts, renderer.ts"
+DV-005,Section Vocabulary,About-team section can appear when relevant,"about-team added to strategist allowed types","1. Generate page for consulting business
+2. Generate page for coaching business
+3. Check section types","At least one output includes 'about-team' section. Section renders with team/story content.",Should-pass,"strategist.ts, prompts/planner.ts, section-generator.ts, renderer.ts"
+DV-006,Theme Variant,themeVariant affects variant selection,"selectVariant() uses themeVariant from preference table","1. Generate page for same business with themeVariant='bold'
+2. Generate page for same business with themeVariant='premium'
+3. Compare variants chosen","Bold page uses more assertive variants (offer-focused hero, dual CTA). Premium page uses more elegant variants (split-image hero, single-highlight testimonials). At least 2 section variants differ.",Must-pass,"variant-selector.ts, section-generator.ts"
+DV-007,Colors,Secondary color used in section backgrounds,"getContextAwareSectionStyle() implemented","1. Generate page with brand { primaryColor, secondaryColor, accentColor }
+2. Inspect section background colors in output","At least one section uses secondaryColor (or a tint of it) as background instead of hardcoded #f8f9fa or #ffffff.",Must-pass,section-generator.ts
+DV-008,Colors,Accent color used in visual elements,"getContextAwareSectionStyle() and/or renderer uses accentColor","1. Generate page with distinct accentColor
+2. Inspect rendered HTML for accent color usage","accentColor appears in at least one rendered element (highlight, border, badge background, icon background). Not limited to only primaryColor usage.",Must-pass,"section-generator.ts, renderer.ts"
+DV-009,Variant Selection,Pages no longer always use first variant for every section,"selectVariant() replaces getDefaultVariant()","1. Generate 3 pages for different business types
+2. Extract variant field from each section
+3. Check for non-default variants","At least 30% of sections across the 3 pages use a non-default variant (not the first in SECTION_VARIANTS list). Multiple different variants appear.",Must-pass,"variant-selector.ts, section-generator.ts"
+DV-010,Section Count,Simple businesses can produce shorter pages,"Section count relaxed to 5-12 in strategist prompt","1. Generate page for simple local business (e.g., barber shop)
+2. Count sections in output","Output has fewer than 8 sections (e.g., 5-7). Page still includes hero, at least 2 content sections, CTA, contact, and footer.",Must-pass,"strategist.ts, prompts/planner.ts"
+DV-011,Theme Styling,Premium theme produces different spacing than bold,"Theme-variant padding values implemented","1. Generate page with themeVariant='premium'
+2. Generate page with themeVariant='bold'
+3. Compare section padding values","Premium sections have larger padding (e.g., 100px 0). Bold sections have tighter padding (e.g., 64px 0). Values are visibly different.",Must-pass,"section-generator.ts, renderer.ts"
+DV-012,Theme Styling,Premium/bold/playful themes produce visibly different treatment,"Theme-variant CSS overrides in renderer","1. Generate pages with each theme variant (clean, bold, premium, playful)
+2. Compare rendered HTML styling","Bold: larger headings, tighter spacing, smaller border-radius. Premium: more whitespace, refined borders, serif-compatible. Playful: rounded corners, lighter colors. Clean: minimal, standard.",Must-pass,"renderer.ts, section-generator.ts"
+DV-013,Coherence,Variation is coherent and not random noise,"selectVariant() uses preference table + deterministic tie-breaking","1. Generate page for a specific business type and theme
+2. Review all section variants and colors together","All variants on the page feel cohesive: no jarring layout mismatches between sections. Color rhythm follows a logical pattern. Page reads as intentionally designed, not randomly assembled.",Must-pass,"variant-selector.ts, section-generator.ts"
+DV-014,Determinism,Same business regenerated twice produces same variant layout,"Deterministic seed-based tie-breaking implemented","1. Generate page for business X with context Y
+2. Generate page again for same business X with same context Y
+3. Compare section variants","Both generations produce the same variant selections for all sections. Layout is identical (deterministic). Only AI-generated text content may differ slightly.",Must-pass,variant-selector.ts
+DV-015,Determinism,Different projects produce different variant choices,"Seed based on projectId","1. Generate page for plumber project A
+2. Generate page for plumber project B (same business type/theme)
+3. Compare section variants","At least some section variants differ between the two projects due to different projectId seeds. Not all sections are identical.",Should-pass,variant-selector.ts
+DV-016,Rendering,Non-default hero variants render correctly,"split-image and background-image hero variants enabled","1. Generate page that selects 'split-image' hero variant
+2. Generate page that selects 'background-image' hero variant
+3. Inspect rendered HTML","split-image hero: two-column layout with text and image. background-image hero: full-width background image with text overlay. No broken HTML or missing elements.",Must-pass,renderer.ts
+DV-017,Rendering,Non-default testimonials variant renders correctly,"avatars and single-highlight variants enabled","1. Generate page selecting 'avatars' testimonials variant
+2. Generate page selecting 'single-highlight' testimonials variant
+3. Inspect rendered HTML","avatars: shows testimonials with avatar placeholders. single-highlight: shows one featured testimonial prominently. No rendering errors.",Must-pass,renderer.ts
+DV-018,Rendering,Non-default services variant renders correctly,"alternating-rows and image-cards variants enabled","1. Generate page selecting 'alternating-rows' services variant
+2. Inspect rendered HTML","alternating-rows: services displayed in left-right alternating layout. image-cards: services displayed as cards with image slots. No rendering errors.",Must-pass,renderer.ts
+DV-019,Color Safety,No white-on-white or dark-on-dark contrast violations,"getContextAwareSectionStyle() with all brand colors","1. Generate pages with various brand color combinations
+2. Inspect all sections for text/background contrast","Every section has readable text: light backgrounds get dark text, dark backgrounds get light text. No section where text color matches background color.",Must-pass,section-generator.ts
+DV-020,CTA Awareness,CTA band variant matches business CTA strategy,"selectVariant() checks businessContext for CTA info","1. Generate page for WhatsApp-first business (has WhatsApp number in context)
+2. Check CTA band variant","CTA band uses 'whatsapp-focused' variant when WhatsApp contact is available. Falls back to 'centered' when no specific CTA strategy detected.",Should-pass,"variant-selector.ts, section-generator.ts"

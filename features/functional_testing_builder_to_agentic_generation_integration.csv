@@ -1,0 +1,50 @@
+Test ID,Category,Test Name,Preconditions,Steps,Expected Result,Priority,Files Involved
+BT-001,Trigger,New project triggers agentic generation,"New project created, AGENTIC_GENERATION_ENABLED=true, kickoff questions answered","1. Create new project with business info
+2. Complete kickoff (answer all questions or skip)
+3. Observe builder behavior","Builder calls POST /generate-site instead of runWorkflow(). Response contains runId. Builder starts polling /generation-status.",Must-pass,"kickoff/route.ts, answer/route.ts, builder/page.tsx"
+BT-002,Trigger,POST /generate-site returns runId with 202,"New project, kickoff complete, no existing GenerationRun","1. Complete kickoff
+2. Builder calls POST /generate-site
+3. Check response","Response status is 202. Body contains { runId: '<uuid>' }. GenerationRun record created in database.",Must-pass,"generate-site/route.ts, run-lock.ts"
+BT-003,Trigger,Duplicate generation attempt returns 409,"Active GenerationRun exists for project","1. Complete kickoff (generation starts)
+2. Reload builder page
+3. Builder attempts POST /generate-site again","Response status is 409. Body contains { error: '...', existingRunId: '<existing-uuid>' }. Builder resumes polling with existingRunId.",Must-pass,"generate-site/route.ts, run-lock.ts, builder/page.tsx"
+BT-004,Polling,Builder polls generation-status with runId,"Generation triggered, runId stored in builder state","1. Trigger generation
+2. Observe network requests","Builder polls GET /generation-status?runId=<runId> every ~2000ms. Each response contains status, currentPhase, progress, recentLogs.",Must-pass,"builder/page.tsx, generation-status/route.ts"
+BT-005,Polling,Progress updates display in UI during generation,"Generation running, polling active","1. Trigger generation
+2. Watch progress component through all phases","Progress component shows phase transitions: planning → shared_settings → page_planning → page_generation → site_review → finalize. Page count updates during page_generation phase.",Must-pass,"builder/page.tsx, AgenticProgress.tsx"
+BT-006,Polling,Page generation progress shows correct counts,"Generation in page_generation phase","1. Observe progress during page generation phase","Progress shows 'Generating pages (X of Y)' with X incrementing as pages complete. Y matches pagesPlanned from response.",Must-pass,"builder/page.tsx, AgenticProgress.tsx"
+BT-007,Completion,Completed generation redirects to editor,"Generation completes with status='completed'","1. Wait for generation to complete
+2. Observe builder behavior","Builder detects status='completed'. Shows success message. Redirects to /projects/{id}/editor within 2 seconds.",Must-pass,"builder/page.tsx"
+BT-008,Completion,Editor shows all generated pages after redirect,"Generation complete, redirected to editor","1. Complete generation (multiple pages)
+2. Arrive at editor
+3. Check page list","Editor page list shows all generated pages (e.g., Home, About, Services, Contact). First page (homepage) is loaded in canvas. Pages are clickable and switchable.",Must-pass,"editor/page.tsx"
+BT-009,Partial,Partial completion redirects with warning,"Generation completes with status='partial_completed'","1. Wait for generation with some page failures
+2. Observe builder behavior","Builder detects status='partial_completed'. Shows warning message about failed pages. Redirects to editor. Editor shows only successfully generated pages in nav.",Must-pass,"builder/page.tsx, editor/page.tsx"
+BT-010,Failure,Failed generation shows retry option,"Generation fails with status='failed'","1. Wait for generation failure
+2. Observe builder behavior","Builder detects status='failed'. Shows error message with description. Displays 'Retry' button. Does NOT redirect to editor.",Must-pass,"builder/page.tsx"
+BT-011,Failure,Retry button triggers new generation,"Failed generation, retry button visible","1. Click retry button after generation failure","Builder calls POST /generate-site again. New runId received. Polling resumes with new runId. Progress component resets.",Must-pass,"builder/page.tsx, generate-site/route.ts"
+BT-012,Legacy,Legacy project uses old workflow flow,"Project with WorkflowRun past intake state (e.g., plan_review or generation_running)","1. Open builder for existing legacy project
+2. Observe behavior","Builder detects legacy project (WorkflowRun past intake). Uses old polling on /workflow endpoint. Shows old WorkflowProgress component. PlanApproval shown at plan_review.",Must-pass,"builder/page.tsx, workflow/route.ts"
+BT-013,Legacy,Old workflow not triggered for agentic projects,"New project, AGENTIC_GENERATION_ENABLED=true","1. Create new project
+2. Complete kickoff
+3. Check WorkflowRun state","WorkflowRun exists at 'intake_complete' (from transitionWorkflowPastIntake). runWorkflow() is NOT called. No workflow states beyond intake_complete.",Must-pass,"kickoff/route.ts, answer/route.ts"
+BT-014,Gating,AGENTIC_GENERATION_ENABLED=false uses legacy flow,"Environment variable set to false","1. Set AGENTIC_GENERATION_ENABLED=false
+2. Create new project
+3. Complete kickoff","Kickoff completion calls runWorkflow() as before. No agenticReady signal returned. Builder uses old workflow polling. Plan review gate works normally.",Must-pass,"kickoff/route.ts, answer/route.ts, builder/page.tsx"
+BT-015,Resume,Page reload during generation resumes polling,"Generation in progress, builder page reloaded","1. Start generation
+2. Reload browser page
+3. Observe builder behavior on remount","Builder detects active GenerationRun on mount. Resumes polling /generation-status with existing runId. Progress component shows current state.",Must-pass,"builder/page.tsx"
+BT-016,Kickoff,Kickoff questioning flow unchanged,"New project, kickoff has questions","1. Create project
+2. Trigger kickoff
+3. Answer questions one by one","Kickoff questions appear normally. Each answer updates businessContext. Skip and SkipAll work. Only after all questions resolved does agenticReady signal appear.",Must-pass,"kickoff/route.ts, answer/route.ts, builder/page.tsx"
+BT-017,Trigger,Generate-site uses collected business context,"Kickoff complete with full businessContext","1. Complete kickoff with all answers
+2. Generation starts
+3. Check orchestrator input","Agentic orchestrator receives full businessContext including businessName, businessType, targetAudience, tone, mainOffer from kickoff inference and answers.",Should-pass,"orchestrator.ts, generate-site/route.ts"
+BT-018,Polling,Network errors during polling handled gracefully,"Generation running, intermittent network issues","1. Start generation polling
+2. Simulate network failure (disconnect briefly)
+3. Reconnect","Polling continues after transient errors. No crash or stuck state. After 3+ consecutive failures, shows connectivity warning.",Should-pass,builder/page.tsx
+BT-019,UI,Chat messages appear during generation phases,"Generation running, chat panel visible","1. Start generation
+2. Watch chat panel","System messages appear as phases complete: 'Planning site...' 'Generated Home page' etc. Messages derived from recentLogs.",Should-pass,"builder/page.tsx"
+BT-020,Multi-page,Multiple pages visible in editor page list,"Generation complete with 4+ pages","1. Complete generation
+2. Open editor
+3. Check page list rail","Page list shows all generated pages with titles. Homepage marked. Pages are switchable. Each page loads its own sections in canvas.",Should-pass,"editor/page.tsx"
