@@ -16,14 +16,19 @@ import type { SiteSettings, NavItem } from "./types";
 import { DEFAULT_SITE_SETTINGS } from "./types";
 
 /**
- * Check if a project needs migration (siteSettings is empty or "{}")
+ * Check if a project needs migration.
+ * A fully migrated project has siteSettings with brand, navigation array,
+ * and header object. Missing any of these indicates partial or no migration.
  */
 export function needsMigration(siteSettingsRaw: string): boolean {
   if (!siteSettingsRaw || siteSettingsRaw === "{}") return true;
   try {
     const parsed = JSON.parse(siteSettingsRaw);
-    // If it's an empty object or missing brand, it needs migration
-    return !parsed.brand;
+    // All required fields must be present for migration to be considered complete
+    if (!parsed.brand) return true;
+    if (!Array.isArray(parsed.navigation)) return true;
+    if (!parsed.header || typeof parsed.header !== "object") return true;
+    return false;
   } catch {
     return true;
   }
@@ -117,16 +122,21 @@ export async function migrateProjectToMultiPage(
     }
 
     // Perform atomic update: set page as homepage + update siteSettings + clean page sections
+    // Brand and actions are REMOVED from page doc — they live exclusively at site level.
+    // The renderer will receive them from siteSettings at render time.
     const updatedDoc = doc
       ? {
-          ...doc,
+          meta: doc.meta,
+          // Provide a minimal brand stub so renderPageFromDocument still works
+          // (it reads brand.primaryColor etc. for CSS). At render time for
+          // published pages, the site-level brand is used instead.
+          brand: doc.brand, // kept read-only for rendering; canonical source is siteSettings
+          assets: doc.assets,
+          actions: [], // Actions are exclusively at site level
           sections: sectionsWithoutFooter.map((s, i) => ({
             ...s,
             order: i,
           })),
-          // Remove brand and actions from page doc (now site-level)
-          brand: siteSettings.brand,
-          actions: [], // Actions are now at site level
         }
       : null;
 
