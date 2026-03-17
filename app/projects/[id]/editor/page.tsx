@@ -136,6 +136,7 @@ function EditorContent({ projectId }: { projectId: string }) {
       const data = await res.json();
       if (data.version) setVersion(data.version);
       if (data.slug) setPageSlug(data.slug);
+      if (data.isHomepage !== undefined) setIsCurrentPageHomepage(data.isHomepage);
       markClean();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Save failed");
