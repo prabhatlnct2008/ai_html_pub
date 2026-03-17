@@ -4,6 +4,7 @@ import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { chatCompletion, parseJSON } from "@/lib/ai/openai-client";
 import { buildKickoffSystemPrompt, buildKickoffUserPrompt } from "@/lib/ai/prompts/kickoff";
 import { runWorkflow } from "@/lib/workflow/engine";
+import { isAgenticGenerationEnabled } from "@/lib/config";
 
 interface KickoffQuestion {
   field: string;
@@ -201,9 +202,21 @@ export async function POST(
       }
     }
 
-    // If kickoff complete (no questions), transition workflow and start engine
+    // If kickoff complete (no questions), transition workflow past intake
     if (kickoff.status === "complete") {
       await transitionWorkflowPastIntake(projectId, businessContext);
+
+      if (isAgenticGenerationEnabled()) {
+        // Agentic flow: don't run legacy workflow — let client trigger POST /generate-site
+        return jsonResponse({
+          status: kickoff.status,
+          agenticReady: true,
+          kickoff,
+          summary: result.summary,
+        });
+      }
+
+      // Legacy flow: run the old workflow engine
       const workflowStatus = await runWorkflow(projectId);
       return jsonResponse({
         status: kickoff.status,

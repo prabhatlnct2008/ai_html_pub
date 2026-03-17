@@ -44,11 +44,13 @@ export async function pagePlanningNode(
       (p) => `- ${p.title} (/${p.slug}): ${p.sections.map((s) => s.type).join(", ")}`
     );
 
+    const themeVariant = state.siteSettingsDraft?.themeVariant || "clean";
     const { plan, usedFallback } = await runPagePlannerAgent(
       page,
       otherSummaries,
       state.businessContext,
-      existingPlans
+      existingPlans,
+      themeVariant
     );
 
     pagePlans[slug] = plan;

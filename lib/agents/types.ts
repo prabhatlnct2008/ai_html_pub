@@ -28,6 +28,8 @@ export interface SitePlan {
 
 export interface SiteSettingsDraft {
   brand: BrandSettings;
+  /** Site-wide theme variant that drives layout, spacing, and variant selection. */
+  themeVariant?: string;
   actions: Action[];
   navigation: NavItem[];
   header: {
