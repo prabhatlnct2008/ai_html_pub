@@ -6,6 +6,7 @@
 import type { SiteBuildStateType } from "../site-build-state";
 import { runSitePlannerAgent } from "../../agents/site-planner";
 import { appendRunLog, updateRunProgress } from "../../run-lock";
+import { saveArtifact } from "../../artifacts";
 import type { LogEntry } from "../../types";
 
 export async function sitePlanningNode(
@@ -34,6 +35,18 @@ export async function sitePlanningNode(
       level: "info",
     });
   }
+
+  // Persist site plan artifact
+  await saveArtifact({
+    projectId: state.projectId,
+    generationRunId: state.runId,
+    artifactType: "site_plan",
+    phase: "planning",
+    status: "success",
+    payloadJson: plan,
+    sourceAgent: "site-planner",
+    metadataJson: { usedFallback },
+  });
 
   // Initialize page statuses
   const pageStatuses: Record<string, { status: "pending"; retryCount: 0; issues: string[] }> = {};

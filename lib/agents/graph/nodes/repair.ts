@@ -8,6 +8,7 @@ import { renderPageFromDocument } from "@/lib/page/renderer";
 import type { SiteBuildStateType } from "../site-build-state";
 import { runRepairAgent } from "../../agents/repair-agent";
 import { appendRunLog, updateRunProgress } from "../../run-lock";
+import { saveArtifact } from "../../artifacts";
 import type { LogEntry } from "../../types";
 import type { PageDocument } from "@/lib/page/schema";
 
@@ -46,6 +47,18 @@ export async function repairNode(
 
     log(`Repairing: ${item.issue.description} on /${item.targetSlug}`);
 
+    // Persist repair attempt artifact
+    await saveArtifact({
+      projectId: state.projectId,
+      generationRunId: state.runId,
+      artifactType: "repair_attempt",
+      phase: "repairing",
+      status: "created",
+      payloadJson: { issue: item.issue, targetSlug: item.targetSlug, targetSectionId: item.targetSectionId },
+      pageSlug: item.targetSlug,
+      sourceAgent: "repair-agent",
+    });
+
     const { repairedSection, repairedSections, skipped } = await runRepairAgent(
       item.issue,
       doc,
@@ -55,6 +68,17 @@ export async function repairNode(
 
     if (skipped) {
       repairsFailed++;
+      await saveArtifact({
+        projectId: state.projectId,
+        generationRunId: state.runId,
+        artifactType: "repair_result",
+        phase: "repairing",
+        status: "failure",
+        payloadJson: {},
+        pageSlug: item.targetSlug,
+        sourceAgent: "repair-agent",
+        error: "Repair skipped or failed",
+      });
       continue;
     }
 
@@ -79,6 +103,19 @@ export async function repairNode(
 
     updatedDocuments[item.targetSlug] = updatedDoc;
     repairsSucceeded++;
+
+    // Persist repair result artifact
+    await saveArtifact({
+      projectId: state.projectId,
+      generationRunId: state.runId,
+      artifactType: "repair_result",
+      phase: "repairing",
+      status: "success",
+      payloadJson: updatedDoc,
+      pageSlug: item.targetSlug,
+      sourceAgent: "repair-agent",
+      metadataJson: { issueDescription: item.issue.description },
+    });
 
     // Persist repaired page
     try {

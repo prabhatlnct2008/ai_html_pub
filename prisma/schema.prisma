@@ -33,6 +33,7 @@ model Project {
   pages           Page[]
   workflowRun     WorkflowRun?
   generationRuns  GenerationRun[]
+  artifacts       GenerationArtifact[]
   assets          Asset[]
 }
 
@@ -125,6 +126,25 @@ model GenerationRun {
   completedAt    DateTime?
   updatedAt      DateTime  @updatedAt
   project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  artifacts      GenerationArtifact[]
+}
+
+model GenerationArtifact {
+  id               String    @id @default(uuid())
+  projectId        String
+  generationRunId  String
+  artifactType     String    // site_plan | shared_settings | page_plan | page_document_raw | page_document_normalized | review_result | repair_attempt | repair_result | terminal_summary | render_failure | normalization_failure
+  pageSlug         String?   // nullable — only set for page-scoped artifacts
+  phase            String    // planning | settings | page_planning | page_generation | reviewing | repairing | finalizing
+  status           String    @default("created") // created | success | failure
+  payloadJson      String    @default("{}") // the artifact data
+  attemptNumber    Int?      // for retried operations
+  sourceAgent      String?   // which agent produced this
+  error            String?   // error message if status=failure
+  metadataJson     String?   // optional extra context
+  createdAt        DateTime  @default(now())
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  generationRun    GenerationRun @relation(fields: [generationRunId], references: [id], onDelete: Cascade)
 }
 
 model Asset {

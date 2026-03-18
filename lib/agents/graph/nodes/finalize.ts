@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { updateSiteNavigation } from "@/lib/site/navigation";
 import type { SiteBuildStateType } from "../site-build-state";
 import { releaseRunLock, appendRunLog, updateRunProgress } from "../../run-lock";
+import { saveArtifact } from "../../artifacts";
 import type { LogEntry, GenerationSummary, BuildPhase } from "../../types";
 
 export async function finalizeNode(
@@ -102,6 +103,18 @@ export async function finalizeNode(
     repairsSucceeded: state.repairsSucceeded,
     warnings: state.logs.filter((l) => l.level === "warn").map((l) => l.message),
   };
+
+  // Persist terminal summary artifact
+  await saveArtifact({
+    projectId: state.projectId,
+    generationRunId: state.runId,
+    artifactType: "terminal_summary",
+    phase: "finalizing",
+    status: terminalStatus === "failed" ? "failure" : "success",
+    payloadJson: summary,
+    sourceAgent: "finalize",
+    metadataJson: { terminalStatus, terminalPhase },
+  });
 
   // Release run lock with summary
   await releaseRunLock(state.runId, terminalStatus, {
