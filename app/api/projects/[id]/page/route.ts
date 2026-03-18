@@ -5,6 +5,8 @@ import { renderPageHtml } from "@/lib/html-renderer";
 import { renderPageFromDocument } from "@/lib/page/renderer";
 import { normalizeDocumentActions } from "@/lib/actions/normalizer";
 import { normalizeVariant } from "@/lib/page/section-library";
+import { normalizeDocumentContent } from "@/lib/page/normalize-section-content";
+import { lazyRepairPageDocument } from "@/lib/page/lazy-repair";
 import type { PageDocument } from "@/lib/page/schema";
 import { BRAND_SITE_MANAGED } from "@/lib/site/types";
 
@@ -43,6 +45,13 @@ export async function GET(
       ...s,
       variant: normalizeVariant(s.type, s.variant),
     }));
+
+    // Normalize section content shapes (repairs malformed stored data)
+    const { doc: normalizedDoc, fixes } = normalizeDocumentContent(doc);
+    if (fixes.length > 0) {
+      doc = normalizedDoc;
+      lazyRepairPageDocument(page.id, page.documentJson, fixes).catch(() => {});
+    }
   }
 
   // V2: prefer documentJson sections as canonical source; fall back to sectionsJson for legacy

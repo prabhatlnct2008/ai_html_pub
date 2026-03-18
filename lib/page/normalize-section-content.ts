@@ -171,6 +171,98 @@ export function normalizeSectionContent(
     }
   }
 
+  // Fix 7: Footer-specific deep normalization
+  // LLM sometimes produces columns[].items instead of columns[].links,
+  // and link.link instead of link.href
+  if (stype === "footer" && Array.isArray(content.columns)) {
+    let footerFixed = false;
+    const fixedColumns = (content.columns as Array<Record<string, unknown>>).map((col) => {
+      const fixed = { ...col };
+      // Remap items → links if links is missing
+      if (!Array.isArray(fixed.links) && Array.isArray(fixed.items)) {
+        fixed.links = fixed.items;
+        delete fixed.items;
+        footerFixed = true;
+      }
+      // Ensure links is an array
+      if (!Array.isArray(fixed.links)) {
+        fixed.links = [];
+        footerFixed = true;
+      }
+      // Normalize individual link objects: link → href
+      fixed.links = (fixed.links as Array<Record<string, unknown>>).map((link) => {
+        if (typeof link !== "object" || link === null) return { text: String(link || ""), href: "#" };
+        const l = { ...link };
+        if (l.link !== undefined && l.href === undefined) {
+          l.href = l.link;
+          delete l.link;
+          footerFixed = true;
+        }
+        if (l.url !== undefined && l.href === undefined) {
+          l.href = l.url;
+          delete l.url;
+          footerFixed = true;
+        }
+        // Ensure text exists
+        if (!l.text) {
+          l.text = "";
+          footerFixed = true;
+        }
+        return l;
+      });
+      // Ensure title exists
+      if (!fixed.title) {
+        fixed.title = "";
+        footerFixed = true;
+      }
+      return fixed;
+    });
+    if (footerFixed) {
+      content = { ...content, columns: fixedColumns };
+      fixes.push("Normalized footer columns (items→links, link→href remapping)");
+    }
+  }
+
+  // Fix 8: Footer legalLinks normalization (link → href)
+  if (stype === "footer" && Array.isArray(content.legalLinks)) {
+    let legalFixed = false;
+    const fixedLegal = (content.legalLinks as Array<Record<string, unknown>>).map((link) => {
+      if (typeof link !== "object" || link === null) return { text: String(link || ""), href: "#" };
+      const l = { ...link };
+      if (l.link !== undefined && l.href === undefined) {
+        l.href = l.link;
+        delete l.link;
+        legalFixed = true;
+      }
+      if (l.url !== undefined && l.href === undefined) {
+        l.href = l.url;
+        delete l.url;
+        legalFixed = true;
+      }
+      return l;
+    });
+    if (legalFixed) {
+      content = { ...content, legalLinks: fixedLegal };
+      fixes.push("Normalized footer legalLinks (link→href remapping)");
+    }
+  }
+
+  // Fix 9: Pricing plans feature arrays — ensure plans[].features is always an array
+  if (stype === "pricing" && Array.isArray(content.plans)) {
+    let pricingFixed = false;
+    const fixedPlans = (content.plans as Array<Record<string, unknown>>).map((plan) => {
+      if (!Array.isArray(plan.features)) {
+        pricingFixed = true;
+        return { ...plan, features: [] };
+      }
+      return plan;
+    });
+    if (pricingFixed) {
+      content = { ...content, plans: fixedPlans };
+      fixes.push("Ensured pricing plans[].features are arrays");
+    }
+  }
+
   return { content, fixes };
 }
 

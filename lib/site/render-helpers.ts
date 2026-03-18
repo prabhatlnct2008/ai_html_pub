@@ -6,6 +6,7 @@
 import type { SiteSettings, SiteFooter } from "./types";
 import type { BrandSettings, PageDocument } from "@/lib/page/schema";
 import { renderPageFromDocument } from "@/lib/page/renderer";
+import { normalizeDocumentContent } from "@/lib/page/normalize-section-content";
 import { BRAND_SITE_MANAGED } from "./types";
 
 function esc(str: string): string {
@@ -181,6 +182,8 @@ export interface RenderOnReadResult {
   html: string;
   /** Non-null when rendering failed — describes what went wrong */
   renderError: string | null;
+  /** List of normalization fixes applied to repair malformed stored content */
+  normalizationFixes: string[];
 }
 
 /**
@@ -210,13 +213,25 @@ export function renderOnRead(
   let html: string;
   let renderError: string | null = null;
 
+  let normalizationFixes: string[] = [];
+
   if (documentJson && documentJson !== "{}") {
     try {
-      const doc = JSON.parse(documentJson) as PageDocument;
+      let doc = JSON.parse(documentJson) as PageDocument;
 
       // Basic validation: does the document have sections?
       if (!doc.sections || doc.sections.length === 0) {
         renderError = "documentJson has no sections array";
+      }
+
+      // Normalize section content shapes before rendering.
+      // This repairs malformed stored data (e.g. footer items→links).
+      if (doc.sections && doc.sections.length > 0) {
+        const { doc: normalizedDoc, fixes } = normalizeDocumentContent(doc);
+        if (fixes.length > 0) {
+          doc = normalizedDoc;
+          normalizationFixes = fixes;
+        }
       }
 
       // Inject site-level brand and actions into the document for rendering.
@@ -246,6 +261,10 @@ export function renderOnRead(
     html = renderedHtml;
   }
 
+  if (normalizationFixes.length > 0) {
+    console.warn(`[renderOnRead] Applied ${normalizationFixes.length} normalization fixes${ctx ? ` (project: ${ctx.projectSlug})` : ""}: ${normalizationFixes.join("; ")}`);
+  }
+
   if (renderError) {
     console.warn(`[renderOnRead] ${renderError}${ctx ? ` (project: ${ctx.projectSlug})` : ""}`);
   }
@@ -269,7 +288,7 @@ export function renderOnRead(
   }
 
   if (returnError) {
-    return { html, renderError };
+    return { html, renderError, normalizationFixes };
   }
   return html;
 }

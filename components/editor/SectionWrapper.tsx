@@ -215,14 +215,16 @@ function renderFeatures(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as { heading: string; subheading?: string; items: Array<{ title: string; description: string; icon: string }> };
+  const c = section.content as { heading?: string; subheading?: string; items?: Array<{ title: string; description: string; icon: string }> };
+  const heading = c.heading || "";
+  const items = Array.isArray(c.items) ? c.items : [];
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
         {isPreview ? (
-          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{heading}</h2>
         ) : (
-          <InlineEditor value={c.heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+          <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
         )}
         {c.subheading && (
           isPreview ? (
@@ -232,8 +234,8 @@ function renderFeatures(
           )
         )}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.items?.length || 3, 3)}, 1fr)`, gap: "24px" }}>
-        {c.items?.map((item, i) => (
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(items.length || 3, 3)}, 1fr)`, gap: "24px" }}>
+        {items.map((item, i) => (
           <div key={i} style={{ background: "#ffffff", borderRadius: "12px", padding: "32px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", textAlign: "center", color: "#1a1a1a" }}>
             <div style={{ fontSize: "40px", marginBottom: "16px" }}>{item.icon || "\u2B50"}</div>
             {isPreview ? (
@@ -259,18 +261,20 @@ function renderBenefits(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as { heading: string; subheading?: string; items: Array<{ title: string; description: string }> };
+  const c = section.content as { heading?: string; subheading?: string; items?: Array<{ title: string; description: string }> };
+  const heading = c.heading || "";
+  const items = Array.isArray(c.items) ? c.items : [];
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
         {isPreview ? (
-          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{heading}</h2>
         ) : (
-          <InlineEditor value={c.heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+          <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
         )}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px", maxWidth: "900px", margin: "0 auto" }}>
-        {c.items?.map((item, i) => (
+        {items.map((item, i) => (
           <div key={i} style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
             <div style={{ flexShrink: 0, width: "40px", height: "40px", borderRadius: "50%", background: "#2563eb", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{"\u2713"}</div>
             <div>
@@ -363,18 +367,20 @@ function renderHowItWorks(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as { heading: string; subheading?: string; steps: Array<{ step: string; title: string; description: string }> };
+  const c = section.content as { heading?: string; subheading?: string; steps?: Array<{ step: string; title: string; description: string }> };
+  const heading = c.heading || "";
+  const steps = Array.isArray(c.steps) ? c.steps : [];
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
         {isPreview ? (
-          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{heading}</h2>
         ) : (
-          <InlineEditor value={c.heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+          <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
         )}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.steps?.length || 3, 3)}, 1fr)`, gap: "32px", maxWidth: "900px", margin: "0 auto" }}>
-        {c.steps?.map((step, i) => (
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(steps.length || 3, 3)}, 1fr)`, gap: "32px", maxWidth: "900px", margin: "0 auto" }}>
+        {steps.map((step, i) => (
           <div key={i} style={{ textAlign: "center" }}>
             <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#2563eb", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", fontWeight: 800, margin: "0 auto 16px" }}>{step.step}</div>
             {isPreview ? (
@@ -409,18 +415,20 @@ function renderTestimonials(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as { heading: string; items: Array<{ quote: string; author: string; role: string }> };
+  const c = section.content as { heading?: string; items?: Array<{ quote: string; author: string; role: string }> };
+  const heading = c.heading || "";
+  const items = Array.isArray(c.items) ? c.items : [];
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
         {isPreview ? (
-          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{heading}</h2>
         ) : (
-          <InlineEditor value={c.heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+          <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
         )}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.items?.length || 2, 3)}, 1fr)`, gap: "24px" }}>
-        {c.items?.map((item, i) => (
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(items.length || 2, 3)}, 1fr)`, gap: "24px" }}>
+        {items.map((item, i) => (
           <div key={i} style={{ background: "#ffffff", borderRadius: "12px", padding: "32px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", color: "#1a1a1a" }}>
             {isPreview ? (
               <p style={{ fontStyle: "italic", fontSize: "18px", marginBottom: "16px" }}>&ldquo;{item.quote}&rdquo;</p>
@@ -453,16 +461,18 @@ function renderResults(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as { heading: string; subheading?: string; stats: Array<{ value: string; label: string }> };
+  const c = section.content as { heading?: string; subheading?: string; stats?: Array<{ value: string; label: string }> };
+  const heading = c.heading || "";
+  const stats = Array.isArray(c.stats) ? c.stats : [];
   return (
     <div style={{ textAlign: "center" }}>
       {isPreview ? (
-        <h2 style={{ fontSize: "36px", fontWeight: 700, marginBottom: "12px" }}>{c.heading}</h2>
+        <h2 style={{ fontSize: "36px", fontWeight: 700, marginBottom: "12px" }}>{heading}</h2>
       ) : (
-        <InlineEditor value={c.heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700, marginBottom: "12px" }} />
+        <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700, marginBottom: "12px" }} />
       )}
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.stats?.length || 3, 4)}, 1fr)`, gap: "32px", maxWidth: "900px", margin: "32px auto 0" }}>
-        {c.stats?.map((stat, i) => (
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(stats.length || 3, 4)}, 1fr)`, gap: "32px", maxWidth: "900px", margin: "32px auto 0" }}>
+        {stats.map((stat, i) => (
           <div key={i}>
             {isPreview ? (
               <div style={{ fontSize: "48px", fontWeight: 800, lineHeight: 1 }}>{stat.value}</div>
@@ -486,18 +496,20 @@ function renderPricing(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as { heading: string; subheading?: string; plans: Array<{ name: string; price: string; period: string; features: string[]; ctaText?: string; cta_text?: string; highlighted: boolean }> };
+  const c = section.content as { heading?: string; subheading?: string; plans?: Array<{ name: string; price: string; period: string; features: string[]; ctaText?: string; cta_text?: string; highlighted: boolean }> };
+  const heading = c.heading || "";
+  const plans = Array.isArray(c.plans) ? c.plans : [];
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
         {isPreview ? (
-          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{heading}</h2>
         ) : (
-          <InlineEditor value={c.heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+          <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
         )}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.plans?.length || 2, 3)}, 1fr)`, gap: "24px", maxWidth: "900px", margin: "0 auto" }}>
-        {c.plans?.map((plan, i) => (
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(plans.length || 2, 3)}, 1fr)`, gap: "24px", maxWidth: "900px", margin: "0 auto" }}>
+        {plans.map((plan, i) => (
           <div key={i} style={{ background: "#ffffff", borderRadius: "12px", padding: "32px", textAlign: "center", border: plan.highlighted ? "2px solid #2563eb" : "1px solid #e5e7eb", color: "#1a1a1a" }}>
             {isPreview ? (
               <h3 style={{ fontSize: "24px", fontWeight: 600 }}>{plan.name}</h3>
@@ -511,7 +523,7 @@ function renderPricing(
               <span style={{ fontSize: "16px", fontWeight: 400, opacity: 0.6 }}>{plan.period}</span>
             </div>
             <ul style={{ listStyle: "none", marginBottom: "24px", textAlign: "left" }}>
-              {plan.features.map((f, fi) => (
+              {(Array.isArray(plan.features) ? plan.features : []).map((f, fi) => (
                 <li key={fi} style={{ padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
                   {"\u2713"} {isPreview ? f : (
                     <InlineEditor value={f} onChange={(v) => update(`plans.${i}.features.${fi}`, v)} tag="span" />
@@ -531,17 +543,19 @@ function renderFaq(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as { heading: string; items: Array<{ question: string; answer: string }> };
+  const c = section.content as { heading?: string; items?: Array<{ question: string; answer: string }> };
+  const heading = c.heading || "";
+  const items = Array.isArray(c.items) ? c.items : [];
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
         {isPreview ? (
-          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{heading}</h2>
         ) : (
-          <InlineEditor value={c.heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+          <InlineEditor value={heading} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
         )}
       </div>
-      {c.items?.map((item, i) => (
+      {items.map((item, i) => (
         <div key={i} style={{ borderBottom: "1px solid #e5e7eb", padding: "20px 0" }}>
           {isPreview ? (
             <>
@@ -670,51 +684,60 @@ function renderFooter(
   update: (path: string, value: unknown) => void,
   isPreview: boolean
 ) {
-  const c = section.content as {
-    companyName: string;
-    tagline?: string;
-    columns?: Array<{ title: string; links: Array<{ text: string; href: string }> }>;
-    copyrightYear?: string;
-    legalLinks?: Array<{ text: string; href: string }>;
-  };
+  const raw = section.content as Record<string, unknown>;
+  const companyName = (raw.companyName as string) || "";
+  const tagline = raw.tagline as string | undefined;
+  const copyrightYear = (raw.copyrightYear as string) || String(new Date().getFullYear());
+  // Defensive: accept both columns[].links and columns[].items
+  const columns = (Array.isArray(raw.columns) ? raw.columns : []) as Array<Record<string, unknown>>;
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "48px", marginBottom: "48px" }}>
         <div style={{ minWidth: "200px" }}>
           {isPreview ? (
-            <h3 style={{ color: "#ffffff", fontSize: "22px", marginBottom: "8px" }}>{c.companyName}</h3>
+            <h3 style={{ color: "#ffffff", fontSize: "22px", marginBottom: "8px" }}>{companyName}</h3>
           ) : (
-            <InlineEditor value={c.companyName || ""} onChange={(v) => update("companyName", v)} tag="h3" style={{ color: "#ffffff", fontSize: "22px", marginBottom: "8px" }} />
+            <InlineEditor value={companyName} onChange={(v) => update("companyName", v)} tag="h3" style={{ color: "#ffffff", fontSize: "22px", marginBottom: "8px" }} />
           )}
-          {c.tagline && (
+          {tagline && (
             isPreview ? (
-              <p style={{ opacity: 0.6, maxWidth: "280px" }}>{c.tagline}</p>
+              <p style={{ opacity: 0.6, maxWidth: "280px" }}>{tagline}</p>
             ) : (
-              <InlineEditor value={c.tagline} onChange={(v) => update("tagline", v)} tag="p" style={{ opacity: 0.6, maxWidth: "280px" }} />
+              <InlineEditor value={tagline} onChange={(v) => update("tagline", v)} tag="p" style={{ opacity: 0.6, maxWidth: "280px" }} />
             )
           )}
         </div>
-        {c.columns?.map((col, ci) => (
-          <div key={ci} style={{ minWidth: "140px" }}>
-            {isPreview ? (
-              <h4 style={{ color: "#ffffff", fontSize: "16px", fontWeight: 600, marginBottom: "16px" }}>{col.title}</h4>
-            ) : (
-              <InlineEditor value={col.title} onChange={(v) => update(`columns.${ci}.title`, v)} tag="h4" style={{ color: "#ffffff", fontSize: "16px", fontWeight: 600, marginBottom: "16px" }} />
-            )}
-            <ul style={{ listStyle: "none" }}>
-              {col.links.map((link, li) => (
-                <li key={li} style={{ marginBottom: "8px", opacity: 0.7 }}>
-                  {isPreview ? link.text : (
-                    <InlineEditor value={link.text} onChange={(v) => update(`columns.${ci}.links.${li}.text`, v)} tag="span" />
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {columns.map((col, ci) => {
+          const colTitle = (col.title as string) || "";
+          // Accept links OR items (LLM sometimes uses items instead of links)
+          const links = (Array.isArray(col.links) ? col.links : Array.isArray(col.items) ? col.items : []) as Array<Record<string, unknown>>;
+          const linksField = Array.isArray(col.links) ? "links" : "items";
+          return (
+            <div key={ci} style={{ minWidth: "140px" }}>
+              {isPreview ? (
+                <h4 style={{ color: "#ffffff", fontSize: "16px", fontWeight: 600, marginBottom: "16px" }}>{colTitle}</h4>
+              ) : (
+                <InlineEditor value={colTitle} onChange={(v) => update(`columns.${ci}.title`, v)} tag="h4" style={{ color: "#ffffff", fontSize: "16px", fontWeight: 600, marginBottom: "16px" }} />
+              )}
+              <ul style={{ listStyle: "none" }}>
+                {links.map((link, li) => {
+                  const linkText = (link.text as string) || "";
+                  return (
+                    <li key={li} style={{ marginBottom: "8px", opacity: 0.7 }}>
+                      {isPreview ? linkText : (
+                        <InlineEditor value={linkText} onChange={(v) => update(`columns.${ci}.${linksField}.${li}.text`, v)} tag="span" />
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
       </div>
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "24px", fontSize: "14px", opacity: 0.6 }}>
-        <p>&copy; {c.copyrightYear || new Date().getFullYear()} {c.companyName}. All rights reserved.</p>
+        <p>&copy; {copyrightYear} {companyName}. All rights reserved.</p>
       </div>
     </div>
   );

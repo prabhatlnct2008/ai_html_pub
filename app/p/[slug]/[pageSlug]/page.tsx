@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import PublishedPageClient from "../PublishedPageClient";
 import { renderOnRead } from "@/lib/site/render-helpers";
 import { saveRenderFailureArtifact } from "@/lib/agents/artifacts";
+import { lazyRepairPageDocument } from "@/lib/page/lazy-repair";
 
 interface Props {
   params: Promise<{ slug: string; pageSlug: string }>;
@@ -45,13 +46,18 @@ export default async function PublishedSubPage({ params }: Props) {
   if (project.siteSettings && project.siteSettings !== "{}") {
     try { siteSettings = JSON.parse(project.siteSettings); } catch { /* ignore */ }
   }
-  const { html, renderError } = renderOnRead(
+  const { html, renderError, normalizationFixes } = renderOnRead(
     page.documentJson,
     page.renderedHtml,
     siteSettings,
     { projectSlug: slug },
     true
   );
+
+  // Lazy repair: persist normalized document back to DB if fixes were applied
+  if (normalizationFixes.length > 0) {
+    lazyRepairPageDocument(page.id, page.documentJson, normalizationFixes).catch(() => {});
+  }
 
   // Persist render failure as artifact (deduplicated, attributed to correct run)
   if (renderError) {
