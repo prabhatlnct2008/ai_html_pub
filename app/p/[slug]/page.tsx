@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import PublishedPageClient from "./PublishedPageClient";
 import { renderOnRead } from "@/lib/site/render-helpers";
-import { saveArtifact } from "@/lib/agents/artifacts";
+import { saveRenderFailureArtifact } from "@/lib/agents/artifacts";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -52,26 +52,14 @@ export default async function PublishedPage({ params }: Props) {
     true
   );
 
-  // Persist render failure as artifact (fire-and-forget, tied to most recent run)
+  // Persist render failure as artifact (deduplicated, attributed to correct run)
   if (renderError) {
-    const latestRun = await prisma.generationRun.findFirst({
-      where: { projectId: project.id },
-      orderBy: { startedAt: "desc" },
-      select: { id: true },
-    });
-    if (latestRun) {
-      saveArtifact({
-        projectId: project.id,
-        generationRunId: latestRun.id,
-        artifactType: "render_failure",
-        phase: "render_on_read",
-        status: "failure",
-        payloadJson: { pageSlug: page.slug, error: renderError },
-        pageSlug: page.slug,
-        sourceAgent: "renderOnRead",
-        error: renderError,
-      }).catch(() => {}); // fire-and-forget
-    }
+    saveRenderFailureArtifact({
+      projectId: project.id,
+      pageSlug: page.slug,
+      pageUpdatedAt: page.updatedAt,
+      error: renderError,
+    }).catch(() => {}); // fire-and-forget
   }
 
   if (!html) notFound();

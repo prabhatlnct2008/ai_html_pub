@@ -72,3 +72,88 @@ function safeStringify(val: unknown): string {
     return "{}";
   }
 }
+
+/**
+ * Deduplicated render-failure artifact persistence.
+ *
+ * Fixes two problems with naive per-request artifact writes:
+ * 1. Deduplication: skips if an identical render_failure artifact already
+ *    exists for this project + page within the last hour.
+ * 2. Correct attribution: finds the GenerationRun that most recently
+ *    touched this page (by matching runs whose time window covers
+ *    page.updatedAt), falling back to the most recent run.
+ *
+ * Fire-and-forget — never throws.
+ */
+export async function saveRenderFailureArtifact(opts: {
+  projectId: string;
+  pageSlug: string;
+  pageUpdatedAt: Date;
+  error: string;
+}): Promise<void> {
+  try {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    // Dedupe: skip if a matching render_failure already exists recently
+    const existing = await prisma.generationArtifact.findFirst({
+      where: {
+        projectId: opts.projectId,
+        pageSlug: opts.pageSlug,
+        artifactType: "render_failure",
+        error: opts.error,
+        createdAt: { gte: oneHourAgo },
+      },
+      select: { id: true },
+    });
+    if (existing) return; // already recorded
+
+    // Attribution: find the run that produced this page content.
+    // Best match: a run that started before the page was last updated
+    // and either completed after or is still running.
+    let run = await prisma.generationRun.findFirst({
+      where: {
+        projectId: opts.projectId,
+        startedAt: { lte: opts.pageUpdatedAt },
+        OR: [
+          { completedAt: { gte: opts.pageUpdatedAt } },
+          { completedAt: null }, // still running
+          { status: "complete" },
+          { status: "partial_complete" },
+        ],
+      },
+      orderBy: { startedAt: "desc" },
+      select: { id: true },
+    });
+
+    // Fallback: most recent run for this project
+    if (!run) {
+      run = await prisma.generationRun.findFirst({
+        where: { projectId: opts.projectId },
+        orderBy: { startedAt: "desc" },
+        select: { id: true },
+      });
+    }
+
+    if (!run) return; // no run to attribute to
+
+    await prisma.generationArtifact.create({
+      data: {
+        projectId: opts.projectId,
+        generationRunId: run.id,
+        artifactType: "render_failure",
+        pageSlug: opts.pageSlug,
+        phase: "render_on_read",
+        status: "failure",
+        payloadJson: safeStringify({ pageSlug: opts.pageSlug, error: opts.error }),
+        sourceAgent: "renderOnRead",
+        error: opts.error,
+      },
+    });
+  } catch (err) {
+    console.warn(
+      `[artifacts] Failed to save render_failure artifact: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+  }
+}
