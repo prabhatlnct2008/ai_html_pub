@@ -177,12 +177,36 @@ function resolveBrand(
  * The page still renders (falls back to pre-rendered HTML or placeholder)
  * but the failure is traceable.
  */
+export interface RenderOnReadResult {
+  html: string;
+  /** Non-null when rendering failed — describes what went wrong */
+  renderError: string | null;
+}
+
+/**
+ * Overload: returns just html string for backward compatibility.
+ * The new overload with `returnError: true` returns { html, renderError }.
+ */
 export function renderOnRead(
   documentJson: string,
   renderedHtml: string,
   siteSettings?: SiteSettings | null,
   ctx?: SiteShellContext
-): string {
+): string;
+export function renderOnRead(
+  documentJson: string,
+  renderedHtml: string,
+  siteSettings: SiteSettings | null | undefined,
+  ctx: SiteShellContext | undefined,
+  returnError: true
+): RenderOnReadResult;
+export function renderOnRead(
+  documentJson: string,
+  renderedHtml: string,
+  siteSettings?: SiteSettings | null,
+  ctx?: SiteShellContext,
+  returnError?: true
+): string | RenderOnReadResult {
   let html: string;
   let renderError: string | null = null;
 
@@ -232,7 +256,9 @@ export function renderOnRead(
   if (!html) {
     if (documentJson && documentJson !== "{}") {
       // We have a document but couldn't render it — this is a real failure
-      console.error(`[renderOnRead] Page has documentJson but produced no HTML${ctx ? ` (project: ${ctx.projectSlug})` : ""}`);
+      const msg = `Page has documentJson but produced no HTML`;
+      console.error(`[renderOnRead] ${msg}${ctx ? ` (project: ${ctx.projectSlug})` : ""}`);
+      if (!renderError) renderError = msg;
     }
     html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page</title></head><body><div style="min-height:60vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;color:#9ca3af;"><p>This page has no content yet.</p></div></body></html>`;
   }
@@ -242,5 +268,8 @@ export function renderOnRead(
     html = composePageWithSiteShell(html, siteSettings, ctx);
   }
 
+  if (returnError) {
+    return { html, renderError };
+  }
   return html;
 }
