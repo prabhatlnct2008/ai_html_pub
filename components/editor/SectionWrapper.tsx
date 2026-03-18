@@ -51,6 +51,9 @@ export default function SectionWrapper({ section, index }: SectionWrapperProps) 
       case "cta": return renderCtaBand(section, update, isPreview); // legacy compat
       case "contact": return renderContact(section, update, isPreview);
       case "footer": return renderFooter(section, update, isPreview);
+      case "gallery": return renderGallery(section, update, isPreview);
+      case "service-area": return renderServiceArea(section, update, isPreview);
+      case "about-team": return renderAboutTeam(section, update, isPreview);
       default: return <p className="text-center text-gray-400">Unknown section: {section.type}</p>;
     }
   };
@@ -713,6 +716,185 @@ function renderFooter(
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "24px", fontSize: "14px", opacity: 0.6 }}>
         <p>&copy; {c.copyrightYear || new Date().getFullYear()} {c.companyName}. All rights reserved.</p>
       </div>
+    </div>
+  );
+}
+
+function renderGallery(
+  section: SectionData,
+  update: (path: string, value: unknown) => void,
+  isPreview: boolean
+) {
+  const c = section.content as { heading: string; subheading?: string; images?: Array<{ imageId?: string; caption?: string; alt?: string }> };
+  return (
+    <div>
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        {isPreview ? (
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+        ) : (
+          <InlineEditor value={c.heading || ""} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+        )}
+        {c.subheading && (
+          isPreview ? (
+            <p style={{ fontSize: "18px", opacity: 0.7, maxWidth: "600px", margin: "8px auto 0" }}>{c.subheading}</p>
+          ) : (
+            <InlineEditor value={c.subheading} onChange={(v) => update("subheading", v)} tag="p" style={{ fontSize: "18px", opacity: 0.7, maxWidth: "600px", margin: "8px auto 0" }} />
+          )
+        )}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.images?.length || 3, 3)}, 1fr)`, gap: "16px" }}>
+        {c.images?.map((img, i) => (
+          <div key={i} style={{ borderRadius: "12px", overflow: "hidden", background: "#f3f4f6", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {img.imageId ? (
+              <div style={{ width: "100%", height: "100%", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#9ca3af" }}>Image</div>
+            ) : (
+              <div style={{ fontSize: "14px", color: "#9ca3af" }}>No image assigned</div>
+            )}
+            {img.caption && (
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.5)", color: "#fff", padding: "8px", fontSize: "13px" }}>
+                {isPreview ? img.caption : (
+                  <InlineEditor value={img.caption} onChange={(v) => update(`images.${i}.caption`, v)} tag="span" />
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function renderServiceArea(
+  section: SectionData,
+  update: (path: string, value: unknown) => void,
+  isPreview: boolean
+) {
+  const c = section.content as { heading: string; subheading?: string; areas?: Array<{ name: string; description?: string }>; mapNote?: string };
+  return (
+    <div>
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        {isPreview ? (
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+        ) : (
+          <InlineEditor value={c.heading || ""} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+        )}
+        {c.subheading && (
+          isPreview ? (
+            <p style={{ fontSize: "18px", opacity: 0.7 }}>{c.subheading}</p>
+          ) : (
+            <InlineEditor value={c.subheading} onChange={(v) => update("subheading", v)} tag="p" style={{ fontSize: "18px", opacity: 0.7 }} />
+          )
+        )}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.areas?.length || 3, 3)}, 1fr)`, gap: "20px", maxWidth: "900px", margin: "0 auto" }}>
+        {c.areas?.map((area, i) => (
+          <div key={i} style={{ background: "#ffffff", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", color: "#1a1a1a" }}>
+            {isPreview ? (
+              <h3 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "8px" }}>{area.name}</h3>
+            ) : (
+              <InlineEditor value={area.name} onChange={(v) => update(`areas.${i}.name`, v)} tag="h3" style={{ fontSize: "20px", fontWeight: 600, marginBottom: "8px" }} />
+            )}
+            {area.description && (
+              isPreview ? (
+                <p style={{ opacity: 0.7 }}>{area.description}</p>
+              ) : (
+                <InlineEditor value={area.description} onChange={(v) => update(`areas.${i}.description`, v)} tag="p" style={{ opacity: 0.7 }} multiline />
+              )
+            )}
+          </div>
+        ))}
+      </div>
+      {c.mapNote && (
+        <div style={{ textAlign: "center", marginTop: "24px", opacity: 0.6, fontStyle: "italic" }}>
+          {isPreview ? c.mapNote : (
+            <InlineEditor value={c.mapNote} onChange={(v) => update("mapNote", v)} tag="p" />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function renderAboutTeam(
+  section: SectionData,
+  update: (path: string, value: unknown) => void,
+  isPreview: boolean
+) {
+  const c = section.content as {
+    heading: string;
+    subheading?: string;
+    description?: string;
+    members?: Array<{ name: string; role: string; bio?: string; imageId?: string }>;
+    values?: Array<{ title: string; description: string }>;
+  };
+  return (
+    <div>
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        {isPreview ? (
+          <h2 style={{ fontSize: "36px", fontWeight: 700 }}>{c.heading}</h2>
+        ) : (
+          <InlineEditor value={c.heading || ""} onChange={(v) => update("heading", v)} tag="h2" style={{ fontSize: "36px", fontWeight: 700 }} />
+        )}
+        {c.subheading && (
+          isPreview ? (
+            <p style={{ fontSize: "18px", opacity: 0.7 }}>{c.subheading}</p>
+          ) : (
+            <InlineEditor value={c.subheading} onChange={(v) => update("subheading", v)} tag="p" style={{ fontSize: "18px", opacity: 0.7 }} />
+          )
+        )}
+      </div>
+      {c.description && (
+        <div style={{ maxWidth: "700px", margin: "0 auto 48px", textAlign: "center" }}>
+          {isPreview ? (
+            <p style={{ fontSize: "16px", opacity: 0.8, lineHeight: 1.7 }}>{c.description}</p>
+          ) : (
+            <InlineEditor value={c.description} onChange={(v) => update("description", v)} tag="p" style={{ fontSize: "16px", opacity: 0.8, lineHeight: 1.7 }} multiline />
+          )}
+        </div>
+      )}
+      {c.members && c.members.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.members.length, 3)}, 1fr)`, gap: "32px", marginBottom: "48px" }}>
+          {c.members.map((member, i) => (
+            <div key={i} style={{ textAlign: "center" }}>
+              <div style={{ width: "120px", height: "120px", borderRadius: "50%", background: "#e5e7eb", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#9ca3af" }}>
+                {member.imageId ? "Photo" : "No photo"}
+              </div>
+              {isPreview ? (
+                <>
+                  <h3 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "4px" }}>{member.name}</h3>
+                  <p style={{ opacity: 0.6, fontSize: "14px", marginBottom: "8px" }}>{member.role}</p>
+                  {member.bio && <p style={{ opacity: 0.7, fontSize: "14px" }}>{member.bio}</p>}
+                </>
+              ) : (
+                <>
+                  <InlineEditor value={member.name} onChange={(v) => update(`members.${i}.name`, v)} tag="h3" style={{ fontSize: "20px", fontWeight: 600, marginBottom: "4px" }} />
+                  <InlineEditor value={member.role} onChange={(v) => update(`members.${i}.role`, v)} tag="p" style={{ opacity: 0.6, fontSize: "14px", marginBottom: "8px" }} />
+                  {member.bio && <InlineEditor value={member.bio} onChange={(v) => update(`members.${i}.bio`, v)} tag="p" style={{ opacity: 0.7, fontSize: "14px" }} multiline />}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {c.values && c.values.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(c.values.length, 3)}, 1fr)`, gap: "24px" }}>
+          {c.values.map((val, i) => (
+            <div key={i} style={{ background: "#ffffff", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", textAlign: "center", color: "#1a1a1a" }}>
+              {isPreview ? (
+                <>
+                  <h4 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "8px" }}>{val.title}</h4>
+                  <p style={{ opacity: 0.7 }}>{val.description}</p>
+                </>
+              ) : (
+                <>
+                  <InlineEditor value={val.title} onChange={(v) => update(`values.${i}.title`, v)} tag="h4" style={{ fontSize: "18px", fontWeight: 600, marginBottom: "8px" }} />
+                  <InlineEditor value={val.description} onChange={(v) => update(`values.${i}.description`, v)} tag="p" style={{ opacity: 0.7 }} multiline />
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

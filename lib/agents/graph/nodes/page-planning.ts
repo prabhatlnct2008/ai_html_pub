@@ -6,6 +6,7 @@
 import type { SiteBuildStateType } from "../site-build-state";
 import { runPagePlannerAgent } from "../../agents/page-planner";
 import { appendRunLog, updateRunProgress } from "../../run-lock";
+import { saveArtifact } from "../../artifacts";
 import type { LogEntry, AgenticPagePlan, PageStatusEntry } from "../../types";
 
 export async function pagePlanningNode(
@@ -55,6 +56,19 @@ export async function pagePlanningNode(
 
     pagePlans[slug] = plan;
     existingPlans.push(plan);
+
+    // Persist page plan artifact
+    await saveArtifact({
+      projectId: state.projectId,
+      generationRunId: state.runId,
+      artifactType: "page_plan",
+      phase: "page_planning",
+      status: "success",
+      payloadJson: plan,
+      pageSlug: slug,
+      sourceAgent: "page-planner",
+      metadataJson: { usedFallback },
+    });
 
     if (usedFallback) {
       log(`Used fallback plan for "${slug}"`, "warn");

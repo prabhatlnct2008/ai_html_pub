@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import type { SiteBuildStateType } from "../site-build-state";
 import { runSharedSettingsAgent } from "../../agents/shared-settings-agent";
 import { appendRunLog, updateRunProgress } from "../../run-lock";
+import { saveArtifact } from "../../artifacts";
 import type { LogEntry, SiteSettingsDraft } from "../../types";
 import type { SiteSettings } from "@/lib/site/types";
 import { CURRENT_MIGRATION_VERSION } from "@/lib/site/types";
@@ -39,6 +40,18 @@ export async function sharedSettingsNode(
   } else {
     log(`Generated settings: ${settings.actions.length} actions, ${settings.navigation.length} nav items`);
   }
+
+  // Persist shared settings artifact
+  await saveArtifact({
+    projectId: state.projectId,
+    generationRunId: state.runId,
+    artifactType: "shared_settings",
+    phase: "settings",
+    status: "success",
+    payloadJson: settings,
+    sourceAgent: "shared-settings-agent",
+    metadataJson: { usedFallback },
+  });
 
   // Persist to Project.siteSettings
   const siteSettings: SiteSettings = {

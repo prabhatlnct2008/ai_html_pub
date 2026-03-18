@@ -6,6 +6,7 @@
 import type { SiteBuildStateType } from "../site-build-state";
 import { runSiteReviewerAgent } from "../../agents/site-reviewer";
 import { appendRunLog, updateRunProgress } from "../../run-lock";
+import { saveArtifact } from "../../artifacts";
 import type { LogEntry, RepairItem } from "../../types";
 
 const MAX_REVIEW_PASSES = 2;
@@ -66,6 +67,18 @@ export async function siteReviewNode(
   });
 
   await updateRunProgress(state.runId, { reviewScore: review.overallScore });
+
+  // Persist review result artifact
+  await saveArtifact({
+    projectId: state.projectId,
+    generationRunId: state.runId,
+    artifactType: "review_result",
+    phase: "reviewing",
+    status: "success",
+    payloadJson: review,
+    sourceAgent: "site-reviewer",
+    attemptNumber: state.reviewPassCount + 1,
+  });
 
   // Build repair queue from error-severity issues
   const repairQueue: RepairItem[] = review.issues

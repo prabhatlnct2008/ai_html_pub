@@ -172,6 +172,10 @@ function resolveBrand(
  * Re-render a page from its documentJson on read (render-on-read pattern).
  * Falls back to pre-rendered HTML if documentJson is empty.
  * Composes with site shell (header/footer) when siteSettings + context are provided.
+ *
+ * Render failures are logged with detail so they can be diagnosed.
+ * The page still renders (falls back to pre-rendered HTML or placeholder)
+ * but the failure is traceable.
  */
 export function renderOnRead(
   documentJson: string,
@@ -180,25 +184,56 @@ export function renderOnRead(
   ctx?: SiteShellContext
 ): string {
   let html: string;
+  let renderError: string | null = null;
 
   if (documentJson && documentJson !== "{}") {
     try {
       const doc = JSON.parse(documentJson) as PageDocument;
+
+      // Basic validation: does the document have sections?
+      if (!doc.sections || doc.sections.length === 0) {
+        renderError = "documentJson has no sections array";
+      }
+
       // Inject site-level brand and actions into the document for rendering.
       // Page docs do not own brand or actions; site settings is canonical.
       doc.brand = resolveBrand(siteSettings, doc.brand);
       if (siteSettings?.actions?.length) doc.actions = siteSettings.actions;
+
+      // Ensure brand has required fields for renderer
+      if (!doc.brand?.fontHeading || !doc.brand?.fontBody) {
+        doc.brand = {
+          ...doc.brand,
+          tone: doc.brand?.tone || "professional",
+          primaryColor: doc.brand?.primaryColor || "#2563eb",
+          secondaryColor: doc.brand?.secondaryColor || "#f8fafc",
+          accentColor: doc.brand?.accentColor || "#f59e0b",
+          fontHeading: doc.brand?.fontHeading || "Inter",
+          fontBody: doc.brand?.fontBody || "Inter",
+        };
+      }
+
       html = renderPageFromDocument(doc);
-    } catch {
+    } catch (err) {
+      renderError = `Render-on-read failed: ${err instanceof Error ? err.message : String(err)}`;
       html = renderedHtml;
     }
   } else {
     html = renderedHtml;
   }
 
+  if (renderError) {
+    console.warn(`[renderOnRead] ${renderError}${ctx ? ` (project: ${ctx.projectSlug})` : ""}`);
+  }
+
   // Newly created pages have no content yet — render a minimal placeholder
   // so the published route doesn't 404 (owner can still preview the shell).
+  // Only use placeholder if BOTH documentJson and renderedHtml are empty.
   if (!html) {
+    if (documentJson && documentJson !== "{}") {
+      // We have a document but couldn't render it — this is a real failure
+      console.error(`[renderOnRead] Page has documentJson but produced no HTML${ctx ? ` (project: ${ctx.projectSlug})` : ""}`);
+    }
     html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page</title></head><body><div style="min-height:60vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;color:#9ca3af;"><p>This page has no content yet.</p></div></body></html>`;
   }
 
