@@ -66,6 +66,25 @@ export function normalizeSectionContent(
   let content = section.content;
   const stype = section.type as SectionType;
 
+  // Fix 0: Guarantee content is an object before any property access.
+  // The LLM can return a string, number, boolean, null, or undefined.
+  if (content === null || content === undefined) {
+    content = {};
+    fixes.push(`Replaced null/undefined content with empty object for ${stype}`);
+  } else if (typeof content === "string") {
+    // A bare string — use it as the heading if the type normally has one
+    const defaults = CONTENT_DEFAULTS[stype];
+    if (defaults && "heading" in defaults) {
+      content = { heading: content as unknown as string };
+    } else {
+      content = {};
+    }
+    fixes.push(`Replaced string content with object for ${stype}`);
+  } else if (typeof content === "number" || typeof content === "boolean") {
+    content = {};
+    fixes.push(`Replaced primitive content (${typeof content}) with empty object for ${stype}`);
+  }
+
   // Fix 1: If content is a raw array, wrap it in the expected field
   if (Array.isArray(content)) {
     const wrapperField = ARRAY_FIELD_MAP[stype];
