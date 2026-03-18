@@ -4,6 +4,8 @@ import { requireAuth, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { renderPageFromDocument } from "@/lib/page/renderer";
 import { normalizeDocumentActions } from "@/lib/actions/normalizer";
 import { normalizeVariant } from "@/lib/page/section-library";
+import { normalizeDocumentContent } from "@/lib/page/normalize-section-content";
+import { lazyRepairPageDocument } from "@/lib/page/lazy-repair";
 import type { PageDocument } from "@/lib/page/schema";
 import type { SiteSettings } from "@/lib/site/types";
 import { BRAND_SITE_MANAGED } from "@/lib/site/types";
@@ -44,6 +46,14 @@ export async function GET(
       ...s,
       variant: normalizeVariant(s.type, s.variant),
     }));
+
+    // Normalize section content shapes (repairs malformed stored data)
+    const { doc: normalizedDoc, fixes } = normalizeDocumentContent(doc);
+    if (fixes.length > 0) {
+      doc = normalizedDoc;
+      // Lazy repair: persist normalized document back to DB
+      lazyRepairPageDocument(page.id, page.documentJson, fixes).catch(() => {});
+    }
   }
 
   const canonicalSections =
