@@ -1,0 +1,1627 @@
+{
+  "model": "gpt-4o-mini",
+  "renderer": "tailwind",
+  "business_context": {
+    "businessName": "VisaBridge Consultants",
+    "businessDescription": "A visa and immigration consultancy based in Bangalore, specializing in document review, application filing, interview preparation, and urgent case guidance for students, professionals, and families.",
+    "businessType": "service-business",
+    "targetAudience": "Individuals and families seeking efficient and clear visa assistance.",
+    "primaryCta": "Get Your Free Consultation",
+    "tone": "professional",
+    "pageType": "service-business",
+    "mainOffer": "Comprehensive visa application support and urgent case handling.",
+    "location": "Bangalore",
+    "differentiators": [
+      "Expertise in various visa categories",
+      "Fast response times for urgent cases"
+    ],
+    "trustDrivers": [
+      "Client testimonials",
+      "Success rates in visa approvals"
+    ],
+    "customerMotivations": [
+      "Need for reliable visa assistance",
+      "Desire for quick and effective solutions"
+    ],
+    "likelyObjections": [
+      "Concerns about cost",
+      "Skepticism about the effectiveness of consultancy"
+    ],
+    "visualStyleHints": [
+      "Clean and modern design",
+      "Professional color palette with blue and white tones"
+    ],
+    "_meta": {
+      "phase": "infer_context",
+      "attempt": 1
+    }
+  },
+  "site_plan": {
+    "siteGoal": "Provide comprehensive visa and immigration consultancy services to individuals and families in Bangalore, driving conversions through free consultations.",
+    "targetAudience": "Individuals and families seeking efficient and clear visa assistance.",
+    "pages": [
+      {
+        "slug": "home",
+        "title": "VisaBridge Consultants - Your Trusted Visa Partner",
+        "purpose": "To introduce the services, establish trust, and drive users to schedule a free consultation.",
+        "pageType": "service-business",
+        "isHomepage": true,
+        "suggestedSections": [
+          "hero",
+          "features",
+          "benefits",
+          "how-it-works",
+          "testimonials",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "about-team",
+        "title": "Meet Our Visa Experts",
+        "purpose": "To build trust by introducing the team and showcasing their expertise in visa applications.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "features",
+          "testimonials",
+          "footer"
+        ]
+      },
+      {
+        "slug": "services",
+        "title": "Our Visa Services",
+        "purpose": "To clearly outline the various visa and immigration services offered, emphasizing urgency and expertise.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "features",
+          "benefits",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "title": "Client Success Stories",
+        "purpose": "To showcase testimonials and success rates in visa approvals to alleviate skepticism and build trust.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "testimonials",
+          "results",
+          "faq",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "faq",
+        "title": "Frequently Asked Questions",
+        "purpose": "To address common objections and concerns about the visa consultancy process and costs.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "faq",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "contact",
+        "title": "Get in Touch with Us",
+        "purpose": "To provide clear contact information and a strong call to action for scheduling consultations.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "contact",
+          "cta-band",
+          "footer"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "site_plan",
+      "attempt": 1
+    }
+  },
+  "keyword_strategy": {
+    "siteIntent": "Provide comprehensive visa and immigration consultancy services to individuals and families in Bangalore, driving conversions through free consultations.",
+    "pageKeywordStrategy": [
+      {
+        "slug": "home",
+        "primaryIntent": "Introduce VisaBridge Consultants and encourage users to schedule a free consultation.",
+        "coreKeywords": [
+          "visa consultancy Bangalore",
+          "immigration services Bangalore",
+          "visa application support",
+          "urgent visa assistance"
+        ],
+        "trustKeywords": [
+          "trusted visa consultants",
+          "client success stories",
+          "high visa approval rates",
+          "expert visa guidance"
+        ],
+        "supportingKeywords": [
+          "free consultation for visa",
+          "best visa consultants in Bangalore",
+          "family visa assistance",
+          "student visa application help"
+        ]
+      },
+      {
+        "slug": "about-team",
+        "primaryIntent": "Build trust by showcasing the expertise of the visa consultancy team.",
+        "coreKeywords": [
+          "meet our visa experts",
+          "visa consultants in Bangalore",
+          "experienced immigration advisors"
+        ],
+        "trustKeywords": [
+          "expertise in visa applications",
+          "qualified immigration consultants",
+          "client testimonials"
+        ],
+        "supportingKeywords": [
+          "visa application success stories",
+          "professional visa guidance",
+          "trusted immigration professionals"
+        ]
+      },
+      {
+        "slug": "services",
+        "primaryIntent": "Outline the various visa and immigration services offered, emphasizing urgency and expertise.",
+        "coreKeywords": [
+          "visa services Bangalore",
+          "document review for visa",
+          "application filing assistance",
+          "interview preparation for visa"
+        ],
+        "trustKeywords": [
+          "fast visa processing",
+          "expert visa support",
+          "client success rates"
+        ],
+        "supportingKeywords": [
+          "urgent visa cases",
+          "student visa services",
+          "family visa application help",
+          "professional visa consultancy"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "primaryIntent": "Showcase client testimonials and success rates to alleviate skepticism and build trust.",
+        "coreKeywords": [
+          "visa approval testimonials",
+          "client success stories",
+          "visa consultancy reviews"
+        ],
+        "trustKeywords": [
+          "high success rates",
+          "client satisfaction",
+          "trusted visa consultancy"
+        ],
+        "supportingKeywords": [
+          "real client experiences",
+          "visa application success",
+          "trusted immigration advisors"
+        ]
+      },
+      {
+        "slug": "faq",
+        "primaryIntent": "Address common objections and concerns about the visa consultancy process and costs.",
+        "coreKeywords": [
+          "visa consultancy FAQs",
+          "cost of visa services",
+          "visa application process explained"
+        ],
+        "trustKeywords": [
+          "transparent pricing",
+          "expert answers to visa questions",
+          "trusted visa advice"
+        ],
+        "supportingKeywords": [
+          "common visa concerns",
+          "how to apply for a visa",
+          "visa consultancy benefits"
+        ]
+      },
+      {
+        "slug": "contact",
+        "primaryIntent": "Provide contact information and a strong call to action for scheduling consultations.",
+        "coreKeywords": [
+          "contact visa consultants",
+          "schedule a free consultation",
+          "visa assistance contact"
+        ],
+        "trustKeywords": [
+          "responsive visa support",
+          "trusted immigration consultants"
+        ],
+        "supportingKeywords": [
+          "get in touch for visa help",
+          "Bangalore visa consultancy contact",
+          "urgent visa assistance contact"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "keyword_strategy",
+      "attempt": 1
+    }
+  },
+  "shared_settings": {
+    "brand": {
+      "tone": "professional",
+      "primaryColor": "#003366",
+      "secondaryColor": "#f0f0f0",
+      "accentColor": "#007bff",
+      "fontHeading": "Arial, sans-serif",
+      "fontBody": "Verdana, sans-serif"
+    },
+    "themeVariant": "clean",
+    "designMode": "warm_local_service",
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Get Your Free Consultation",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "header": {
+      "siteName": "VisaBridge Consultants",
+      "showNav": true
+    },
+    "footer": {
+      "companyName": "VisaBridge Consultants",
+      "tagline": "Your Trusted Visa Partner",
+      "columns": [
+        {
+          "title": "Quick Links",
+          "links": [
+            {
+              "text": "Home",
+              "href": "#home"
+            },
+            {
+              "text": "About Our Team",
+              "href": "#about-team"
+            },
+            {
+              "text": "Our Services",
+              "href": "#services"
+            },
+            {
+              "text": "Testimonials",
+              "href": "#testimonials"
+            },
+            {
+              "text": "FAQs",
+              "href": "#faq"
+            },
+            {
+              "text": "Contact Us",
+              "href": "#contact"
+            }
+          ]
+        }
+      ],
+      "copyrightYear": "2026"
+    },
+    "navigation": [
+      {
+        "label": "Home",
+        "href": "#home"
+      },
+      {
+        "label": "About Our Team",
+        "href": "#about-team"
+      },
+      {
+        "label": "Our Services",
+        "href": "#services"
+      },
+      {
+        "label": "Testimonials",
+        "href": "#testimonials"
+      },
+      {
+        "label": "FAQs",
+        "href": "#faq"
+      },
+      {
+        "label": "Contact Us",
+        "href": "#contact"
+      }
+    ],
+    "_meta": {
+      "phase": "shared_settings",
+      "attempt": 1
+    },
+    "selectedDesignMode": {
+      "id": "warm_local_service",
+      "label": "Warm Local Service",
+      "summary": "Approachable neighborhood-business style for local providers who need trust, familiarity, and simple action more than polished luxury.",
+      "bestFor": [
+        "pandits",
+        "local tutors",
+        "physiotherapists",
+        "repair services",
+        "small clinics",
+        "visa consultants",
+        "travel agencies"
+      ],
+      "businessTags": [
+        "local-service",
+        "trust-service",
+        "community-business"
+      ],
+      "visualTraits": [
+        "friendly colors",
+        "simple trust blocks",
+        "clear cards",
+        "familiar layouts",
+        "human-first design"
+      ],
+      "toneTraits": [
+        "approachable",
+        "trustworthy",
+        "clear",
+        "human"
+      ],
+      "heroPreferences": [
+        "centered",
+        "offer-focused"
+      ],
+      "sectionPreferences": {
+        "services": [
+          "list-with-icons",
+          "story"
+        ],
+        "benefits": [
+          "icon-list"
+        ],
+        "testimonials": [
+          "avatars"
+        ],
+        "ctaBand": [
+          "contact-strip"
+        ],
+        "footer": [
+          "simple"
+        ]
+      },
+      "ctaStyle": "friendly and easy to act on",
+      "density": "medium",
+      "avoid": [
+        "cold corporate styling",
+        "overly premium minimalism",
+        "heavy jargon",
+        "complex interaction patterns"
+      ]
+    }
+  },
+  "design_mode_selection": {
+    "selected_id": "warm_local_service",
+    "score": 5,
+    "reasons": [
+      "partial:visa consultants",
+      "boost:page-type-service"
+    ],
+    "score_table": [
+      {
+        "id": "warm_local_service",
+        "score": 5
+      },
+      {
+        "id": "soft_concierge",
+        "score": 3
+      },
+      {
+        "id": "direct_local_conversion",
+        "score": 3
+      },
+      {
+        "id": "crisp_b2b_saas",
+        "score": 0
+      },
+      {
+        "id": "premium_editorial",
+        "score": 0
+      },
+      {
+        "id": "modern_glass_saas",
+        "score": 0
+      }
+    ]
+  },
+  "design_brief": {
+    "heroStrategy": {
+      "layout": "Full-width background image of a successful visa applicant or family in an emotional moment (e.g., celebrating a visa approval), overlaying a concise headline and a prominent CTA button.",
+      "goal": "To evoke an emotional response while clearly communicating VisaBridge's value proposition and prompting users to take immediate action.",
+      "headlineStyle": "Bold, impactful, and benefit-driven, e.g., 'Navigate Your Visa Journey with Confidence and Expertise'.",
+      "supportingCopyStyle": "Short, reassuring statements that highlight urgency and expertise, e.g., 'Fast, reliable visa assistance tailored to your unique needs.'",
+      "ctaApproach": "Make the primary CTA obvious and low-friction",
+      "trustSupport": "Display a small badge or quote from a client testimonial beneath the CTA, along with a success rate percentage (e.g., '98% Success Rate in Visa Approvals') to establish immediate credibility."
+    },
+    "navigationStrategy": {
+      "style": "Sticky navigation bar that remains at the top as users scroll, with clear, descriptive links.",
+      "links": [
+        "Home",
+        "Services",
+        "Testimonials",
+        "FAQ",
+        "Contact"
+      ],
+      "ctaPlacement": "Include the primary CTA ('Get Your Free Consultation') in the navigation bar, ensuring it stands out with a bright accent color.",
+      "notes": "Navigation should be straightforward and user-friendly, allowing quick access to key information and minimizing any friction in the user journey."
+    },
+    "visualSystem": {
+      "designIntent": "Professional yet approachable, with a clean layout that emphasizes clarity and trustworthiness.",
+      "primaryColorRole": "Deep blue should be used for headings and key elements to convey reliability and professionalism.",
+      "secondaryColorRole": "Light gray should serve as a background color to create a clean and organized look, enhancing readability.",
+      "accentColorRole": "Bright colors (like vibrant green or orange) should be used for CTA buttons and important highlights to ensure they stand out and attract attention.",
+      "contrastStrategy": "Utilize strong contrast between text and background colors to enhance readability, especially for key information and CTAs, while using softer tones for less critical areas.",
+      "surfaceStyle": "Cards and backgrounds should feel light and airy, incorporating subtle shadows to create depth and separate sections without overwhelming the user."
+    },
+    "typographyStrategy": {
+      "headingApproach": "Headings should be bold, modern, and action-oriented, using a sans-serif font for clarity and impact.",
+      "bodyApproach": "Body text should be clean, straightforward, and legible, using a sans-serif font for easy reading.",
+      "hierarchyNotes": "Use varying font sizes and weights to create a clear hierarchy that guides scanning, ensuring that key points stand out.",
+      "fontPairingDirection": "Pair a bold sans-serif font for headings with a clean, readable sans-serif font for body text to maintain a cohesive and professional appearance."
+    },
+    "sectionFlowStrategy": {
+      "openingExperience": "The hero section should capture attention and convey the main offer, immediately followed by a snapshot of services that briefly outlines VisaBridge's offerings.",
+      "midPageRhythm": "Alternate between sections that explain the benefits of services and showcase testimonials, creating a rhythm that builds trust and interest while addressing potential objections.",
+      "closingExperience": "Conclude with a strong CTA band that reinforces the offer and encourages immediate action, supported by a final testimonial or success story to alleviate skepticism.",
+      "densityPattern": "Balance dense sections (like testimonials and benefits) with lighter sections (like service snapshots) to maintain engagement and prevent overwhelming users with information."
+    },
+    "conversionStrategy": {
+      "primaryFrictionToReduce": "Concerns about the cost of consultancy services and skepticism regarding effectiveness.",
+      "howDesignSupportsTrust": "Visually support trust by incorporating testimonials, success rates, and professional imagery throughout the homepage, especially in the hero and testimonials sections.",
+      "howDesignSupportsAction": "Ensure CTAs are visually prominent and strategically placed throughout the page, making it easy for users to take action at any point in their journey.",
+      "whatMustNotHappen": [
+        "Users should not feel lost or confused about what to do next; clear CTAs must guide them.",
+        "Important information should not be buried in dense text; key points should be highlighted and easily scannable."
+      ]
+    },
+    "implementationNotes": [
+      "Ensure the design is mobile-responsive, with touch-friendly buttons and intuitive navigation for a seamless experience across devices.",
+      "Use high-quality, relatable images that resonate with the target audience, showcasing diverse clients and successful outcomes to enhance emotional connection."
+    ],
+    "_meta": {
+      "phase": "design_rewrite",
+      "attempt": 1
+    },
+    "_review": {
+      "pass": false,
+      "score": 4,
+      "summary": "The design brief lacks specificity and depth in several key areas, which could lead to a bland and ineffective homepage.",
+      "issues": [
+        {
+          "severity": "high",
+          "type": "hero",
+          "message": "The hero strategy is underdeveloped; it lacks a compelling emotional hook and clear prioritization of content.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "conversion",
+          "message": "The conversion strategy does not adequately address how to overcome skepticism about costs and effectiveness.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "specificity",
+          "message": "The brief lacks concrete examples and specific guidance for typography and color roles.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "sectionFlow",
+          "message": "The section flow strategy does not provide a clear connection to the buyer journey, risking disconnection in pacing.",
+          "field": ""
+        }
+      ],
+      "requiredFixes": [
+        "Enhance the hero section with a stronger emotional appeal and clearer content hierarchy.",
+        "Provide more specific guidance on typography and color roles based on their intended functions.",
+        "Clarify the connection between sections to ensure they align with the buyer journey and maintain user engagement."
+      ],
+      "strengths": [
+        "The brief identifies the target audience and business context clearly."
+      ],
+      "_meta": {
+        "phase": "design_review",
+        "attempt": 1
+      }
+    }
+  },
+  "page_plan": {
+    "slug": "home",
+    "title": "VisaBridge Consultants - Your Trusted Visa Partner",
+    "pageType": "service-business",
+    "sections": [
+      {
+        "type": "hero",
+        "purpose": "Lead with offer and CTA",
+        "variant": "centered",
+        "selectedPattern": {
+          "id": "hero_centered_clear_offer",
+          "sectionType": "hero",
+          "variant": "centered",
+          "label": "Centered Clear Offer Hero",
+          "bestFor": [
+            "local-service",
+            "trust-service",
+            "simple-offer",
+            "coach"
+          ],
+          "styleFit": [
+            "direct_local_conversion",
+            "warm_local_service",
+            "premium_editorial"
+          ],
+          "description": "Centered hero with strong heading, short support copy, visible CTA row, and optional trust chips below.",
+          "contentNeeds": [
+            "eyebrow",
+            "heading",
+            "subheading",
+            "buttons"
+          ],
+          "visualTraits": [
+            "centered layout",
+            "strong hierarchy",
+            "easy scanability",
+            "clear CTA cluster"
+          ],
+          "avoidIf": [
+            "business needs product screenshot first",
+            "hero needs side-by-side visual storytelling"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "hero_centered_clear_offer",
+          "score": 10,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service"
+          ]
+        }
+      },
+      {
+        "type": "trust-bar",
+        "purpose": "Reinforce trust immediately after the hero with fast-scanning proof signals",
+        "variant": "simple",
+        "selectedPattern": {
+          "id": "fallback_trust-bar",
+          "sectionType": "trust-bar",
+          "variant": "default",
+          "label": "Fallback Pattern",
+          "bestFor": [],
+          "styleFit": [],
+          "description": "Fallback section pattern",
+          "contentNeeds": [],
+          "visualTraits": [],
+          "avoidIf": []
+        },
+        "patternSelection": {
+          "selected_pattern_id": "fallback_trust-bar",
+          "score": 0,
+          "reasons": [
+            "fallback:no-patterns"
+          ]
+        }
+      },
+      {
+        "type": "features",
+        "purpose": "Explain core service offerings",
+        "variant": "icon-grid",
+        "selectedPattern": {
+          "id": "fallback_features",
+          "sectionType": "features",
+          "variant": "default",
+          "label": "Fallback Pattern",
+          "bestFor": [],
+          "styleFit": [],
+          "description": "Fallback section pattern",
+          "contentNeeds": [],
+          "visualTraits": [],
+          "avoidIf": []
+        },
+        "patternSelection": {
+          "selected_pattern_id": "fallback_features",
+          "score": 0,
+          "reasons": [
+            "fallback:no-patterns"
+          ]
+        }
+      },
+      {
+        "type": "benefits",
+        "purpose": "Translate services into client value",
+        "variant": "icon-list",
+        "selectedPattern": {
+          "id": "benefits_icon_list",
+          "sectionType": "benefits",
+          "variant": "icon-list",
+          "label": "Benefits Icon List",
+          "bestFor": [
+            "all"
+          ],
+          "styleFit": [
+            "direct_local_conversion",
+            "crisp_b2b_saas",
+            "warm_local_service",
+            "soft_concierge"
+          ],
+          "description": "A clean list of benefits with supporting descriptions, useful for explaining value quickly.",
+          "contentNeeds": [
+            "heading",
+            "subheading",
+            "items"
+          ],
+          "visualTraits": [
+            "clear value explanation",
+            "fast scanability",
+            "repeatable layout"
+          ],
+          "avoidIf": [
+            "benefits need long narrative treatment"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "benefits_icon_list",
+          "score": 16,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "generic-all-match",
+            "matched:section-preference:icon-list"
+          ]
+        }
+      },
+      {
+        "type": "how-it-works",
+        "purpose": "Clarify the visa application process",
+        "variant": "timeline",
+        "selectedPattern": {
+          "id": "fallback_how-it-works",
+          "sectionType": "how-it-works",
+          "variant": "default",
+          "label": "Fallback Pattern",
+          "bestFor": [],
+          "styleFit": [],
+          "description": "Fallback section pattern",
+          "contentNeeds": [],
+          "visualTraits": [],
+          "avoidIf": []
+        },
+        "patternSelection": {
+          "selected_pattern_id": "fallback_how-it-works",
+          "score": 0,
+          "reasons": [
+            "fallback:no-patterns"
+          ]
+        }
+      },
+      {
+        "type": "testimonials",
+        "purpose": "Build trust through client success stories",
+        "variant": "avatars",
+        "selectedPattern": {
+          "id": "testimonials_avatar_quotes",
+          "sectionType": "testimonials",
+          "variant": "avatars",
+          "label": "Avatar Quote Cards",
+          "bestFor": [
+            "local-service",
+            "coaching",
+            "beauty",
+            "pet-service",
+            "education"
+          ],
+          "styleFit": [
+            "warm_local_service",
+            "soft_concierge",
+            "direct_local_conversion"
+          ],
+          "description": "Friendly review cards with strong author presence, useful for human warmth and relatability.",
+          "contentNeeds": [
+            "heading",
+            "items"
+          ],
+          "visualTraits": [
+            "human presence",
+            "relatability",
+            "friendly trust",
+            "social proof with personality"
+          ],
+          "avoidIf": [
+            "brand is very formal and minimal",
+            "testimonials are highly corporate"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "testimonials_avatar_quotes",
+          "score": 15,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:section-preference:avatars"
+          ]
+        }
+      },
+      {
+        "type": "cta-band",
+        "purpose": "Encourage scheduling a free consultation",
+        "variant": "contact-strip",
+        "selectedPattern": {
+          "id": "cta_contact_strip",
+          "sectionType": "cta-band",
+          "variant": "contact-strip",
+          "label": "Contact Strip CTA",
+          "bestFor": [
+            "local-service",
+            "trust-service",
+            "pandit",
+            "physiotherapist",
+            "consultant"
+          ],
+          "styleFit": [
+            "warm_local_service",
+            "direct_local_conversion",
+            "soft_concierge"
+          ],
+          "description": "Utility-oriented closing strip that reinforces contact channels and gives a low-friction next step.",
+          "contentNeeds": [
+            "heading",
+            "subheading",
+            "buttons"
+          ],
+          "visualTraits": [
+            "simple close",
+            "practical",
+            "contact-led",
+            "low-friction action"
+          ],
+          "avoidIf": [
+            "page should end on a highly visual premium block"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "cta_contact_strip",
+          "score": 18,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:consultant",
+            "matched:section-preference:contact-strip"
+          ]
+        }
+      },
+      {
+        "type": "footer",
+        "purpose": "Provide navigation and contact information",
+        "variant": "simple",
+        "selectedPattern": {
+          "id": "footer_simple_utility",
+          "sectionType": "footer",
+          "variant": "simple",
+          "label": "Simple Utility Footer",
+          "bestFor": [
+            "local-service",
+            "small-business",
+            "single-page-site",
+            "lead-gen"
+          ],
+          "styleFit": [
+            "warm_local_service",
+            "direct_local_conversion",
+            "soft_concierge"
+          ],
+          "description": "Compact footer with business name, short tagline, limited nav links, and basic contact path.",
+          "contentNeeds": [
+            "companyName",
+            "tagline",
+            "columns",
+            "copyrightYear"
+          ],
+          "visualTraits": [
+            "clean close",
+            "not overbuilt",
+            "practical footer"
+          ],
+          "avoidIf": [
+            "business needs a more established corporate footer"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "footer_simple_utility",
+          "score": 15,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:section-preference:simple"
+          ]
+        }
+      }
+    ],
+    "_meta": {
+      "phase": "page_plan",
+      "attempt": 1
+    }
+  },
+  "section_pattern_selection": [
+    {
+      "section_type": "hero",
+      "selected_pattern_id": "hero_centered_clear_offer",
+      "variant": "centered",
+      "score": 10,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service"
+      ]
+    },
+    {
+      "section_type": "trust-bar",
+      "selected_pattern_id": "fallback_trust-bar",
+      "variant": "simple",
+      "score": 0,
+      "reasons": [
+        "fallback:no-patterns"
+      ]
+    },
+    {
+      "section_type": "features",
+      "selected_pattern_id": "fallback_features",
+      "variant": "icon-grid",
+      "score": 0,
+      "reasons": [
+        "fallback:no-patterns"
+      ]
+    },
+    {
+      "section_type": "benefits",
+      "selected_pattern_id": "benefits_icon_list",
+      "variant": "icon-list",
+      "score": 16,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "generic-all-match",
+        "matched:section-preference:icon-list"
+      ]
+    },
+    {
+      "section_type": "how-it-works",
+      "selected_pattern_id": "fallback_how-it-works",
+      "variant": "timeline",
+      "score": 0,
+      "reasons": [
+        "fallback:no-patterns"
+      ]
+    },
+    {
+      "section_type": "testimonials",
+      "selected_pattern_id": "testimonials_avatar_quotes",
+      "variant": "avatars",
+      "score": 15,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:section-preference:avatars"
+      ]
+    },
+    {
+      "section_type": "cta-band",
+      "selected_pattern_id": "cta_contact_strip",
+      "variant": "contact-strip",
+      "score": 18,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:consultant",
+        "matched:section-preference:contact-strip"
+      ]
+    },
+    {
+      "section_type": "footer",
+      "selected_pattern_id": "footer_simple_utility",
+      "variant": "simple",
+      "score": 15,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:section-preference:simple"
+      ]
+    }
+  ],
+  "used_patterns": {
+    "pattern_ids": [
+      "hero_centered_clear_offer",
+      "fallback_trust-bar",
+      "fallback_features",
+      "benefits_icon_list",
+      "fallback_how-it-works",
+      "testimonials_avatar_quotes",
+      "cta_contact_strip",
+      "footer_simple_utility"
+    ],
+    "variants": [
+      "centered",
+      "default",
+      "icon-list",
+      "avatars",
+      "contact-strip",
+      "simple"
+    ],
+    "section_types": [
+      "hero",
+      "trust-bar",
+      "features",
+      "benefits",
+      "how-it-works",
+      "testimonials",
+      "cta-band",
+      "footer"
+    ],
+    "layout_styles": [
+      "centered",
+      "default",
+      "icon-list",
+      "avatars",
+      "contact-strip",
+      "simple"
+    ],
+    "visual_traits": [
+      "centered layout",
+      "strong hierarchy",
+      "easy scanability",
+      "clear CTA cluster",
+      "clear value explanation",
+      "fast scanability",
+      "repeatable layout",
+      "human presence",
+      "relatability",
+      "friendly trust",
+      "social proof with personality",
+      "simple close",
+      "practical",
+      "contact-led",
+      "low-friction action",
+      "clean close",
+      "not overbuilt",
+      "practical footer"
+    ]
+  },
+  "section_keyword_plan": {
+    "sections": [
+      {
+        "type": "hero",
+        "keywords": [
+          "visa consultancy Bangalore",
+          "immigration assistance services",
+          "expert visa guidance",
+          "urgent visa application help",
+          "trusted visa consultants",
+          "fast visa processing",
+          "student visa support",
+          "family visa application services",
+          "free visa consultation",
+          "high visa approval rates",
+          "personalized visa solutions",
+          "navigate visa challenges",
+          "comprehensive immigration support",
+          "successful visa journeys"
+        ]
+      },
+      {
+        "type": "trust-bar",
+        "keywords": [
+          "client success stories",
+          "98% visa approval success",
+          "trusted immigration consultants",
+          "fast visa processing",
+          "client satisfaction ratings",
+          "reliable visa assistance",
+          "expertise in visa applications",
+          "proven track record",
+          "trusted by families and students",
+          "high client retention rates"
+        ]
+      },
+      {
+        "type": "features",
+        "keywords": [
+          "document review services",
+          "application filing assistance",
+          "interview preparation for visas",
+          "urgent visa case handling",
+          "comprehensive visa services",
+          "personalized immigration strategies",
+          "family visa processing",
+          "student visa application help",
+          "work visa consultancy",
+          "travel visa assistance"
+        ]
+      },
+      {
+        "type": "benefits",
+        "keywords": [
+          "hassle-free visa applications",
+          "expert guidance throughout the process",
+          "time-saving visa solutions",
+          "stress-free immigration experience",
+          "maximize your visa approval chances",
+          "tailored services for individual needs",
+          "transparent pricing for visa services",
+          "support for urgent visa cases",
+          "comprehensive support for families",
+          "dedicated visa consultants"
+        ]
+      },
+      {
+        "type": "how-it-works",
+        "keywords": [
+          "step-by-step visa application process",
+          "how to apply for a visa",
+          "visa application timeline",
+          "understanding visa requirements",
+          "preparing for visa interviews",
+          "document checklist for visa applications",
+          "navigating visa regulations",
+          "expert tips for visa success",
+          "what to expect during the process",
+          "common visa application pitfalls"
+        ]
+      },
+      {
+        "type": "testimonials",
+        "keywords": [
+          "real client experiences",
+          "visa approval testimonials",
+          "client success stories",
+          "trusted immigration advisors",
+          "high success rates",
+          "client satisfaction reviews",
+          "positive feedback from families",
+          "successful visa journeys",
+          "trusted consultancy experiences",
+          "personalized service testimonials"
+        ]
+      },
+      {
+        "type": "cta-band",
+        "keywords": [
+          "schedule your free consultation",
+          "get expert visa assistance",
+          "contact us for visa help",
+          "start your visa journey today",
+          "book your consultation now",
+          "urgent visa assistance available",
+          "personalized visa support",
+          "take the first step towards your visa",
+          "connect with our visa experts",
+          "get started with your visa application"
+        ]
+      },
+      {
+        "type": "footer",
+        "keywords": [
+          "contact VisaBridge Consultants",
+          "Bangalore visa consultancy",
+          "visa assistance contact information",
+          "get in touch for visa help",
+          "follow us on social media",
+          "subscribe for visa updates",
+          "frequently asked questions",
+          "terms and conditions",
+          "privacy policy",
+          "business hours for consultations"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "section_keyword_plan",
+      "attempt": 1
+    }
+  },
+  "rag_dir": "sandbox/unit_cli_html_generator/chroma_db",
+  "business_rag_dir": "sandbox/unit_cli_html_generator/chroma_business_playbooks",
+  "page_document": {
+    "meta": {
+      "title": "VisaBridge Consultants - Your Trusted Visa Partner",
+      "description": "Expert visa and immigration consultancy in Bangalore, providing personalized support for students, professionals, and families.",
+      "pageType": "service-business",
+      "themeVariant": "clean",
+      "slug": "home"
+    },
+    "brand": {
+      "tone": "professional",
+      "primaryColor": "#003366",
+      "secondaryColor": "#f0f0f0",
+      "accentColor": "#007bff",
+      "fontHeading": "Arial, sans-serif",
+      "fontBody": "Verdana, sans-serif"
+    },
+    "assets": [],
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Get Your Free Consultation",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "sections": [
+      {
+        "id": "section-hero-001",
+        "type": "hero",
+        "variant": "centered",
+        "visible": true,
+        "order": 0,
+        "layoutHint": "container > row > col-lg-7 content / col-lg-5 support",
+        "motionHint": "fade-up stagger with soft reveal",
+        "content": {
+          "eyebrow": "Your Visa Journey Starts Here",
+          "heading": "Unlock Your Future: Expert Visa Solutions Tailored for You",
+          "subheading": "Experience personalized visa assistance that prioritizes your unique needs and ensures timely results.",
+          "supportingPoints": [
+            "Thorough document review and meticulous application filing across all visa categories, ensuring no detail is overlooked.",
+            "Tailored interview preparation strategies that boost your confidence and enhance your chances of approval.",
+            "Rapid response for urgent visa cases, providing you with immediate support and solutions when you need them most."
+          ],
+          "trustChips": [
+            "98% Success Rate in Visa Approvals",
+            "Over 1,000 satisfied clients in Bangalore with successful visa outcomes",
+            "Specialized expertise in student and family visa applications, with numerous success stories"
+          ],
+          "buttons": [
+            {
+              "text": "Claim Your Free Consultation Today",
+              "actionId": "action-primary",
+              "style": "primary"
+            }
+          ],
+          "badge": "Your Trusted Visa Experts",
+          "ctaNote": "Begin your successful visa journey with our dedicated, personalized solutions."
+        },
+        "style": {
+          "backgroundColor": "#003366",
+          "textColor": "#ffffff",
+          "padding": "80px 0",
+          "surface": "soft-gradient",
+          "emphasis": "high"
+        },
+        "_meta": {
+          "phase": "section_rewrite:hero",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-trust-bar-002",
+        "type": "trust-bar",
+        "variant": "simple",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "items": [
+            "{'text': 'Hear from our clients: 95% of families successfully immigrated!', 'url': '#testimonials'}",
+            "{'text': '98% Visa Approval Rate - We make it happen!', 'url': '#success-stories'}",
+            "{'text': 'Expert Guidance for Every Visa Category', 'url': '#about-team'}"
+          ],
+          "heading": "Your Trusted Partner for Visa Success",
+          "subheading": "Expert assistance tailored to your immigration needs.",
+          "eyebrow": "Join our community of successful clients!",
+          "badge": "98% Visa Approval Rate",
+          "ctaNote": "Schedule your free consultation now and take the first step towards your visa success!",
+          "supportingPoints": [
+            "Fast response times for urgent cases",
+            "Specialized in student, professional, and family visas",
+            "Proven track record with hundreds of satisfied clients"
+          ],
+          "trustChips": [
+            "{'text': 'Client Testimonials', 'url': '#testimonials'}",
+            "{'text': 'Successful Cases', 'url': '#success-stories'}",
+            "{'text': 'Expert Team', 'url': '#about-team'}"
+          ]
+        },
+        "style": {
+          "backgroundColor": "#f0f0f0",
+          "textColor": "#003366",
+          "padding": "20px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:trust-bar",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-features-003",
+        "type": "features",
+        "variant": "icon-grid",
+        "visible": true,
+        "order": 2,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Our Comprehensive Visa Services",
+          "subheading": "Expert Guidance for Your Visa Journey",
+          "items": [
+            {
+              "title": "Thorough Document Review",
+              "description": "Our specialists meticulously assess your visa documents, ensuring accuracy and compliance with all requirements, significantly reducing the risk of application delays."
+            },
+            {
+              "title": "Streamlined Application Filing",
+              "description": "Experience a hassle-free application process with our step-by-step guidance, designed to enhance your chances of success while saving you time and stress."
+            },
+            {
+              "title": "Tailored Interview Preparation",
+              "description": "Boost your confidence with personalized mock interviews and expert tips, specifically crafted to prepare you for the unique demands of your visa interview."
+            },
+            {
+              "title": "Rapid Urgent Case Handling",
+              "description": "Facing a tight deadline? Our expedited service is dedicated to handling urgent visa applications and inquiries with precision and speed."
+            },
+            {
+              "title": "Custom Immigration Strategies",
+              "description": "Benefit from our bespoke immigration strategies tailored to your individual needs, whether for student, work, or family visas, ensuring a smooth application experience."
+            },
+            {
+              "title": "Family Visa Solutions",
+              "description": "We simplify the complexities of family visa applications, ensuring your loved ones can join you seamlessly, with expert support every step of the way."
+            },
+            {
+              "title": "Expert Student Visa Support",
+              "description": "Our dedicated consultants guide you through the intricacies of student visa applications, ensuring a smooth transition to your educational journey abroad."
+            },
+            {
+              "title": "Comprehensive Work Visa Assistance",
+              "description": "Navigate the work visa landscape with our in-depth consultancy, designed to clarify requirements and maximize your chances of approval."
+            },
+            {
+              "title": "Travel Visa Facilitation",
+              "description": "Planning a trip? Our travel visa services ensure you have all necessary documents, allowing you to focus on enjoying your travels without interruptions."
+            }
+          ],
+          "eyebrow": "Expert Guidance at Every Step",
+          "badge": "Trusted by Thousands",
+          "ctaNote": "Don't wait! Start your visa journey today with a free consultation and let us handle the details for you!",
+          "supportingPoints": [
+            "Fast response times for urgent cases.",
+            "98% success rate in visa approvals.",
+            "Experienced team dedicated to your success."
+          ],
+          "trustChips": [
+            "Client Satisfaction Guaranteed",
+            "Over 5,000 Successful Applications"
+          ]
+        },
+        "style": {
+          "backgroundColor": "#f0f0f0",
+          "textColor": "#003366",
+          "padding": "60px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:features",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-benefits-004",
+        "type": "benefits",
+        "variant": "icon-list",
+        "visible": true,
+        "order": 3,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Why Choose VisaBridge Consultants?",
+          "subheading": "Your Trusted Partner for Visa Success",
+          "items": [
+            {
+              "title": "Seamless Application Process",
+              "description": "Our expert consultants manage every detail of your visa application, ensuring a smooth journey from start to finish, so you can focus on what matters most."
+            },
+            {
+              "title": "Tailored Visa Expertise",
+              "description": "We specialize in a variety of visa categories, providing personalized strategies that enhance your chances of approval based on your unique circumstances."
+            },
+            {
+              "title": "Rapid Response for Urgent Cases",
+              "description": "In urgent situations, our team prioritizes your application, delivering swift solutions that keep your plans on track without unnecessary delays."
+            },
+            {
+              "title": "Comprehensive Family Support",
+              "description": "Navigating family immigration can be complex; we offer dedicated support to ensure a smooth transition for you and your loved ones, addressing all your concerns."
+            },
+            {
+              "title": "Transparent Pricing Structure",
+              "description": "We believe in clear communication. Our pricing is straightforward, with no hidden fees, allowing you to budget confidently for your visa services."
+            },
+            {
+              "title": "Continuous Support and Guidance",
+              "description": "From initial consultation to final approval, we provide ongoing support, ensuring you feel informed and empowered throughout your immigration journey."
+            }
+          ],
+          "eyebrow": "",
+          "badge": "",
+          "ctaNote": "",
+          "supportingPoints": [],
+          "trustChips": []
+        },
+        "style": {
+          "backgroundColor": "#f9f9f9",
+          "textColor": "#003366",
+          "padding": "60px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:benefits",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-how-it-works-005",
+        "type": "how-it-works",
+        "variant": "timeline",
+        "visible": true,
+        "order": 4,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Our Process",
+          "subheading": "Your Journey to Visa Success Starts Here",
+          "timeline": [
+            {
+              "step": 1,
+              "title": "Personalized Consultation",
+              "description": "Kickstart your visa journey with a complimentary consultation. Our experienced consultants will evaluate your unique circumstances, clarify visa requirements, and outline a tailored application strategy designed to optimize your chances of approval."
+            },
+            {
+              "step": 2,
+              "title": "Thorough Document Preparation",
+              "description": "Receive a customized document checklist to ensure you gather all necessary paperwork. Our meticulous team reviews your documents for accuracy and completeness, helping you avoid common pitfalls that could delay your application."
+            },
+            {
+              "step": 3,
+              "title": "Timely Application Submission",
+              "description": "With our expert guidance, submit your application accurately and punctually. We ensure that every form is completed correctly and that all supporting documents are included, significantly enhancing your likelihood of success."
+            },
+            {
+              "step": 4,
+              "title": "Comprehensive Interview Coaching",
+              "description": "Prepare for your visa interview with confidence through our specialized coaching. We provide tailored mock interviews and practical tips to help you navigate the process effectively, ensuring you present your best self to visa officials."
+            },
+            {
+              "step": 5,
+              "title": "Celebrate Your Approval",
+              "description": "Once your visa is approved, we continue to support you with essential information and resources for a smooth transition to your new destination, ensuring you feel ready and informed for your next chapter."
+            }
+          ],
+          "eyebrow": "Experience the VisaBridge Difference",
+          "badge": "Trusted by Thousands",
+          "ctaNote": "Don't wait! Schedule your free consultation now and take the first step toward your visa approval!",
+          "supportingPoints": [],
+          "trustChips": [],
+          "steps": []
+        },
+        "style": {
+          "backgroundColor": "#e9f5ff",
+          "textColor": "#003366",
+          "padding": "60px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:how-it-works",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-testimonials-006",
+        "type": "testimonials",
+        "variant": "avatars",
+        "visible": true,
+        "order": 5,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Client Success Stories",
+          "items": [
+            {
+              "quote": "VisaBridge guided me through every detail of my student visa application. Their thorough document review and prompt responses led to my approval in just three weeks! I felt supported and informed throughout the process.",
+              "author": "Anjali Sharma, Student"
+            },
+            {
+              "quote": "Initially, I was hesitant about hiring a consultancy, but VisaBridge exceeded my expectations. Their knowledgeable team provided personalized advice and support, making my work visa application seamless. I can\u2019t recommend them enough!",
+              "author": "Rohan Mehta, IT Professional"
+            },
+            {
+              "quote": "Relocating to Canada was a daunting task, but VisaBridge made it effortless for our family. Their expertise in documentation and interview preparation ensured we were well-prepared, and we received our visas without any issues.",
+              "author": "Suresh and Priya Gupta, Family"
+            },
+            {
+              "quote": "I was facing a tight deadline for my visa application. Thanks to VisaBridge\u2019s swift response and deep understanding of complex cases, I received my visa just in time. Their support was invaluable!",
+              "author": "Deepak Nair, Business Executive"
+            },
+            {
+              "quote": "The dedication and expertise of VisaBridge are evident in their high success rates. Our family felt genuinely cared for, and the positive feedback from others is a testament to their exceptional service.",
+              "author": "Neha Iyer, Family Client"
+            }
+          ],
+          "subheading": "Real Client Experiences",
+          "eyebrow": "Hear from our satisfied clients",
+          "badge": "Trusted Consultancy",
+          "ctaNote": "Start your successful visa journey with us today!",
+          "supportingPoints": [],
+          "trustChips": [
+            "{'label': '98% Success Rate in Visa Approvals', 'style': 'success-rate'}",
+            "{'label': 'Trusted by Families Across Bangalore', 'style': 'trust-badge'}"
+          ]
+        },
+        "style": {
+          "backgroundColor": "#f0f0f0",
+          "textColor": "#003366",
+          "padding": "60px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:testimonials",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-cta-band-007",
+        "type": "cta-band",
+        "variant": "contact-strip",
+        "visible": true,
+        "order": 6,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Start Your Visa Approval Journey Today!",
+          "subheading": "Book your complimentary consultation and let our experienced consultants navigate the complexities of your visa application with personalized support tailored to your unique situation.",
+          "buttons": [
+            {
+              "text": "Claim Your Free Consultation Now",
+              "actionId": "action-primary",
+              "style": "primary"
+            }
+          ],
+          "eyebrow": "Your Trusted Visa Partner",
+          "badge": "98% Success Rate in Visa Approvals",
+          "ctaNote": "Need urgent assistance? We're here to help you navigate your visa challenges swiftly.",
+          "supportingPoints": [
+            "Tailored strategies for students, professionals, and families to maximize your chances of approval.",
+            "In-depth document review to ensure your application meets all requirements.",
+            "Rapid response for urgent cases, because your time is critical."
+          ],
+          "trustChips": [
+            "{'text': 'Over 1,000 clients served', 'style': 'success'}",
+            "{'text': 'Client satisfaction rating: 4.9/5', 'style': 'success'}"
+          ]
+        },
+        "style": {
+          "backgroundColor": "#003366",
+          "textColor": "#ffffff",
+          "padding": "40px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:cta-band",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-hero-001",
+        "type": "footer",
+        "variant": "simple",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "eyebrow": "Trusted Visa Experts in Bangalore",
+          "heading": "Your Pathway to a Successful Visa Application",
+          "subheading": "Expert guidance tailored to your visa needs, ensuring peace of mind.",
+          "ctaButtons": [
+            {
+              "label": "Start Your Visa Application Today - Free Consultation!",
+              "url": "#contact",
+              "style": "primary"
+            }
+          ],
+          "supportingPoints": [
+            "Personalized document review to maximize your chances of approval.",
+            "Comprehensive application filing assistance across various visa categories.",
+            "Expert interview preparation to help you present your best self.",
+            "Urgent case handling available for time-sensitive applications."
+          ],
+          "trustSupport": {
+            "successRate": "98% Success Rate in Visa Approvals",
+            "testimonial": "\"VisaBridge Consultants transformed my stressful visa journey into a smooth experience!\" - Riya S."
+          },
+          "badge": "",
+          "ctaNote": "",
+          "trustChips": [],
+          "companyName": "VisaBridge Consultants",
+          "tagline": "Your dedicated partner for comprehensive visa solutions.",
+          "columns": [
+            {
+              "title": "Contact Us",
+              "links": [
+                {
+                  "text": "",
+                  "href": "tel:+911234567890"
+                },
+                {
+                  "text": "",
+                  "href": "mailto:info@visabridge.com"
+                },
+                {
+                  "text": "",
+                  "href": "#location"
+                }
+              ]
+            },
+            {
+              "title": "Follow Us",
+              "links": [
+                {
+                  "text": "",
+                  "href": "https://facebook.com/visabridge"
+                },
+                {
+                  "text": "",
+                  "href": "https://twitter.com/visabridge"
+                },
+                {
+                  "text": "",
+                  "href": "https://linkedin.com/company/visabridge"
+                }
+              ]
+            }
+          ],
+          "copyrightYear": "2026"
+        },
+        "style": {
+          "backgroundColor": "#f0f0f0",
+          "textColor": "#003366",
+          "padding": "60px 20px",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:footer",
+          "attempt": 1
+        }
+      }
+    ],
+    "_meta": {
+      "phase": "page_document",
+      "attempt": 1
+    }
+  }
+}

@@ -1,0 +1,1600 @@
+{
+  "model": "gpt-4o-mini",
+  "renderer": "tailwind",
+  "business_context": {
+    "businessName": "Northside Physio Care",
+    "businessDescription": "A neighborhood physiotherapy clinic dedicated to helping families, office workers, and seniors recover from pain through clear treatment plans and friendly care.",
+    "businessType": "physiotherapy clinic",
+    "targetAudience": "Families and working adults seeking approachable, trustworthy physiotherapy care",
+    "primaryCta": "Schedule a Consultation",
+    "tone": "friendly",
+    "pageType": "local-business",
+    "mainOffer": "Personalized physiotherapy treatment plans",
+    "location": "Bangalore",
+    "differentiators": [
+      "Family-focused care",
+      "Clear and transparent treatment plans"
+    ],
+    "trustDrivers": [
+      "Experienced physiotherapists",
+      "Positive patient testimonials"
+    ],
+    "customerMotivations": [
+      "Relief from pain",
+      "Improved mobility and health"
+    ],
+    "likelyObjections": [
+      "Concerns about treatment effectiveness",
+      "Cost of services"
+    ],
+    "visualStyleHints": [
+      "Warm colors",
+      "Inviting imagery of families and seniors"
+    ],
+    "_meta": {
+      "phase": "infer_context",
+      "attempt": 1
+    }
+  },
+  "site_plan": {
+    "siteGoal": "Convert visitors into patients by showcasing personalized physiotherapy services and building trust through clear information.",
+    "targetAudience": "Families and working adults seeking approachable, trustworthy physiotherapy care in Bangalore.",
+    "pages": [
+      {
+        "slug": "home",
+        "title": "Northside Physio Care | Your Trusted Physiotherapy Clinic",
+        "purpose": "To provide an overview of services, establish trust, and encourage visitors to schedule a consultation.",
+        "pageType": "local-business",
+        "isHomepage": true,
+        "suggestedSections": [
+          "hero",
+          "features",
+          "benefits",
+          "testimonials",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "about-us",
+        "title": "About Northside Physio Care",
+        "purpose": "To introduce the clinic, highlight the experience of physiotherapists, and emphasize family-focused care.",
+        "pageType": "local-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "trust-bar",
+          "about-team",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "services",
+        "title": "Our Physiotherapy Services",
+        "purpose": "To detail the personalized treatment plans offered and the various physiotherapy services available.",
+        "pageType": "local-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "services",
+          "how-it-works",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "title": "Patient Testimonials",
+        "purpose": "To build trust and credibility by showcasing positive experiences from previous patients.",
+        "pageType": "local-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "testimonials",
+          "results",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "faq",
+        "title": "Frequently Asked Questions",
+        "purpose": "To address common concerns and objections about treatment effectiveness and cost, helping to reduce hesitation.",
+        "pageType": "local-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "faq",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "pricing",
+        "title": "Transparent Pricing",
+        "purpose": "To provide clear information about service costs, helping potential clients understand what to expect.",
+        "pageType": "local-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "pricing",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "contact",
+        "title": "Contact Us",
+        "purpose": "To provide contact information and an easy way to schedule a consultation.",
+        "pageType": "local-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "contact",
+          "cta-band",
+          "footer"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "site_plan",
+      "attempt": 1
+    }
+  },
+  "keyword_strategy": {
+    "siteIntent": "Convert visitors into patients by showcasing personalized physiotherapy services and building trust through clear information.",
+    "pageKeywordStrategy": [
+      {
+        "slug": "home",
+        "primaryIntent": "Establish Northside Physio Care as a trusted physiotherapy clinic and encourage scheduling a consultation.",
+        "coreKeywords": [
+          "physiotherapy clinic Bangalore",
+          "personalized physiotherapy treatment plans"
+        ],
+        "trustKeywords": [
+          "experienced physiotherapists",
+          "positive patient testimonials"
+        ],
+        "supportingKeywords": [
+          "family-focused physiotherapy",
+          "pain relief services Bangalore"
+        ]
+      },
+      {
+        "slug": "about-us",
+        "primaryIntent": "Introduce the clinic and highlight the experience of physiotherapists while emphasizing family-focused care.",
+        "coreKeywords": [
+          "about Northside Physio Care",
+          "trusted physiotherapists Bangalore"
+        ],
+        "trustKeywords": [
+          "experienced physiotherapy team",
+          "family-oriented care"
+        ],
+        "supportingKeywords": [
+          "physiotherapy clinic history",
+          "meet our physiotherapists"
+        ]
+      },
+      {
+        "slug": "services",
+        "primaryIntent": "Detail the personalized treatment plans and various physiotherapy services available.",
+        "coreKeywords": [
+          "physiotherapy services Bangalore",
+          "customized treatment plans"
+        ],
+        "trustKeywords": [
+          "evidence-based physiotherapy",
+          "patient-focused treatment"
+        ],
+        "supportingKeywords": [
+          "sports injury rehabilitation",
+          "post-operative physiotherapy"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "primaryIntent": "Build trust and credibility by showcasing positive experiences from previous patients.",
+        "coreKeywords": [
+          "patient testimonials Bangalore",
+          "physiotherapy success stories"
+        ],
+        "trustKeywords": [
+          "real patient experiences",
+          "trusted physiotherapy reviews"
+        ],
+        "supportingKeywords": [
+          "physiotherapy patient feedback",
+          "success rates in physiotherapy"
+        ]
+      },
+      {
+        "slug": "faq",
+        "primaryIntent": "Address common concerns and objections about treatment effectiveness and cost.",
+        "coreKeywords": [
+          "physiotherapy FAQs",
+          "common questions about physiotherapy"
+        ],
+        "trustKeywords": [
+          "treatment effectiveness",
+          "cost of physiotherapy services"
+        ],
+        "supportingKeywords": [
+          "how physiotherapy works",
+          "what to expect from treatment"
+        ]
+      },
+      {
+        "slug": "pricing",
+        "primaryIntent": "Provide clear information about service costs to help potential clients understand what to expect.",
+        "coreKeywords": [
+          "physiotherapy pricing Bangalore",
+          "transparent physiotherapy costs"
+        ],
+        "trustKeywords": [
+          "clear pricing structure",
+          "affordable physiotherapy services"
+        ],
+        "supportingKeywords": [
+          "cost of treatment plans",
+          "payment options for physiotherapy"
+        ]
+      },
+      {
+        "slug": "contact",
+        "primaryIntent": "Provide contact information and an easy way to schedule a consultation.",
+        "coreKeywords": [
+          "contact Northside Physio Care",
+          "schedule physiotherapy consultation"
+        ],
+        "trustKeywords": [
+          "easy appointment booking",
+          "responsive customer service"
+        ],
+        "supportingKeywords": [
+          "location of physiotherapy clinic",
+          "contact details for physiotherapy"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "keyword_strategy",
+      "attempt": 1
+    }
+  },
+  "shared_settings": {
+    "brand": {
+      "tone": "friendly",
+      "primaryColor": "#4CAF50",
+      "secondaryColor": "#F5F5F5",
+      "accentColor": "#FF5722",
+      "fontHeading": "Arial, sans-serif",
+      "fontBody": "Roboto, sans-serif"
+    },
+    "themeVariant": "clean",
+    "designMode": "warm_local_service",
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Schedule a Consultation",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "header": {
+      "siteName": "Northside Physio Care",
+      "showNav": true
+    },
+    "footer": {
+      "companyName": "Northside Physio Care",
+      "tagline": "Your Trusted Physiotherapy Clinic",
+      "columns": [
+        {
+          "title": "Quick Links",
+          "links": [
+            {
+              "text": "Home",
+              "href": "#home"
+            },
+            {
+              "text": "About Us",
+              "href": "#about-us"
+            },
+            {
+              "text": "Our Services",
+              "href": "#services"
+            },
+            {
+              "text": "Testimonials",
+              "href": "#testimonials"
+            },
+            {
+              "text": "FAQ",
+              "href": "#faq"
+            },
+            {
+              "text": "Pricing",
+              "href": "#pricing"
+            },
+            {
+              "text": "Contact Us",
+              "href": "#contact"
+            }
+          ]
+        }
+      ],
+      "copyrightYear": "2026"
+    },
+    "navigation": [
+      {
+        "label": "Home",
+        "href": "#home"
+      },
+      {
+        "label": "About Us",
+        "href": "#about-us"
+      },
+      {
+        "label": "Our Services",
+        "href": "#services"
+      },
+      {
+        "label": "Testimonials",
+        "href": "#testimonials"
+      },
+      {
+        "label": "FAQ",
+        "href": "#faq"
+      },
+      {
+        "label": "Pricing",
+        "href": "#pricing"
+      },
+      {
+        "label": "Contact Us",
+        "href": "#contact"
+      }
+    ],
+    "_meta": {
+      "phase": "shared_settings",
+      "attempt": 1
+    },
+    "selectedDesignMode": {
+      "id": "warm_local_service",
+      "label": "Warm Local Service",
+      "summary": "Approachable neighborhood-business style for local providers who need trust, familiarity, and simple action more than polished luxury.",
+      "bestFor": [
+        "pandits",
+        "local tutors",
+        "physiotherapists",
+        "repair services",
+        "small clinics",
+        "visa consultants",
+        "travel agencies"
+      ],
+      "businessTags": [
+        "local-service",
+        "trust-service",
+        "community-business"
+      ],
+      "visualTraits": [
+        "friendly colors",
+        "simple trust blocks",
+        "clear cards",
+        "familiar layouts",
+        "human-first design"
+      ],
+      "toneTraits": [
+        "approachable",
+        "trustworthy",
+        "clear",
+        "human"
+      ],
+      "heroPreferences": [
+        "centered",
+        "offer-focused"
+      ],
+      "sectionPreferences": {
+        "services": [
+          "list-with-icons",
+          "story"
+        ],
+        "benefits": [
+          "icon-list"
+        ],
+        "testimonials": [
+          "avatars"
+        ],
+        "ctaBand": [
+          "contact-strip"
+        ],
+        "footer": [
+          "simple"
+        ]
+      },
+      "ctaStyle": "friendly and easy to act on",
+      "density": "medium",
+      "avoid": [
+        "cold corporate styling",
+        "overly premium minimalism",
+        "heavy jargon",
+        "complex interaction patterns"
+      ]
+    }
+  },
+  "design_mode_selection": {
+    "selected_id": "warm_local_service",
+    "score": 11,
+    "reasons": [
+      "matched:physiotherapists",
+      "boost:local-conversion",
+      "boost:page-type-service"
+    ],
+    "score_table": [
+      {
+        "id": "warm_local_service",
+        "score": 11
+      },
+      {
+        "id": "modern_glass_saas",
+        "score": 9
+      },
+      {
+        "id": "soft_concierge",
+        "score": 8
+      },
+      {
+        "id": "direct_local_conversion",
+        "score": 8
+      },
+      {
+        "id": "crisp_b2b_saas",
+        "score": 6
+      },
+      {
+        "id": "premium_editorial",
+        "score": 0
+      }
+    ]
+  },
+  "design_brief": {
+    "heroStrategy": {
+      "layout": "Split layout with the left side featuring a bold headline and supportive text, while the right side showcases an inviting image of a physiotherapist actively engaging with a family or senior patient.",
+      "goal": "To immediately communicate the clinic's commitment to family-focused care and personalized treatment plans, encouraging visitors to feel confident and motivated to take action.",
+      "headlineStyle": "Bold, friendly, and reassuring, emphasizing recovery and the personalized nature of care with a tagline like 'Your Family's Path to Pain-Free Living'.",
+      "supportingCopyStyle": "Concise and empathetic, explaining how the clinic tailors treatment plans to individual needs, alleviating fears about treatment effectiveness.",
+      "ctaApproach": "Make the primary CTA obvious and low-friction",
+      "trustSupport": "Incorporate trust signals such as certifications, a brief testimonial snippet, or a star rating system prominently near the hero section to establish credibility right away."
+    },
+    "navigationStrategy": {
+      "style": "Simple, intuitive, and sticky, ensuring the navigation bar remains fixed at the top as users scroll to facilitate easy access.",
+      "links": [
+        "Home",
+        "About Us",
+        "Services",
+        "Testimonials",
+        "FAQs",
+        "Contact"
+      ],
+      "ctaPlacement": "The primary CTA 'Schedule a Consultation' should be highlighted in a contrasting color at the far right of the navigation bar for easy visibility.",
+      "notes": "Navigation should be clear and straightforward, allowing users to quickly find essential information and reducing friction in the booking process."
+    },
+    "visualSystem": {
+      "designIntent": "Warm and inviting, reflecting the clinic's friendly and supportive approach while maintaining a professional appearance.",
+      "primaryColorRole": "Soft greens and blues to evoke feelings of healing and tranquility, used predominantly in backgrounds and headings to create a calming atmosphere.",
+      "secondaryColorRole": "Light neutrals for clarity, ensuring readability and a clean layout that feels open and accessible.",
+      "accentColorRole": "Warm coral or orange for CTA buttons, drawing attention and encouraging action while contrasting nicely with the primary colors.",
+      "contrastStrategy": "Balance calming colors with brighter accents in CTAs to create a visually engaging hierarchy, ensuring that important elements stand out without overwhelming the user.",
+      "surfaceStyle": "Cards and backgrounds should feel soft and approachable, incorporating rounded corners and subtle shadows for depth, enhancing the inviting atmosphere."
+    },
+    "typographyStrategy": {
+      "headingApproach": "Friendly and approachable, using a sans serif font that conveys warmth and professionalism, with a slightly rounded style.",
+      "bodyApproach": "Clean and legible, ensuring easy reading and comprehension, with a focus on clarity.",
+      "hierarchyNotes": "Use larger, bolder headings to guide scanning, with clear distinctions between sections to help users navigate quickly.",
+      "fontPairingDirection": "Pair a warm, rounded sans serif for headings with a clean, functional sans serif for body text to maintain readability and warmth."
+    },
+    "sectionFlowStrategy": {
+      "openingExperience": "The hero section should immediately establish the clinic's unique value proposition, followed by a concise overview of services that highlights personalized treatment options.",
+      "midPageRhythm": "Pace the flow by alternating between dense information (service details) and lighter sections (benefits and testimonials) to maintain engagement and prevent cognitive overload.",
+      "closingExperience": "End with a strong testimonial section that reinforces trust, followed by a clear CTA band to prompt immediate action and scheduling.",
+      "densityPattern": "Utilize a medium density for service descriptions and lighter density for testimonials and CTAs to create visual variety while ensuring information is digestible."
+    },
+    "conversionStrategy": {
+      "primaryFrictionToReduce": "Concerns about treatment effectiveness and costs, which may cause hesitation in scheduling a consultation.",
+      "howDesignSupportsTrust": "Incorporate testimonials, trust signals, and visible credentials throughout the homepage, especially near CTAs, to visually support trust and alleviate concerns.",
+      "howDesignSupportsAction": "Ensure CTAs are bright, clear, and strategically positioned to encourage clicks, with minimal distractions around them to maintain focus on booking.",
+      "whatMustNotHappen": [
+        "Overwhelming visitors with too much information at once, leading to confusion.",
+        "Using jargon or complex language that could confuse potential patients, creating barriers to understanding."
+      ]
+    },
+    "implementationNotes": [
+      "Ensure all images are high-quality and reflect the friendly, family-oriented atmosphere of the clinic, showcasing real interactions between physiotherapists and patients.",
+      "Use consistent padding and margins to create a cohesive layout that feels open and inviting, enhancing the overall user experience."
+    ],
+    "_meta": {
+      "phase": "design_rewrite",
+      "attempt": 1
+    },
+    "_review": {
+      "pass": false,
+      "score": 4,
+      "summary": "The design brief has several strengths but lacks specificity in key areas, particularly in the hero section and conversion strategies, which could lead to a bland homepage.",
+      "issues": [
+        {
+          "severity": "high",
+          "type": "hero",
+          "message": "The hero section lacks a compelling and unique value proposition that differentiates the clinic from competitors.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "conversion",
+          "message": "The conversion strategy does not sufficiently address how to alleviate concerns about treatment effectiveness and costs in a proactive manner.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "specificity",
+          "message": "Some sections, like the mid-page flow and section pacing, are too generic and do not provide enough actionable detail for effective implementation.",
+          "field": ""
+        }
+      ],
+      "requiredFixes": [
+        "Enhance the hero section with a stronger, more specific value proposition that clearly communicates the clinic's unique offerings.",
+        "Provide more detailed strategies for addressing common objections related to treatment effectiveness and costs."
+      ],
+      "strengths": [
+        "The brief effectively outlines a friendly and inviting tone, aligning with the clinic's brand identity.",
+        "The proposed color and typography strategies are well thought out and support the overall emotional tone of the clinic."
+      ],
+      "_meta": {
+        "phase": "design_review",
+        "attempt": 1
+      }
+    }
+  },
+  "page_plan": {
+    "slug": "home",
+    "title": "Northside Physio Care | Your Trusted Physiotherapy Clinic",
+    "pageType": "local-business",
+    "sections": [
+      {
+        "type": "hero",
+        "purpose": "Lead with clarity, credibility, and a confidence-building CTA",
+        "variant": "trust-panel",
+        "selectedPattern": {
+          "id": "hero_trust_panel_local",
+          "sectionType": "hero",
+          "variant": "trust-panel",
+          "label": "Trust-Panel Local Service Hero",
+          "bestFor": [
+            "clinic",
+            "pet-service",
+            "therapy",
+            "physiotherapy",
+            "local-care-service"
+          ],
+          "styleFit": [
+            "soft_concierge",
+            "warm_local_service",
+            "direct_local_conversion"
+          ],
+          "description": "Hero with clear service positioning and an adjacent trust panel containing service facts, chips, or reassurance points.",
+          "contentNeeds": [
+            "heading",
+            "subheading",
+            "buttons",
+            "trustChips",
+            "badge"
+          ],
+          "visualTraits": [
+            "trust-heavy",
+            "service reassurance",
+            "neighborhood confidence",
+            "clean layout"
+          ],
+          "avoidIf": [
+            "product-led SaaS hero",
+            "brand wants high editorial minimalism"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "hero_trust_panel_local",
+          "score": 19,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:clinic",
+            "matched:therapy",
+            "matched:physiotherapy"
+          ]
+        }
+      },
+      {
+        "type": "problem-solution",
+        "purpose": "Frame the pain point and your approach clearly",
+        "variant": "two-column",
+        "selectedPattern": {
+          "id": "fallback_problem-solution",
+          "sectionType": "problem-solution",
+          "variant": "default",
+          "label": "Fallback Pattern",
+          "bestFor": [],
+          "styleFit": [],
+          "description": "Fallback section pattern",
+          "contentNeeds": [],
+          "visualTraits": [],
+          "avoidIf": []
+        },
+        "patternSelection": {
+          "selected_pattern_id": "fallback_problem-solution",
+          "score": 0,
+          "reasons": [
+            "fallback:no-patterns"
+          ]
+        }
+      },
+      {
+        "type": "results",
+        "purpose": "Make outcomes and reassurance scannable",
+        "variant": "full-section",
+        "selectedPattern": {
+          "id": "fallback_results",
+          "sectionType": "results",
+          "variant": "default",
+          "label": "Fallback Pattern",
+          "bestFor": [],
+          "styleFit": [],
+          "description": "Fallback section pattern",
+          "contentNeeds": [],
+          "visualTraits": [],
+          "avoidIf": []
+        },
+        "patternSelection": {
+          "selected_pattern_id": "fallback_results",
+          "score": 0,
+          "reasons": [
+            "fallback:no-patterns"
+          ]
+        }
+      },
+      {
+        "type": "about-team",
+        "purpose": "Establish practitioner credibility and care standards",
+        "variant": "values",
+        "selectedPattern": {
+          "id": "fallback_about-team",
+          "sectionType": "about-team",
+          "variant": "default",
+          "label": "Fallback Pattern",
+          "bestFor": [],
+          "styleFit": [],
+          "description": "Fallback section pattern",
+          "contentNeeds": [],
+          "visualTraits": [],
+          "avoidIf": []
+        },
+        "patternSelection": {
+          "selected_pattern_id": "fallback_about-team",
+          "score": 0,
+          "reasons": [
+            "fallback:no-patterns"
+          ]
+        }
+      },
+      {
+        "type": "testimonials",
+        "purpose": "Build trust through patient experiences",
+        "variant": "avatars",
+        "selectedPattern": {
+          "id": "testimonials_avatar_quotes",
+          "sectionType": "testimonials",
+          "variant": "avatars",
+          "label": "Avatar Quote Cards",
+          "bestFor": [
+            "local-service",
+            "coaching",
+            "beauty",
+            "pet-service",
+            "education"
+          ],
+          "styleFit": [
+            "warm_local_service",
+            "soft_concierge",
+            "direct_local_conversion"
+          ],
+          "description": "Friendly review cards with strong author presence, useful for human warmth and relatability.",
+          "contentNeeds": [
+            "heading",
+            "items"
+          ],
+          "visualTraits": [
+            "human presence",
+            "relatability",
+            "friendly trust",
+            "social proof with personality"
+          ],
+          "avoidIf": [
+            "brand is very formal and minimal",
+            "testimonials are highly corporate"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "testimonials_avatar_quotes",
+          "score": 15,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:section-preference:avatars"
+          ]
+        }
+      },
+      {
+        "type": "faq",
+        "purpose": "Handle anxiety and objections directly",
+        "variant": "grouped",
+        "selectedPattern": {
+          "id": "faq_grouped_topics",
+          "sectionType": "faq",
+          "variant": "grouped",
+          "label": "Grouped FAQ Topics",
+          "bestFor": [
+            "saas",
+            "visa",
+            "travel",
+            "clinic",
+            "education"
+          ],
+          "styleFit": [
+            "crisp_b2b_saas",
+            "direct_local_conversion",
+            "warm_local_service"
+          ],
+          "description": "FAQ organized into clearer categories such as process, pricing, eligibility, or support.",
+          "contentNeeds": [
+            "heading",
+            "items"
+          ],
+          "visualTraits": [
+            "structured clarity",
+            "good for complex offers",
+            "better information grouping"
+          ],
+          "avoidIf": [
+            "FAQ set is very small and simple"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "faq_grouped_topics",
+          "score": 13,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:clinic"
+          ]
+        }
+      },
+      {
+        "type": "cta-band",
+        "purpose": "Encourage immediate action and booking",
+        "variant": "contact-strip",
+        "selectedPattern": {
+          "id": "cta_contact_strip",
+          "sectionType": "cta-band",
+          "variant": "contact-strip",
+          "label": "Contact Strip CTA",
+          "bestFor": [
+            "local-service",
+            "trust-service",
+            "pandit",
+            "physiotherapist",
+            "consultant"
+          ],
+          "styleFit": [
+            "warm_local_service",
+            "direct_local_conversion",
+            "soft_concierge"
+          ],
+          "description": "Utility-oriented closing strip that reinforces contact channels and gives a low-friction next step.",
+          "contentNeeds": [
+            "heading",
+            "subheading",
+            "buttons"
+          ],
+          "visualTraits": [
+            "simple close",
+            "practical",
+            "contact-led",
+            "low-friction action"
+          ],
+          "avoidIf": [
+            "page should end on a highly visual premium block"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "cta_contact_strip",
+          "score": 18,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:physiotherapist",
+            "matched:section-preference:contact-strip"
+          ]
+        }
+      },
+      {
+        "type": "footer",
+        "purpose": "Close with a more trust-oriented footer",
+        "variant": "simple",
+        "selectedPattern": {
+          "id": "footer_simple_utility",
+          "sectionType": "footer",
+          "variant": "simple",
+          "label": "Simple Utility Footer",
+          "bestFor": [
+            "local-service",
+            "small-business",
+            "single-page-site",
+            "lead-gen"
+          ],
+          "styleFit": [
+            "warm_local_service",
+            "direct_local_conversion",
+            "soft_concierge"
+          ],
+          "description": "Compact footer with business name, short tagline, limited nav links, and basic contact path.",
+          "contentNeeds": [
+            "companyName",
+            "tagline",
+            "columns",
+            "copyrightYear"
+          ],
+          "visualTraits": [
+            "clean close",
+            "not overbuilt",
+            "practical footer"
+          ],
+          "avoidIf": [
+            "business needs a more established corporate footer"
+          ]
+        },
+        "patternSelection": {
+          "selected_pattern_id": "footer_simple_utility",
+          "score": 15,
+          "reasons": [
+            "matched:section-type",
+            "matched:style-fit:warm_local_service",
+            "matched:section-preference:simple"
+          ]
+        }
+      }
+    ],
+    "_meta": {
+      "phase": "page_plan",
+      "attempt": 1
+    }
+  },
+  "section_pattern_selection": [
+    {
+      "section_type": "hero",
+      "selected_pattern_id": "hero_trust_panel_local",
+      "variant": "trust-panel",
+      "score": 19,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:clinic",
+        "matched:therapy",
+        "matched:physiotherapy"
+      ]
+    },
+    {
+      "section_type": "problem-solution",
+      "selected_pattern_id": "fallback_problem-solution",
+      "variant": "two-column",
+      "score": 0,
+      "reasons": [
+        "fallback:no-patterns"
+      ]
+    },
+    {
+      "section_type": "results",
+      "selected_pattern_id": "fallback_results",
+      "variant": "full-section",
+      "score": 0,
+      "reasons": [
+        "fallback:no-patterns"
+      ]
+    },
+    {
+      "section_type": "about-team",
+      "selected_pattern_id": "fallback_about-team",
+      "variant": "values",
+      "score": 0,
+      "reasons": [
+        "fallback:no-patterns"
+      ]
+    },
+    {
+      "section_type": "testimonials",
+      "selected_pattern_id": "testimonials_avatar_quotes",
+      "variant": "avatars",
+      "score": 15,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:section-preference:avatars"
+      ]
+    },
+    {
+      "section_type": "faq",
+      "selected_pattern_id": "faq_grouped_topics",
+      "variant": "grouped",
+      "score": 13,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:clinic"
+      ]
+    },
+    {
+      "section_type": "cta-band",
+      "selected_pattern_id": "cta_contact_strip",
+      "variant": "contact-strip",
+      "score": 18,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:physiotherapist",
+        "matched:section-preference:contact-strip"
+      ]
+    },
+    {
+      "section_type": "footer",
+      "selected_pattern_id": "footer_simple_utility",
+      "variant": "simple",
+      "score": 15,
+      "reasons": [
+        "matched:section-type",
+        "matched:style-fit:warm_local_service",
+        "matched:section-preference:simple"
+      ]
+    }
+  ],
+  "used_patterns": {
+    "pattern_ids": [
+      "hero_trust_panel_local",
+      "fallback_problem-solution",
+      "fallback_results",
+      "fallback_about-team",
+      "testimonials_avatar_quotes",
+      "faq_grouped_topics",
+      "cta_contact_strip",
+      "footer_simple_utility"
+    ],
+    "variants": [
+      "trust-panel",
+      "default",
+      "avatars",
+      "grouped",
+      "contact-strip",
+      "simple"
+    ],
+    "section_types": [
+      "hero",
+      "problem-solution",
+      "results",
+      "about-team",
+      "testimonials",
+      "faq",
+      "cta-band",
+      "footer"
+    ],
+    "layout_styles": [
+      "trust-panel",
+      "default",
+      "avatars",
+      "grouped",
+      "contact-strip",
+      "simple"
+    ],
+    "visual_traits": [
+      "trust-heavy",
+      "service reassurance",
+      "neighborhood confidence",
+      "clean layout",
+      "human presence",
+      "relatability",
+      "friendly trust",
+      "social proof with personality",
+      "structured clarity",
+      "good for complex offers",
+      "better information grouping",
+      "simple close",
+      "practical",
+      "contact-led",
+      "low-friction action",
+      "clean close",
+      "not overbuilt",
+      "practical footer"
+    ]
+  },
+  "section_keyword_plan": {
+    "sections": [
+      {
+        "type": "hero",
+        "keywords": [
+          "family physiotherapy Bangalore",
+          "personalized treatment plans",
+          "trusted physiotherapy clinic",
+          "pain-free living",
+          "experienced physiotherapists",
+          "friendly physiotherapy care",
+          "recovery support for families",
+          "physiotherapy for seniors",
+          "compassionate care for office workers",
+          "schedule a consultation today",
+          "neighborhood physiotherapy services",
+          "clear treatment plans",
+          "patient-centered physiotherapy",
+          "trustworthy physiotherapy solutions"
+        ]
+      },
+      {
+        "type": "problem-solution",
+        "keywords": [
+          "common pain issues",
+          "physiotherapy solutions",
+          "effective pain management",
+          "rehabilitation strategies",
+          "individualized care approach",
+          "overcoming mobility challenges",
+          "addressing chronic pain",
+          "support for sports injuries",
+          "post-surgery recovery",
+          "holistic physiotherapy methods",
+          "family-oriented treatment options",
+          "accessible physiotherapy services",
+          "evidence-based treatment solutions",
+          "improving quality of life"
+        ]
+      },
+      {
+        "type": "results",
+        "keywords": [
+          "successful treatment outcomes",
+          "patient recovery stories",
+          "physiotherapy effectiveness",
+          "measurable rehabilitation results",
+          "improved mobility",
+          "pain relief success",
+          "patient satisfaction rates",
+          "transformative physiotherapy experiences",
+          "long-term health benefits",
+          "evidence of treatment success",
+          "positive patient feedback",
+          "real-life recovery examples",
+          "outcomes of personalized care",
+          "trust in physiotherapy results"
+        ]
+      },
+      {
+        "type": "about-team",
+        "keywords": [
+          "meet our physiotherapy team",
+          "qualified physiotherapists Bangalore",
+          "expertise in physiotherapy",
+          "family-focused care providers",
+          "dedicated healthcare professionals",
+          "certified physiotherapy staff",
+          "compassionate treatment approach",
+          "team credentials and experience",
+          "patient-first philosophy",
+          "community-oriented physiotherapy",
+          "values of our clinic",
+          "commitment to patient care",
+          "professional development in physiotherapy",
+          "team collaboration for better outcomes"
+        ]
+      },
+      {
+        "type": "testimonials",
+        "keywords": [
+          "patient testimonials Bangalore",
+          "real patient experiences",
+          "trusted physiotherapy reviews",
+          "success stories from patients",
+          "feedback on physiotherapy services",
+          "impact of treatment on lives",
+          "community trust in our clinic",
+          "patient satisfaction testimonials",
+          "physiotherapy success feedback",
+          "stories of recovery",
+          "positive experiences shared",
+          "trustworthy patient reviews",
+          "building confidence through testimonials",
+          "social proof of our services"
+        ]
+      },
+      {
+        "type": "faq",
+        "keywords": [
+          "common physiotherapy questions",
+          "understanding physiotherapy",
+          "what to expect from treatment",
+          "treatment effectiveness explained",
+          "cost of physiotherapy services",
+          "how physiotherapy helps",
+          "frequently asked questions",
+          "physiotherapy process overview",
+          "insurance coverage for physiotherapy",
+          "appointment scheduling FAQs",
+          "clarifying treatment doubts",
+          "patient concerns addressed",
+          "physiotherapy myths debunked",
+          "guidance on treatment options"
+        ]
+      },
+      {
+        "type": "cta-band",
+        "keywords": [
+          "schedule your consultation",
+          "book a physiotherapy appointment",
+          "contact Northside Physio Care",
+          "easy appointment booking",
+          "get started with physiotherapy",
+          "take the first step to recovery",
+          "connect with our team",
+          "schedule your visit today",
+          "low-friction booking process",
+          "contact us for more information",
+          "start your healing journey",
+          "personalized care awaits",
+          "reach out for physiotherapy help",
+          "book your session now"
+        ]
+      },
+      {
+        "type": "footer",
+        "keywords": [
+          "Northside Physio Care contact details",
+          "physiotherapy clinic location",
+          "connect with us",
+          "follow us on social media",
+          "clinic hours and services",
+          "privacy policy and terms",
+          "community involvement",
+          "physiotherapy resources",
+          "stay updated with our news",
+          "supporting local health initiatives",
+          "footer navigation links",
+          "contact information for inquiries",
+          "clinic mission and values",
+          "building community trust"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "section_keyword_plan",
+      "attempt": 1
+    }
+  },
+  "rag_dir": "sandbox/unit_cli_html_generator/chroma_db",
+  "business_rag_dir": "sandbox/unit_cli_html_generator/chroma_business_playbooks",
+  "page_document": {
+    "meta": {
+      "title": "Northside Physio Care | Your Trusted Physiotherapy Clinic",
+      "description": "Experience personalized physiotherapy treatment plans in Bangalore for families and working adults. Relief from pain and improved mobility await you.",
+      "pageType": "local-business",
+      "themeVariant": "clean",
+      "slug": "home"
+    },
+    "brand": {
+      "tone": "friendly",
+      "primaryColor": "#4CAF50",
+      "secondaryColor": "#F5F5F5",
+      "accentColor": "#FF5722",
+      "fontHeading": "Arial, sans-serif",
+      "fontBody": "Roboto, sans-serif"
+    },
+    "assets": [],
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Schedule a Consultation",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "sections": [
+      {
+        "id": "section-hero-001",
+        "type": "hero",
+        "variant": "trust-panel",
+        "visible": true,
+        "order": 0,
+        "layoutHint": "container > row > col-lg-7 content / col-lg-5 support",
+        "motionHint": "fade-up stagger with soft reveal",
+        "content": {
+          "eyebrow": "Welcome to Northside Physio Care",
+          "heading": "Empowering Your Family Towards Pain-Free Living",
+          "subheading": "Experience personalized physiotherapy plans designed specifically for your unique recovery journey.",
+          "supportingPoints": [
+            "Comprehensive family-focused care: We cater to all ages, ensuring that children, adults, and seniors receive tailored attention and support.",
+            "Transparent treatment plans: Understand your recovery process with clear, step-by-step plans that keep you informed and engaged.",
+            "Expert physiotherapists: Our skilled team utilizes proven techniques and evidence-based practices to ensure effective and lasting relief from pain."
+          ],
+          "trustChips": [
+            "Licensed and Experienced Physiotherapists",
+            "Trusted by Over 500 Families in Bangalore",
+            "Outstanding Patient Success Stories"
+          ],
+          "buttons": [
+            {
+              "text": "Book Your Consultation Today",
+              "actionId": "action-primary",
+              "style": "primary"
+            }
+          ],
+          "badge": "",
+          "ctaNote": "Take the first step towards a pain-free life\u2014schedule your consultation now and start your journey to recovery!"
+        },
+        "style": {
+          "backgroundColor": "#F5F5F5",
+          "textColor": "#333333",
+          "padding": "80px 0",
+          "surface": "soft-gradient",
+          "emphasis": "high"
+        },
+        "_meta": {
+          "phase": "section_rewrite:hero",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-problem-solution-002",
+        "type": "problem-solution",
+        "variant": "two-column",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "container > row",
+        "motionHint": "",
+        "content": {
+          "problem": "{'title': 'Are You Tired of Living with Pain?', 'description': 'For families and office workers in Bangalore, persistent pain\u2014whether it\u2019s nagging backaches from long hours at a desk, neck stiffness from stress, or sports injuries that hold you back\u2014can significantly disrupt daily life. We understand how these issues can limit your activities and affect your overall well-being. It\u2019s time to reclaim your life and restore your mobility.'}",
+          "solution": "{'title': 'Our Tailored Physiotherapy Solutions', 'description': 'At Northside Physio Care, we focus on crafting personalized treatment plans that cater to your unique needs. Our skilled physiotherapists employ evidence-based techniques to effectively address chronic pain, facilitate recovery after surgery, and improve your overall mobility. With a commitment to family-centered care, we ensure that everyone\u2014from children to seniors\u2014receives the attention and support they deserve. Experience a compassionate approach to physiotherapy that prioritizes your health and well-being.'}",
+          "heading": "Your Journey to a Pain-Free Life Starts Here",
+          "subheading": "Explore how our dedicated physiotherapy services can help you recover and thrive in daily life.",
+          "eyebrow": "Take the First Step Towards Recovery",
+          "badge": "Trusted by Families Across Bangalore",
+          "ctaNote": "Don\u2019t let pain hold you back any longer. Schedule your consultation today and start your journey to recovery!",
+          "supportingPoints": [
+            "In-depth assessments to pinpoint the source of your pain",
+            "Personalized rehabilitation plans designed for your recovery",
+            "Expert support for sports injuries and active lifestyles",
+            "Conveniently located clinic for easy access to care"
+          ],
+          "trustChips": [
+            "Certified Physiotherapists",
+            "Positive Patient Testimonials",
+            "Evidence-Based Practices"
+          ]
+        },
+        "style": {
+          "padding": "60px 0",
+          "textColor": "#333333",
+          "backgroundColor": "#ffffff",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:problem-solution",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-results-003",
+        "type": "results",
+        "variant": "full-section",
+        "visible": true,
+        "order": 2,
+        "layoutHint": "container > row",
+        "motionHint": "",
+        "content": {
+          "title": "Your Path to Pain-Free Living",
+          "description": "At Northside Physio Care, we specialize in creating personalized physiotherapy treatment plans that cater to the unique needs of families, office workers, and seniors in Bangalore. Our experienced physiotherapists are dedicated to providing clear, transparent care that not only alleviates pain but also empowers you to regain your mobility and enjoy life to the fullest.",
+          "items": [
+            "Customized rehabilitation programs designed specifically for your lifestyle and recovery goals.",
+            "Expert guidance from seasoned physiotherapists with a track record of success.",
+            "Holistic approaches that focus on long-term wellness and injury prevention.",
+            "Positive patient testimonials showcasing real success stories and satisfaction.",
+            "Flexible appointment options to fit your busy schedule and ensure consistent care."
+          ],
+          "heading": "",
+          "subheading": "",
+          "eyebrow": "",
+          "badge": "",
+          "ctaNote": "Take the first step towards a healthier you\u2014schedule your consultation today and join our community of thriving patients.",
+          "supportingPoints": [],
+          "trustChips": [],
+          "stats": []
+        },
+        "style": {
+          "padding": "60px 0",
+          "textColor": "#333333",
+          "backgroundColor": "#ffffff",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:results",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-about-team-004",
+        "type": "about-team",
+        "variant": "values",
+        "visible": true,
+        "order": 3,
+        "layoutHint": "container > row",
+        "motionHint": "",
+        "content": {
+          "title": "Meet Our Expert Team of Physiotherapists",
+          "description": "At Northside Physio Care, our passionate team of physiotherapists is dedicated to delivering personalized, family-centered care. Each member brings specialized expertise and years of experience in treating a diverse range of conditions. We focus on clear communication and collaborative treatment plans to ensure you receive the best possible care tailored to your unique needs.",
+          "teamMembers": [
+            {
+              "name": "Dr. Anjali Rao",
+              "role": "Senior Physiotherapist",
+              "bio": "Dr. Anjali has over 10 years of experience in family physiotherapy and rehabilitation. Her expertise in chronic pain management and her patient-first philosophy ensure that every treatment plan is customized, creating a nurturing environment for effective recovery."
+            },
+            {
+              "name": "Mr. Ravi Kumar",
+              "role": "Physiotherapist",
+              "bio": "With a strong focus on mobility and functional recovery, Mr. Ravi utilizes advanced techniques to develop personalized treatment plans. His commitment to building trust with patients helps them feel empowered and confident throughout their rehabilitation journey."
+            },
+            {
+              "name": "Ms. Priya Menon",
+              "role": "Physiotherapist",
+              "bio": "A certified physiotherapist with expertise in sports injuries and post-operative care, Ms. Priya is dedicated to ongoing professional development. Her proactive approach ensures that patients receive cutting-edge treatment tailored to their recovery goals."
+            }
+          ],
+          "heading": "Your Partners in Recovery",
+          "subheading": "Specialized Care for Families and Individuals in Bangalore",
+          "eyebrow": "Your Healing Journey Starts Here",
+          "badge": "Compassionate and Skilled",
+          "ctaNote": "Take the first step towards a pain-free life. Schedule your personalized consultation today and discover how we can assist you!",
+          "supportingPoints": [
+            "Expert physiotherapists with specialized training and extensive experience.",
+            "A family-focused approach that understands and respects your unique needs.",
+            "Collaborative treatment plans designed to optimize recovery and enhance well-being."
+          ],
+          "trustChips": [
+            "Certified Physiotherapists",
+            "10+ Years of Experience",
+            "Patient-Centered Care"
+          ],
+          "items": []
+        },
+        "style": {
+          "padding": "60px 0",
+          "textColor": "#333333",
+          "backgroundColor": "#ffffff",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:about-team",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-testimonials-005",
+        "type": "testimonials",
+        "variant": "avatars",
+        "visible": true,
+        "order": 4,
+        "layoutHint": "container > row",
+        "motionHint": "",
+        "content": {
+          "heading": "What Our Patients Say About Northside Physio Care",
+          "items": [
+            {
+              "quote": "I was struggling with knee pain for months. The personalized treatment plan at Northside Physio Care not only eased my pain but also restored my confidence in movement. I can now enjoy playing with my grandchildren again!",
+              "author": "Anita R."
+            },
+            {
+              "quote": "As a busy office worker, I often neglect my health. The team at Northside Physio Care really listened to my concerns and crafted a tailored plan that fit my schedule. I\u2019m back to my best self and can\u2019t recommend them enough!",
+              "author": "Rajesh K."
+            },
+            {
+              "quote": "Initially, I was hesitant to start physiotherapy due to my age. However, the caring and patient staff made every session enjoyable. I\u2019m now pain-free and more active than I\u2019ve been in years!",
+              "author": "Mrs. Sharma"
+            },
+            {
+              "quote": "Northside Physio Care has been a game-changer for me. Their clear treatment plans and supportive environment made all the difference in my recovery journey. I feel like a new person!",
+              "author": "Vikram S."
+            }
+          ],
+          "subheading": "Real Experiences from Our Community in Bangalore",
+          "eyebrow": "Building Confidence Through Patient Stories",
+          "badge": "Trusted by Families and Seniors in Bangalore",
+          "ctaNote": "Schedule your personalized consultation today and start your journey to recovery!",
+          "supportingPoints": [
+            "Hear how our personalized care has transformed lives in your community.",
+            "Discover the success stories of patients just like you.",
+            "Read genuine reviews that reflect our commitment to family-focused care."
+          ],
+          "trustChips": [
+            "5-Star Rated Clinic",
+            "Experienced Physiotherapists",
+            "Community Trust in Our Clinic"
+          ]
+        },
+        "style": {
+          "padding": "60px 0",
+          "textColor": "#333333",
+          "backgroundColor": "#ffffff",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:testimonials",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-faq-006",
+        "type": "faq",
+        "variant": "grouped",
+        "visible": true,
+        "order": 5,
+        "layoutHint": "container > row",
+        "motionHint": "",
+        "content": {
+          "heading": "Frequently Asked Questions",
+          "items": [
+            {
+              "question": "What should I expect during my first visit?",
+              "answer": "During your initial appointment at Northside Physio Care, our experienced physiotherapists will: \n- Conduct a comprehensive assessment of your condition.\n- Discuss your treatment goals.\n- Develop a personalized physiotherapy plan tailored just for you."
+            },
+            {
+              "question": "How are treatment costs structured?",
+              "answer": "At Northside Physio Care, we prioritize transparency. Our pricing structure is designed to be clear and upfront, ensuring you understand the costs involved. We aim to provide effective treatment options that fit your budget."
+            },
+            {
+              "question": "Are the treatment plans personalized?",
+              "answer": "Absolutely! Each treatment plan is uniquely crafted to meet your individual needs and recovery goals. We believe personalized care is essential for achieving optimal outcomes in physiotherapy."
+            },
+            {
+              "question": "How does physiotherapy help with pain management?",
+              "answer": "Physiotherapy employs evidence-based techniques to manage pain effectively, including: \n- Manual therapy\n- Tailored exercise prescriptions\n- Patient education\nOur physiotherapists will collaborate with you to alleviate pain and enhance your mobility, helping you get back to your daily activities."
+            },
+            {
+              "question": "What are common physiotherapy myths debunked?",
+              "answer": "Many people think physiotherapy is only for athletes or post-surgery recovery. In truth, it benefits anyone experiencing pain or mobility challenges, including families and seniors. Our team is here to dispel myths and guide you on your recovery journey."
+            },
+            {
+              "question": "Is insurance coverage available for physiotherapy services?",
+              "answer": "Yes, many insurance plans include physiotherapy services. We recommend checking with your provider for specifics. Our team can also assist you in navigating your benefits."
+            }
+          ],
+          "subheading": "Your Questions Answered",
+          "eyebrow": "Clarifying Treatment Doubts",
+          "badge": "",
+          "ctaNote": "Still have questions? <a href='/contact' class='cta-button'>Reach out or schedule a consultation!</a>",
+          "supportingPoints": [],
+          "trustChips": []
+        },
+        "style": {
+          "padding": "60px 0",
+          "textColor": "#333333",
+          "backgroundColor": "#ffffff",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:faq",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-hero-001",
+        "type": "cta-band",
+        "variant": "contact-strip",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "container > row",
+        "motionHint": "",
+        "content": {
+          "heading": "Experience Compassionate Care for Your Family's Recovery",
+          "subheading": "At Northside Physio Care in Bangalore, we provide personalized physiotherapy treatment plans tailored to the unique needs of families, office workers, and seniors, ensuring a clear path to recovery.",
+          "buttons": [
+            {
+              "text": "Get Started Today",
+              "actionId": "action-primary",
+              "style": "primary"
+            }
+          ],
+          "trustChips": [
+            "{'text': 'Certified Physiotherapists', 'icon': 'check-circle'}",
+            "{'text': 'Family-Centered Approach', 'icon': 'heart'}",
+            "{'text': 'Clear Treatment Plans', 'icon': 'clipboard-list'}"
+          ],
+          "supportingPoints": [
+            "Individualized assessments to create customized treatment plans that fit your lifestyle.",
+            "Friendly, experienced staff committed to guiding you through every step of your recovery.",
+            "Flexible appointment scheduling to accommodate your busy life and ensure timely care."
+          ],
+          "eyebrow": "",
+          "badge": "",
+          "ctaNote": ""
+        },
+        "style": {
+          "padding": "80px 0",
+          "backgroundColor": "#F5F5F5",
+          "textColor": "#333333",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:cta-band",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-hero-001",
+        "type": "footer",
+        "variant": "simple",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "split",
+        "motionHint": "",
+        "content": {
+          "headline": "Experience Lasting Relief with Northside Physio Care",
+          "subheading": "At Northside Physio Care, we specialize in creating personalized physiotherapy treatment plans that cater to the unique needs of families, office workers, and seniors. Our dedicated team of experienced physiotherapists is committed to guiding you through your recovery journey with compassion and expertise.",
+          "buttons": [
+            {
+              "label": "Book Your Free Consultation Today",
+              "type": "url",
+              "value": "#contact",
+              "style": "primary"
+            }
+          ],
+          "trustChips": [
+            "{'text': 'Experienced Physiotherapists', 'icon': 'check'}",
+            "{'text': 'Positive Patient Testimonials', 'icon': 'star'}",
+            "{'text': 'Family-Focused Care', 'icon': 'heart'}"
+          ],
+          "badge": "Trusted by the Bangalore Community",
+          "heading": "",
+          "eyebrow": "",
+          "ctaNote": "",
+          "supportingPoints": [],
+          "companyName": "Northside Physio Care",
+          "tagline": "Personalized physiotherapy treatment plans",
+          "columns": [],
+          "copyrightYear": "2026"
+        },
+        "style": {
+          "padding": "40px 20px",
+          "textColor": "#333333",
+          "backgroundColor": "#F5F5F5",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:footer",
+          "attempt": 1
+        }
+      }
+    ],
+    "_meta": {
+      "phase": "page_document",
+      "attempt": 1
+    }
+  }
+}

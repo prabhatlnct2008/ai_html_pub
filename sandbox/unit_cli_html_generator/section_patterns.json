@@ -1,0 +1,310 @@
+{
+    "sectionPatterns": [
+      {
+        "id": "hero_centered_clear_offer",
+        "sectionType": "hero",
+        "variant": "centered",
+        "label": "Centered Clear Offer Hero",
+        "bestFor": ["local-service", "trust-service", "simple-offer", "coach"],
+        "styleFit": ["direct_local_conversion", "warm_local_service", "premium_editorial"],
+        "description": "Centered hero with strong heading, short support copy, visible CTA row, and optional trust chips below.",
+        "contentNeeds": ["eyebrow", "heading", "subheading", "buttons"],
+        "visualTraits": ["centered layout", "strong hierarchy", "easy scanability", "clear CTA cluster"],
+        "avoidIf": ["business needs product screenshot first", "hero needs side-by-side visual storytelling"]
+      },
+      {
+        "id": "hero_split_image_service",
+        "sectionType": "hero",
+        "variant": "split-image",
+        "label": "Split Hero with Visual Panel",
+        "bestFor": ["local-service", "care-service", "pet-service", "premium-service"],
+        "styleFit": ["soft_concierge", "warm_local_service", "premium_editorial"],
+        "description": "Left side copy with CTA, right side visual panel or image area with trust chips or supporting visual treatment.",
+        "contentNeeds": ["eyebrow", "heading", "subheading", "buttons", "trustChips"],
+        "visualTraits": ["split layout", "balanced composition", "soft visual support", "hero confidence"],
+        "avoidIf": ["business has no visual support at all", "product needs a software UI first"]
+      },
+      {
+        "id": "hero_offer_focused_panel",
+        "sectionType": "hero",
+        "variant": "offer-focused",
+        "label": "Offer-Focused Hero with Side Panel",
+        "bestFor": ["lead-gen", "local-service", "visa-consultant", "travel-agency", "clinic"],
+        "styleFit": ["direct_local_conversion", "warm_local_service", "crisp_b2b_saas"],
+        "description": "Main offer and CTA on one side, structured reassurance panel on the other side showing key reasons to act.",
+        "contentNeeds": ["eyebrow", "heading", "subheading", "buttons", "supportingPoints"],
+        "visualTraits": ["high-conversion hero", "clarity first", "structured reassurance", "action-ready"],
+        "avoidIf": ["brand needs an ultra-minimal editorial hero", "offer is very image-led"]
+      },
+      {
+        "id": "hero_trust_panel_local",
+        "sectionType": "hero",
+        "variant": "trust-panel",
+        "label": "Trust-Panel Local Service Hero",
+        "bestFor": ["clinic", "pet-service", "therapy", "physiotherapy", "local-care-service"],
+        "styleFit": ["soft_concierge", "warm_local_service", "direct_local_conversion"],
+        "description": "Hero with clear service positioning and an adjacent trust panel containing service facts, chips, or reassurance points.",
+        "contentNeeds": ["heading", "subheading", "buttons", "trustChips", "badge"],
+        "visualTraits": ["trust-heavy", "service reassurance", "neighborhood confidence", "clean layout"],
+        "avoidIf": ["product-led SaaS hero", "brand wants high editorial minimalism"]
+      },
+      {
+        "id": "hero_product_led_saas",
+        "sectionType": "hero",
+        "variant": "split-image",
+        "label": "Product-Led SaaS Hero",
+        "bestFor": ["saas", "b2b", "ai-product", "workflow-software"],
+        "styleFit": ["crisp_b2b_saas", "modern_glass_saas"],
+        "description": "Value proposition and CTA on the left, product UI or dashboard visual on the right with optional floating proof cards.",
+        "contentNeeds": ["eyebrow", "heading", "subheading", "buttons", "supportingPoints"],
+        "visualTraits": ["product-first", "split hero", "dashboard visual", "modern SaaS"],
+        "avoidIf": ["service business without product UI", "spiritual or ceremonial service"]
+      },
+  
+      {
+        "id": "services_simple_card_grid",
+        "sectionType": "services",
+        "variant": "card-grid",
+        "label": "Simple Service Card Grid",
+        "bestFor": ["local-service", "pet-service", "clinic", "beauty-service"],
+        "styleFit": ["direct_local_conversion", "warm_local_service", "soft_concierge"],
+        "description": "A clean multi-card grid where each card explains one service clearly and concisely.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["equal cards", "scannable menu", "clear service breakdown", "balanced grid"],
+        "avoidIf": ["business has only one very custom service", "highly editorial page with low card density"]
+      },
+      {
+        "id": "services_icon_list",
+        "sectionType": "services",
+        "variant": "icon-list",
+        "label": "Icon List Services",
+        "bestFor": ["local-service", "trust-service", "consulting", "travel", "visa"],
+        "styleFit": ["direct_local_conversion", "warm_local_service", "crisp_b2b_saas"],
+        "description": "Services presented as a structured list with icons or numbered markers, ideal for fast scanning.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["fast scanability", "clean list rhythm", "utility-first presentation"],
+        "avoidIf": ["business needs rich imagery", "brand wants visually lush storytelling"]
+      },
+      {
+        "id": "services_image_cards",
+        "sectionType": "services",
+        "variant": "image-cards",
+        "label": "Image Card Services",
+        "bestFor": ["pet-service", "interior-design", "travel", "beauty", "premium-service"],
+        "styleFit": ["soft_concierge", "premium_editorial", "modern_glass_saas"],
+        "description": "Cards with a visual top area and service copy beneath, useful when each service benefits from a more polished presentation.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["visual richness", "premium feel", "more expressive cards", "gallery-adjacent"],
+        "avoidIf": ["business is extremely practical/utility-led", "no visual support exists"]
+      },
+      {
+        "id": "services_alternating_rows",
+        "sectionType": "services",
+        "variant": "alternating-rows",
+        "label": "Alternating Detail Rows",
+        "bestFor": ["premium-service", "saas", "consulting", "design-studio"],
+        "styleFit": ["premium_editorial", "crisp_b2b_saas", "modern_glass_saas"],
+        "description": "Each service or feature is presented in a more detailed row layout, useful when the offer needs explanation rather than just a short grid.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["editorial rhythm", "more breathing room", "deeper explanation", "section variety"],
+        "avoidIf": ["offer is very simple", "mobile-first quick-scan utility page only"]
+      },
+      {
+        "id": "services_story_blocks",
+        "sectionType": "services",
+        "variant": "story",
+        "label": "Story-Led Service Blocks",
+        "bestFor": ["premium-service", "care-service", "coaching", "wellness"],
+        "styleFit": ["soft_concierge", "premium_editorial", "warm_local_service"],
+        "description": "Service items feel more like narrative blocks, useful for higher-trust or higher-touch services.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["narrative feel", "higher trust", "human-centered tone", "slower richer reading"],
+        "avoidIf": ["page must be highly transactional", "business is price/utility-led"]
+      },
+      {
+        "id": "services_list_with_icons",
+        "sectionType": "services",
+        "variant": "list-with-icons",
+        "label": "List with Icons",
+        "bestFor": ["saas", "visa", "travel", "local-service", "professional-service"],
+        "styleFit": ["direct_local_conversion", "crisp_b2b_saas", "warm_local_service"],
+        "description": "Compact set of service or feature rows with leading icon/marker, good for dense but readable content.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["compact clarity", "structured list", "efficient reading", "clean section density"],
+        "avoidIf": ["brand needs highly visual cards", "very expressive premium page"]
+      },
+  
+      {
+        "id": "benefits_icon_list",
+        "sectionType": "benefits",
+        "variant": "icon-list",
+        "label": "Benefits Icon List",
+        "bestFor": ["all"],
+        "styleFit": ["direct_local_conversion", "crisp_b2b_saas", "warm_local_service", "soft_concierge"],
+        "description": "A clean list of benefits with supporting descriptions, useful for explaining value quickly.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["clear value explanation", "fast scanability", "repeatable layout"],
+        "avoidIf": ["benefits need long narrative treatment"]
+      },
+      {
+        "id": "benefits_alternating_rows",
+        "sectionType": "benefits",
+        "variant": "alternating-rows",
+        "label": "Alternating Benefit Rows",
+        "bestFor": ["premium-service", "saas", "high-trust-service"],
+        "styleFit": ["premium_editorial", "crisp_b2b_saas", "soft_concierge"],
+        "description": "Benefit blocks arranged with more visual rhythm and slightly deeper content.",
+        "contentNeeds": ["heading", "subheading", "items"],
+        "visualTraits": ["less repetitive than card grids", "good pacing", "supports deeper value communication"],
+        "avoidIf": ["page is extremely short and practical"]
+      },
+  
+      {
+        "id": "testimonials_single_highlight",
+        "sectionType": "testimonials",
+        "variant": "single-highlight",
+        "label": "Single Highlight + Supporting Quotes",
+        "bestFor": ["premium-service", "clinic", "pet-service", "saas", "travel"],
+        "styleFit": ["soft_concierge", "premium_editorial", "crisp_b2b_saas", "modern_glass_saas"],
+        "description": "One large featured testimonial supported by a few smaller quotes, ideal when one emotional story should lead.",
+        "contentNeeds": ["heading", "items"],
+        "visualTraits": ["high trust", "story-led proof", "strong focal point", "premium testimonial treatment"],
+        "avoidIf": ["you only have one weak generic quote", "page already has too many oversized blocks"]
+      },
+      {
+        "id": "testimonials_quote_grid",
+        "sectionType": "testimonials",
+        "variant": "grid-quotes",
+        "label": "Quote Grid",
+        "bestFor": ["local-service", "saas", "travel", "education", "beauty"],
+        "styleFit": ["direct_local_conversion", "warm_local_service", "crisp_b2b_saas"],
+        "description": "A grid of testimonial cards for broader proof coverage and quick scanning.",
+        "contentNeeds": ["heading", "items"],
+        "visualTraits": ["balanced proof", "multi-card layout", "simple trust section"],
+        "avoidIf": ["brand wants one emotionally strong focal story"]
+      },
+      {
+        "id": "testimonials_avatar_quotes",
+        "sectionType": "testimonials",
+        "variant": "avatars",
+        "label": "Avatar Quote Cards",
+        "bestFor": ["local-service", "coaching", "beauty", "pet-service", "education"],
+        "styleFit": ["warm_local_service", "soft_concierge", "direct_local_conversion"],
+        "description": "Friendly review cards with strong author presence, useful for human warmth and relatability.",
+        "contentNeeds": ["heading", "items"],
+        "visualTraits": ["human presence", "relatability", "friendly trust", "social proof with personality"],
+        "avoidIf": ["brand is very formal and minimal", "testimonials are highly corporate"]
+      },
+      {
+        "id": "testimonials_side_by_side_proof",
+        "sectionType": "testimonials",
+        "variant": "side-by-side-proof",
+        "label": "Side-by-Side Proof Blocks",
+        "bestFor": ["saas", "consulting", "clinic", "high-ticket-service"],
+        "styleFit": ["crisp_b2b_saas", "premium_editorial", "modern_glass_saas"],
+        "description": "A tighter proof layout using paired testimonials or statements for controlled trust building.",
+        "contentNeeds": ["heading", "items"],
+        "visualTraits": ["controlled density", "formal proof feel", "less playful than quote grid"],
+        "avoidIf": ["page needs warmer emotional social proof"]
+      },
+  
+      {
+        "id": "cta_centered_warm",
+        "sectionType": "cta-band",
+        "variant": "centered",
+        "label": "Centered Warm CTA Band",
+        "bestFor": ["local-service", "care-service", "pet-service", "beauty"],
+        "styleFit": ["soft_concierge", "warm_local_service", "premium_editorial"],
+        "description": "Centered CTA section with a strong emotional close and one or two actions.",
+        "contentNeeds": ["heading", "subheading", "buttons"],
+        "visualTraits": ["simple close", "clear final step", "emotionally supportive"],
+        "avoidIf": ["page needs a more action-heavy utility CTA strip"]
+      },
+      {
+        "id": "cta_dual_action_band",
+        "sectionType": "cta-band",
+        "variant": "dual",
+        "label": "Dual Action CTA Band",
+        "bestFor": ["saas", "travel", "visa", "clinic", "lead-gen"],
+        "styleFit": ["crisp_b2b_saas", "direct_local_conversion", "modern_glass_saas"],
+        "description": "CTA band with two actions, such as Book Demo / Talk to Us or Book Now / WhatsApp.",
+        "contentNeeds": ["heading", "subheading", "buttons"],
+        "visualTraits": ["high-conversion", "practical choice architecture", "strong call-to-action section"],
+        "avoidIf": ["brand should feel extremely minimal and quiet"]
+      },
+      {
+        "id": "cta_contact_strip",
+        "sectionType": "cta-band",
+        "variant": "contact-strip",
+        "label": "Contact Strip CTA",
+        "bestFor": ["local-service", "trust-service", "pandit", "physiotherapist", "consultant"],
+        "styleFit": ["warm_local_service", "direct_local_conversion", "soft_concierge"],
+        "description": "Utility-oriented closing strip that reinforces contact channels and gives a low-friction next step.",
+        "contentNeeds": ["heading", "subheading", "buttons"],
+        "visualTraits": ["simple close", "practical", "contact-led", "low-friction action"],
+        "avoidIf": ["page should end on a highly visual premium block"]
+      },
+  
+      {
+        "id": "faq_simple_accordion",
+        "sectionType": "faq",
+        "variant": "accordion",
+        "label": "Simple Accordion FAQ",
+        "bestFor": ["all"],
+        "styleFit": ["all"],
+        "description": "Straightforward accordion list for resolving user hesitation in a clean format.",
+        "contentNeeds": ["heading", "items"],
+        "visualTraits": ["high usability", "compact clarity", "good for objections"],
+        "avoidIf": ["you do not have enough meaningful FAQ items"]
+      },
+      {
+        "id": "faq_grouped_topics",
+        "sectionType": "faq",
+        "variant": "grouped",
+        "label": "Grouped FAQ Topics",
+        "bestFor": ["saas", "visa", "travel", "clinic", "education"],
+        "styleFit": ["crisp_b2b_saas", "direct_local_conversion", "warm_local_service"],
+        "description": "FAQ organized into clearer categories such as process, pricing, eligibility, or support.",
+        "contentNeeds": ["heading", "items"],
+        "visualTraits": ["structured clarity", "good for complex offers", "better information grouping"],
+        "avoidIf": ["FAQ set is very small and simple"]
+      },
+      {
+        "id": "faq_with_cta_close",
+        "sectionType": "faq",
+        "variant": "faq-plus-cta",
+        "label": "FAQ with CTA Close",
+        "bestFor": ["lead-gen", "local-service", "travel", "visa", "saas"],
+        "styleFit": ["direct_local_conversion", "warm_local_service", "crisp_b2b_saas"],
+        "description": "FAQ section designed to lead naturally into the next CTA, useful when hesitation needs direct resolution before action.",
+        "contentNeeds": ["heading", "items"],
+        "visualTraits": ["objection handling + momentum", "good pre-CTA bridge", "conversion-aware FAQ"],
+        "avoidIf": ["CTA already appears too frequently nearby"]
+      },
+  
+      {
+        "id": "footer_simple_utility",
+        "sectionType": "footer",
+        "variant": "simple",
+        "label": "Simple Utility Footer",
+        "bestFor": ["local-service", "small-business", "single-page-site", "lead-gen"],
+        "styleFit": ["warm_local_service", "direct_local_conversion", "soft_concierge"],
+        "description": "Compact footer with business name, short tagline, limited nav links, and basic contact path.",
+        "contentNeeds": ["companyName", "tagline", "columns", "copyrightYear"],
+        "visualTraits": ["clean close", "not overbuilt", "practical footer"],
+        "avoidIf": ["business needs a more established corporate footer"]
+      },
+      {
+        "id": "footer_multi_column_brand",
+        "sectionType": "footer",
+        "variant": "default",
+        "label": "Multi-Column Brand Footer",
+        "bestFor": ["saas", "multi-page-site", "professional-service", "premium-brand"],
+        "styleFit": ["crisp_b2b_saas", "premium_editorial", "modern_glass_saas"],
+        "description": "Richer multi-column footer with grouped links, stronger brand presence, and more complete navigation.",
+        "contentNeeds": ["companyName", "tagline", "columns", "copyrightYear"],
+        "visualTraits": ["established brand feel", "more navigable", "stronger site completion"],
+        "avoidIf": ["site is extremely small and single-page only"]
+      }
+    ]
+  }

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sky Pet Grooming Services</title>
+  <meta name="description" content="Enjoy convenient mobile dog and cat grooming services in Bangalore. Our experienced groomers provide a low-stress environment for your pets in the comfort of your home." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #FFCC00;
+      --secondary: #0099FF;
+      --accent: #FF6699;
+      --text: #111827;
+      --bg: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Verdana', system-ui, sans-serif; color: var(--text); background: var(--bg); }
+    .container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+    header { position: sticky; top: 0; background: rgba(255,255,255,0.94); backdrop-filter: blur(10px); border-bottom: 1px solid #e5e7eb; }
+    header .inner { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; gap: 24px; }
+    nav { display: flex; flex-wrap: wrap; gap: 18px; }
+    nav a, .footer a { text-decoration: none; color: inherit; }
+    h1, h2, h3, h4, strong { font-family: 'Trebuchet MS', system-ui, sans-serif; }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.8rem; font-weight: 700; opacity: 0.72; margin-bottom: 14px; }
+    .badge { display: inline-block; padding: 8px 12px; border-radius: 999px; background: rgba(17,24,39,0.08); margin-bottom: 14px; font-size: 0.82rem; font-weight: 700; }
+    h1 { font-size: clamp(2.7rem, 6vw, 5rem); line-height: 1.02; margin: 0 0 20px; }
+    h2 { font-size: clamp(2rem, 4vw, 3rem); margin: 0 0 18px; }
+    h3 { margin: 0 0 10px; }
+    .lead { font-size: 1.2rem; max-width: 760px; }
+    .card { background: rgba(255,255,255,0.72); border-radius: 18px; border: 1px solid rgba(17,24,39,0.08); }
+    .card-body { padding: 22px; }
+    .actions { margin-top: 22px; }
+    .btn { display: inline-block; padding: 14px 20px; border-radius: 999px; font-weight: 700; text-decoration: none; }
+    .btn.primary { background: var(--accent); color: #111827; }
+    .btn.secondary { background: rgba(17,24,39,0.08); color: inherit; }
+    .stat { background: rgba(255,255,255,0.14); border-radius: 16px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+    .chip { padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,0.16); font-size: 0.9rem; }
+    .supporting-points { display: grid; gap: 10px; margin: 18px 0; padding-left: 18px; }
+    .cta-note { opacity: 0.8; margin-top: 14px; }
+    .copyright { grid-column: 1 / -1; opacity: 0.72; margin-top: 24px; }
+    .trust-bar { display: flex; flex-wrap: wrap; gap: 12px; }
+    .pricing-grid .price { font-size: 1.8rem; font-weight: 700; margin: 10px 0; }
+    .gallery-card .media-placeholder { aspect-ratio: 4/3; display: grid; place-items: center; border-radius: 16px; margin-bottom: 14px; background: linear-gradient(135deg, var(--secondary), rgba(255,255,255,0.6)); }
+    .hero-panel { min-height: 100%; }
+    .hero-offer-focused .badge { background: var(--accent); color: #111827; }
+    .hero-background-image { border-radius: 28px; background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); padding: 24px; }
+    .alt-card { transform: translateY(22px); }
+    [data-surface="soft-gradient"] { background-image: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.02)); }
+    [data-emphasis="high"] h2, [data-emphasis="high"] h1 { letter-spacing: -0.03em; }
+    @media (max-width: 768px) {
+      header .inner { flex-direction: column; align-items: flex-start; }
+      .alt-card { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container inner">
+      <strong>Sky Pet Grooming Services</strong>
+      <nav><a href='#home'>Home</a><a href='#about-team'>Meet Our Groomers</a><a href='#services'>Our Grooming Services</a><a href='#testimonials'>Customer Reviews</a><a href='#faq'>Frequently Asked Questions</a><a href='#pricing'>Grooming Pricing</a><a href='#contact'>Contact Us</a></nav>
+    </div>
+  </header>
+  <main><section id="section-hero-001" class="section-block" data-motion="fade-up stagger with soft reveal" data-layout="container &gt; row &gt; col-lg-7 content / col-lg-5 support" data-surface="soft-gradient" data-emphasis="high" style="background:#FFCC00;color:#ffffff;padding:80px 0;"><div class="container hero hero-centered"><div class="row g-4 align-items-center"><div class="col-lg-7"><div class='eyebrow'>Grooming Made Easy</div><h1>Your Pets Deserve the Best Mobile Grooming in Bangalore</h1><p class='lead'>Transform bath time into a delightful experience for your furry friends—right at home.</p><ul class='supporting-points'><li>Compassionate groomers dedicated to your pet's comfort and happiness</li><li>A calming, low-stress environment tailored for your pets</li><li>Convenient scheduling options that fit seamlessly into your busy life</li></ul><div class='chips'><span class='chip'>Trusted by Bangalore's Pet Owners</span><span class='chip'>100% Satisfaction Guarantee</span><span class='chip'>Certified Groomers with a Passion for Pets</span></div><div class='actions d-flex flex-wrap gap-3'><a class="btn primary" href="#contact">Schedule Your Stress-Free Grooming Today!</a></div><p class='cta-note'>Limited slots available—book now to secure your spot!</p></div></div></div></section>
+<section id="section-features-001" class="section-block" data-motion="" data-layout="container &gt; row &gt; col-lg-12" data-surface="solid" data-emphasis="medium" style="background:#ffffff;color:#111827;padding:72px 0;"><div class="container"><div class='badge'>Trusted by Pet Owners in Bangalore</div><div class='eyebrow'>Transform Your Pet's Grooming Experience</div><h2>Why Choose Sky Pet Grooming?</h2><p class='lead'>Experience the ultimate convenience and care for your furry family members.</p><div class='row g-4'><div class='col-md-6 col-xl-4'><article class='card h-100 shadow-sm border-0 '><div class='card-body'><h3>Convenient Mobile Grooming</h3><p class='mb-0'>We bring the grooming salon to your doorstep, allowing you to skip the stressful travel and wait times. Enjoy personalized care in the comfort of your home.</p></div></article></div><div class='col-md-6 col-xl-4'><article class='card h-100 shadow-sm border-0 '><div class='card-body'><h3>Gentle, Low-Stress Environment</h3><p class='mb-0'>Our experienced groomers prioritize your pet's comfort, ensuring a calm and soothing experience that reduces anxiety for both dogs and cats.</p></div></article></div><div class='col-md-6 col-xl-4'><article class='card h-100 shadow-sm border-0 '><div class='card-body'><h3>Comprehensive Grooming Services</h3><p class='mb-0'>From thorough bathing and nail trimming to stylish haircuts, we provide a full suite of grooming services tailored to your pet's unique needs.</p></div></article></div></div></div></section>
+<section id="section-testimonials-001" class="section-block" data-motion="" data-layout="container &gt; row &gt; col-lg-12" data-surface="solid" data-emphasis="medium" style="background:#ffffff;color:#111827;padding:72px 0;"><div class="container"><div class='badge'>5-Star Rated</div><div class='eyebrow'>Trusted by Pet Owners</div><h2>What Our Clients Are Saying</h2><p class='lead'>Discover how our mobile grooming services are making a difference for pets and their owners in Bangalore.</p><div class='row g-4'></div></div></section>
+<section id="section-cta-band-001" class="section-block" data-motion="" data-layout="container &gt; row &gt; col-lg-12" data-surface="solid" data-emphasis="medium" style="background:#ffffff;color:#111827;padding:72px 0;"><div class="container"><div class='eyebrow'>Your Pet Deserves the Best</div><h2>Transform Your Pet's Grooming Experience</h2><p class='lead'>Convenient, Stress-Free Mobile Grooming Right at Your Doorstep in Bangalore</p><div class='actions d-flex flex-wrap gap-3'><a class="btn primary" href="#contact">Book Your Appointment Now</a></div></div></section>
+<section id="section-cta-band-002" class="section-block" data-motion="" data-layout="container &gt; row &gt; col-lg-12" data-surface="solid" data-emphasis="medium" style="background:#ffffff;color:#111827;padding:72px 0;"><div class="container"><div class='badge'>Trusted by Pet Owners</div><div class='eyebrow'>Why Choose Us?</div><h2>Convenient &amp; Stress-Free Grooming at Your Doorstep</h2><p class='lead'>Expert groomers in Bangalore dedicated to your pets' comfort and care.</p><div class='actions d-flex flex-wrap gap-3'><a class="btn primary" href="#contact">Schedule Your Mobile Grooming Today</a></div></div></section>
+<section id="section-footer-001" class="section-block" data-motion="" data-layout="container &gt; row &gt; col-lg-12" data-surface="solid" data-emphasis="medium" style="background:#ffffff;color:#111827;padding:72px 0;"><div class="container"><div class='row footer'><div class='col-md-4'><h3>Sky Pet Grooming Services</h3><p>Convenient mobile grooming services for dogs and cats</p></div><p class='copyright'>&copy; 2026 Sky Pet Grooming Services</p></div></div></section></main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

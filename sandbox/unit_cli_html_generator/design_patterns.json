@@ -1,0 +1,383 @@
+{
+    "designModes": [
+      {
+        "id": "soft_concierge",
+        "label": "Soft Concierge",
+        "summary": "Warm, calm, premium-friendly style for service businesses where trust, care, and emotional reassurance matter.",
+        "bestFor": [
+          "pet grooming at home",
+          "home beauty services",
+          "elder care services",
+          "child enrichment services",
+          "wellness services",
+          "premium local services"
+        ],
+        "businessTags": [
+          "local-service",
+          "care-service",
+          "home-service",
+          "pet-service",
+          "wellness"
+        ],
+        "visualTraits": [
+          "soft surfaces",
+          "rounded cards",
+          "airy spacing",
+          "warm neutrals",
+          "gentle shadows",
+          "friendly premium feel"
+        ],
+        "toneTraits": [
+          "reassuring",
+          "warm",
+          "polished",
+          "helpful",
+          "calm"
+        ],
+        "heroPreferences": [
+          "split-image",
+          "offer-focused"
+        ],
+        "sectionPreferences": {
+          "services": [
+            "image-cards",
+            "story"
+          ],
+          "benefits": [
+            "icon-list",
+            "alternating-rows"
+          ],
+          "testimonials": [
+            "single-highlight",
+            "avatars"
+          ],
+          "ctaBand": [
+            "contact-strip",
+            "dual"
+          ],
+          "footer": [
+            "simple"
+          ]
+        },
+        "ctaStyle": "warm, low-pressure, concierge-like",
+        "density": "airy",
+        "avoid": [
+          "harsh contrast",
+          "aggressive sales language",
+          "overly technical layouts",
+          "crowded above-the-fold"
+        ]
+      },
+      {
+        "id": "direct_local_conversion",
+        "label": "Direct Local Conversion",
+        "summary": "Fast, practical, lead-focused style for local businesses where users want clarity, service area confidence, and a quick CTA.",
+        "bestFor": [
+          "local clinics",
+          "electricians",
+          "plumbers",
+          "cleaning services",
+          "local repair businesses",
+          "salons",
+          "pet services"
+        ],
+        "businessTags": [
+          "local-service",
+          "lead-gen",
+          "utility-service",
+          "booking-service"
+        ],
+        "visualTraits": [
+          "clear hierarchy",
+          "strong CTA contrast",
+          "tight scanability",
+          "simple cards",
+          "utility-first sections"
+        ],
+        "toneTraits": [
+          "clear",
+          "direct",
+          "confident",
+          "practical"
+        ],
+        "heroPreferences": [
+          "centered",
+          "offer-focused"
+        ],
+        "sectionPreferences": {
+          "services": [
+            "icon-list",
+            "list-with-icons"
+          ],
+          "benefits": [
+            "icon-list",
+            "alternating-rows"
+          ],
+          "testimonials": [
+            "avatars"
+          ],
+          "ctaBand": [
+            "dual",
+            "contact-strip"
+          ],
+          "footer": [
+            "simple"
+          ]
+        },
+        "ctaStyle": "high-visibility, immediate action",
+        "density": "medium",
+        "avoid": [
+          "overly abstract branding",
+          "hidden CTA",
+          "too much decorative whitespace",
+          "slow storytelling before clarity"
+        ]
+      },
+      {
+        "id": "crisp_b2b_saas",
+        "label": "Crisp B2B SaaS",
+        "summary": "Structured, reliable, product-led style for operational SaaS products where clarity, trust, and workflow understanding drive conversion.",
+        "bestFor": [
+          "workflow software",
+          "clinic software",
+          "team productivity tools",
+          "business automation SaaS",
+          "B2B dashboards"
+        ],
+        "businessTags": [
+          "saas",
+          "b2b",
+          "product-led",
+          "software"
+        ],
+        "visualTraits": [
+          "clean grids",
+          "sharp typography",
+          "dashboard-friendly layouts",
+          "controlled color usage",
+          "structured sections"
+        ],
+        "toneTraits": [
+          "competent",
+          "clear",
+          "modern",
+          "efficient"
+        ],
+        "heroPreferences": [
+          "split-image",
+          "offer-focused"
+        ],
+        "sectionPreferences": {
+          "features": [
+            "list-with-icons",
+            "alternating-rows"
+          ],
+          "benefits": [
+            "icon-list"
+          ],
+          "testimonials": [
+            "single-highlight",
+            "avatars"
+          ],
+          "ctaBand": [
+            "dual"
+          ],
+          "footer": [
+            "default",
+            "simple"
+          ]
+        },
+        "ctaStyle": "demo-driven, professional, product-first",
+        "density": "medium",
+        "avoid": [
+          "vague AI buzzwords",
+          "too much lifestyle imagery",
+          "excessive decoration",
+          "unclear feature hierarchy"
+        ]
+      },
+      {
+        "id": "premium_editorial",
+        "label": "Premium Editorial",
+        "summary": "Elegant, design-led style for premium brands and high-ticket services where taste, trust, and perceived sophistication matter.",
+        "bestFor": [
+          "interior design studios",
+          "luxury travel planners",
+          "high-end clinics",
+          "premium consultants",
+          "boutique brands"
+        ],
+        "businessTags": [
+          "premium-service",
+          "luxury",
+          "design-led",
+          "consulting"
+        ],
+        "visualTraits": [
+          "large whitespace",
+          "editorial hierarchy",
+          "image-led sections",
+          "restrained palette",
+          "high-end typography"
+        ],
+        "toneTraits": [
+          "refined",
+          "confident",
+          "quietly premium",
+          "elegant"
+        ],
+        "heroPreferences": [
+          "split-image",
+          "centered"
+        ],
+        "sectionPreferences": {
+          "services": [
+            "story",
+            "image-cards"
+          ],
+          "gallery": [
+            "image-cards"
+          ],
+          "testimonials": [
+            "single-highlight"
+          ],
+          "ctaBand": [
+            "contact-strip"
+          ],
+          "footer": [
+            "default"
+          ]
+        },
+        "ctaStyle": "refined, lower-noise, confidence-led",
+        "density": "airy",
+        "avoid": [
+          "crowded card grids everywhere",
+          "cheap-looking bright accents",
+          "aggressive conversion copy",
+          "too many micro-elements"
+        ]
+      },
+      {
+        "id": "modern_glass_saas",
+        "label": "Modern Glass SaaS",
+        "summary": "Layered, startup-style visual system with rounded glass-like panels, glow accents, and bold hero treatment for modern software brands.",
+        "bestFor": [
+          "AI SaaS",
+          "productivity apps",
+          "workflow startups",
+          "founder-led SaaS launches"
+        ],
+        "businessTags": [
+          "saas",
+          "ai",
+          "startup",
+          "product-led"
+        ],
+        "visualTraits": [
+          "glassmorphism panels",
+          "glow effects",
+          "rounded surfaces",
+          "floating cards",
+          "strong hero contrast"
+        ],
+        "toneTraits": [
+          "modern",
+          "ambitious",
+          "high-signal",
+          "innovative"
+        ],
+        "heroPreferences": [
+          "split-image",
+          "offer-focused"
+        ],
+        "sectionPreferences": {
+          "features": [
+            "image-cards",
+            "alternating-rows"
+          ],
+          "benefits": [
+            "icon-list"
+          ],
+          "testimonials": [
+            "single-highlight"
+          ],
+          "ctaBand": [
+            "dual"
+          ],
+          "footer": [
+            "default"
+          ]
+        },
+        "ctaStyle": "bold, startup-like, high-emphasis",
+        "density": "medium",
+        "avoid": [
+          "legacy corporate stiffness",
+          "too much plain white without contrast",
+          "generic stock-business feel",
+          "weak hero presence"
+        ]
+      },
+      {
+        "id": "warm_local_service",
+        "label": "Warm Local Service",
+        "summary": "Approachable neighborhood-business style for local providers who need trust, familiarity, and simple action more than polished luxury.",
+        "bestFor": [
+          "pandits",
+          "local tutors",
+          "physiotherapists",
+          "repair services",
+          "small clinics",
+          "visa consultants",
+          "travel agencies"
+        ],
+        "businessTags": [
+          "local-service",
+          "trust-service",
+          "community-business"
+        ],
+        "visualTraits": [
+          "friendly colors",
+          "simple trust blocks",
+          "clear cards",
+          "familiar layouts",
+          "human-first design"
+        ],
+        "toneTraits": [
+          "approachable",
+          "trustworthy",
+          "clear",
+          "human"
+        ],
+        "heroPreferences": [
+          "centered",
+          "offer-focused"
+        ],
+        "sectionPreferences": {
+          "services": [
+            "list-with-icons",
+            "story"
+          ],
+          "benefits": [
+            "icon-list"
+          ],
+          "testimonials": [
+            "avatars"
+          ],
+          "ctaBand": [
+            "contact-strip"
+          ],
+          "footer": [
+            "simple"
+          ]
+        },
+        "ctaStyle": "friendly and easy to act on",
+        "density": "medium",
+        "avoid": [
+          "cold corporate styling",
+          "overly premium minimalism",
+          "heavy jargon",
+          "complex interaction patterns"
+        ]
+      }
+    ]
+  }

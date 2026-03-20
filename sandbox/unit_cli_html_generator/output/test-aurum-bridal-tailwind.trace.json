@@ -1,0 +1,1229 @@
+{
+  "model": "gpt-4o-mini",
+  "renderer": "tailwind",
+  "business_context": {
+    "businessName": "Aurum Bridal Studio",
+    "businessDescription": "A luxury bridal makeup and styling studio in Delhi specializing in polished, high-touch wedding looks through private consultations and premium in-studio service.",
+    "businessType": "luxury bridal makeup and styling",
+    "targetAudience": "Brides and families seeking a premium wedding beauty experience",
+    "primaryCta": "Book Your Consultation",
+    "tone": "elegant",
+    "pageType": "service-business",
+    "mainOffer": "Luxury bridal makeup and styling services",
+    "location": "Delhi",
+    "differentiators": [
+      "High-touch personalized service",
+      "Exclusive luxury experience"
+    ],
+    "trustDrivers": [
+      "Portfolio of stunning bridal transformations",
+      "Client testimonials and reviews"
+    ],
+    "customerMotivations": [
+      "Desire for a flawless wedding look",
+      "Need for personalized and premium service"
+    ],
+    "likelyObjections": [
+      "Concerns about pricing",
+      "Worries about availability on wedding dates"
+    ],
+    "visualStyleHints": [
+      "Sophisticated color palette",
+      "Elegant typography and imagery"
+    ],
+    "_meta": {
+      "phase": "infer_context",
+      "attempt": 1
+    }
+  },
+  "site_plan": {
+    "siteGoal": "Convert visitors into booked consultations for luxury bridal makeup and styling services.",
+    "targetAudience": "Brides and families seeking a premium wedding beauty experience in Delhi.",
+    "pages": [
+      {
+        "slug": "home",
+        "title": "Aurum Bridal Studio - Luxury Bridal Makeup & Styling",
+        "purpose": "To provide an overview of the luxury bridal makeup services, showcase the studio's unique offerings, and encourage bookings.",
+        "pageType": "service-business",
+        "isHomepage": true,
+        "suggestedSections": [
+          "hero",
+          "features",
+          "testimonials",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "about-us",
+        "title": "About Aurum Bridal Studio",
+        "purpose": "To build trust by sharing the studio's story, values, and the team behind the services.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "trust-bar",
+          "footer"
+        ]
+      },
+      {
+        "slug": "services",
+        "title": "Our Bridal Makeup Services",
+        "purpose": "To clearly outline the range of luxury bridal makeup and styling services offered, supporting informed decision-making.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "features",
+          "benefits",
+          "faq",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "portfolio",
+        "title": "Bridal Transformations Portfolio",
+        "purpose": "To showcase stunning before-and-after transformations to demonstrate expertise and quality.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "gallery",
+          "footer"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "title": "Client Testimonials",
+        "purpose": "To build trust through real client feedback and experiences, addressing concerns and showcasing satisfaction.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "testimonials",
+          "footer"
+        ]
+      },
+      {
+        "slug": "pricing",
+        "title": "Pricing Information",
+        "purpose": "To provide clarity on service costs, addressing potential objections about pricing and availability.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "pricing",
+          "faq",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "faq",
+        "title": "Frequently Asked Questions",
+        "purpose": "To address common concerns and questions that potential clients may have before booking.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "faq",
+          "footer"
+        ]
+      },
+      {
+        "slug": "contact",
+        "title": "Contact Us",
+        "purpose": "To provide a direct way for potential clients to reach out for inquiries or to book consultations.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "contact",
+          "footer"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "site_plan",
+      "attempt": 1
+    }
+  },
+  "keyword_strategy": {
+    "siteIntent": "Convert visitors into booked consultations for luxury bridal makeup and styling services in Delhi.",
+    "pageKeywordStrategy": [
+      {
+        "slug": "home",
+        "primaryIntent": "Introduce Aurum Bridal Studio as the premier destination for luxury bridal makeup and styling in Delhi.",
+        "coreKeywords": [
+          "luxury bridal makeup Delhi",
+          "bridal styling services",
+          "premium wedding makeup"
+        ],
+        "trustKeywords": [
+          "client testimonials bridal makeup",
+          "portfolio of bridal transformations",
+          "trusted bridal makeup artist"
+        ],
+        "supportingKeywords": [
+          "personalized bridal consultations",
+          "high-touch wedding beauty experience",
+          "exclusive bridal makeup studio"
+        ]
+      },
+      {
+        "slug": "about-us",
+        "primaryIntent": "Build trust by sharing the studio's story, values, and team behind the services.",
+        "coreKeywords": [
+          "about Aurum Bridal Studio",
+          "bridal makeup team Delhi",
+          "luxury bridal studio"
+        ],
+        "trustKeywords": [
+          "meet our bridal makeup artists",
+          "our story luxury bridal",
+          "client satisfaction bridal makeup"
+        ],
+        "supportingKeywords": [
+          "values of Aurum Bridal Studio",
+          "expertise in bridal styling",
+          "personalized service commitment"
+        ]
+      },
+      {
+        "slug": "services",
+        "primaryIntent": "Outline the range of luxury bridal makeup and styling services offered.",
+        "coreKeywords": [
+          "bridal makeup services Delhi",
+          "luxury bridal styling packages",
+          "wedding makeup options"
+        ],
+        "trustKeywords": [
+          "bridal makeup service reviews",
+          "expert bridal makeup techniques",
+          "high-quality bridal products"
+        ],
+        "supportingKeywords": [
+          "pre-wedding makeup trials",
+          "bridal party makeup services",
+          "customized bridal looks"
+        ]
+      },
+      {
+        "slug": "portfolio",
+        "primaryIntent": "Showcase stunning before-and-after transformations to demonstrate expertise and quality.",
+        "coreKeywords": [
+          "bridal transformations portfolio",
+          "before and after bridal makeup",
+          "bridal makeup gallery"
+        ],
+        "trustKeywords": [
+          "real bridal transformations",
+          "stunning bridal looks",
+          "expertise in bridal beauty"
+        ],
+        "supportingKeywords": [
+          "bridal makeup styles",
+          "luxury bridal looks",
+          "client success stories"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "primaryIntent": "Build trust through real client feedback and experiences.",
+        "coreKeywords": [
+          "client testimonials bridal makeup",
+          "reviews of Aurum Bridal Studio",
+          "bridal makeup experiences"
+        ],
+        "trustKeywords": [
+          "happy brides testimonials",
+          "client satisfaction reviews",
+          "trusted bridal makeup feedback"
+        ],
+        "supportingKeywords": [
+          "real wedding makeup stories",
+          "bridal beauty success stories",
+          "client experiences luxury makeup"
+        ]
+      },
+      {
+        "slug": "pricing",
+        "primaryIntent": "Provide clarity on service costs, addressing potential objections about pricing and availability.",
+        "coreKeywords": [
+          "bridal makeup pricing Delhi",
+          "luxury makeup service costs",
+          "wedding makeup packages"
+        ],
+        "trustKeywords": [
+          "transparent pricing bridal makeup",
+          "value for luxury bridal services",
+          "pricing clarity for brides"
+        ],
+        "supportingKeywords": [
+          "affordable luxury bridal makeup",
+          "pricing FAQs bridal services",
+          "cost of bridal consultations"
+        ]
+      },
+      {
+        "slug": "faq",
+        "primaryIntent": "Address common concerns and questions that potential clients may have before booking.",
+        "coreKeywords": [
+          "bridal makeup FAQs",
+          "common questions bridal services",
+          "wedding makeup inquiries"
+        ],
+        "trustKeywords": [
+          "expert answers bridal makeup",
+          "bridal service FAQs",
+          "trusted bridal makeup advice"
+        ],
+        "supportingKeywords": [
+          "how to book bridal makeup",
+          "bridal consultation process",
+          "makeup trial information"
+        ]
+      },
+      {
+        "slug": "contact",
+        "primaryIntent": "Provide a direct way for potential clients to reach out for inquiries or to book consultations.",
+        "coreKeywords": [
+          "contact Aurum Bridal Studio",
+          "book bridal consultation Delhi",
+          "inquire about bridal makeup"
+        ],
+        "trustKeywords": [
+          "reach out for bridal services",
+          "trusted bridal makeup inquiries",
+          "easy booking for bridal consultations"
+        ],
+        "supportingKeywords": [
+          "consultation booking process",
+          "contact information bridal studio",
+          "get in touch for bridal makeup"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "keyword_strategy",
+      "attempt": 1
+    }
+  },
+  "shared_settings": {
+    "brand": {
+      "tone": "elegant",
+      "primaryColor": "#F2D4D4",
+      "secondaryColor": "#FFFFFF",
+      "accentColor": "#D4AF37",
+      "fontHeading": "Playfair Display",
+      "fontBody": "Lato"
+    },
+    "themeVariant": "premium",
+    "designMode": "editorial-luxe",
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Book Your Consultation",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "header": {
+      "siteName": "Aurum Bridal Studio",
+      "showNav": true
+    },
+    "footer": {
+      "companyName": "Aurum Bridal Studio",
+      "tagline": "Luxury Bridal Makeup & Styling",
+      "columns": [
+        {
+          "title": "Quick Links",
+          "links": [
+            {
+              "text": "Home",
+              "href": "#home"
+            },
+            {
+              "text": "About Us",
+              "href": "#about-us"
+            },
+            {
+              "text": "Services",
+              "href": "#services"
+            },
+            {
+              "text": "Portfolio",
+              "href": "#portfolio"
+            },
+            {
+              "text": "Testimonials",
+              "href": "#testimonials"
+            },
+            {
+              "text": "Pricing",
+              "href": "#pricing"
+            },
+            {
+              "text": "FAQ",
+              "href": "#faq"
+            },
+            {
+              "text": "Contact Us",
+              "href": "#contact"
+            }
+          ]
+        }
+      ],
+      "copyrightYear": "2026"
+    },
+    "navigation": [
+      {
+        "label": "Home",
+        "href": "#home"
+      },
+      {
+        "label": "About Us",
+        "href": "#about-us"
+      },
+      {
+        "label": "Services",
+        "href": "#services"
+      },
+      {
+        "label": "Portfolio",
+        "href": "#portfolio"
+      },
+      {
+        "label": "Testimonials",
+        "href": "#testimonials"
+      },
+      {
+        "label": "Pricing",
+        "href": "#pricing"
+      },
+      {
+        "label": "FAQ",
+        "href": "#faq"
+      },
+      {
+        "label": "Contact Us",
+        "href": "#contact"
+      }
+    ],
+    "_meta": {
+      "phase": "shared_settings",
+      "attempt": 1
+    }
+  },
+  "design_brief": {
+    "heroStrategy": {
+      "layout": "Full-width hero image featuring a breathtaking bride styled by Aurum Bridal Studio, with a soft overlay for text readability, allowing the image to evoke emotions related to beauty and luxury.",
+      "goal": "To immediately capture the essence of luxury bridal makeup and styling, enticing brides to envision their perfect wedding look and encouraging them to explore further.",
+      "headlineStyle": "A large, elegant serif font that conveys sophistication and aspiration, designed to resonate with brides' desires for a flawless wedding look.",
+      "supportingCopyStyle": "A concise subheading in a clean sans serif font that emphasizes the personalized nature of the service and the convenience of in-studio consultations, positioned directly below the headline.",
+      "ctaApproach": "Make the primary CTA obvious and low-friction",
+      "trustSupport": "Incorporate a small trust badge or logo of a relevant wedding industry award or feature in a magazine, positioned subtly in the bottom right corner of the hero section."
+    },
+    "navigationStrategy": {
+      "style": "Fixed top navigation that remains visible as users scroll, with a luxurious feel through elegant typography and a soft white background to maintain clarity.",
+      "links": [
+        "Home",
+        "About Us",
+        "Services",
+        "Portfolio",
+        "Testimonials",
+        "Pricing",
+        "Contact"
+      ],
+      "ctaPlacement": "The primary CTA 'Book Your Consultation' should be placed at the far right of the navigation bar, highlighted with the accent color for immediate visibility.",
+      "notes": "The navigation should be intuitive and easy to use, with dropdowns for services to reduce clutter and allow users to quickly find information without overwhelming them."
+    },
+    "visualSystem": {
+      "designIntent": "To create an elegant, luxurious experience that evokes feelings of beauty, sophistication, and personalization.",
+      "primaryColorRole": "Soft pastels (blush pink, lavender) should be used for backgrounds and subtle elements, creating a romantic atmosphere that aligns with bridal themes.",
+      "secondaryColorRole": "White or cream should be used for text and main backgrounds to maintain clarity and elegance, ensuring high contrast for readability.",
+      "accentColorRole": "Gold or rose gold should be used for CTAs, hover states, and key highlights to draw attention and convey luxury, ensuring they pop against softer backgrounds.",
+      "contrastStrategy": "Balance areas of emphasis (like CTAs) with calm, airy sections that allow for breathing space, enhancing overall readability and reducing visual clutter.",
+      "surfaceStyle": "Use soft, rounded card designs for testimonials and service offerings, with subtle shadows to create depth and elegance, ensuring they feel inviting and premium."
+    },
+    "typographyStrategy": {
+      "headingApproach": "Headings should be in an elegant serif font, large and bold to capture attention and communicate luxury, with a size hierarchy that guides the reader's eye.",
+      "bodyApproach": "Body text should be in a clean sans serif font, easy to read, and comfortably sized to ensure clarity, with sufficient line spacing for legibility.",
+      "hierarchyNotes": "Clear visual hierarchy should guide scanning, with headings leading into subheadings and body text, allowing for quick comprehension and engagement.",
+      "fontPairingDirection": "Pair an elegant serif font for headings with a modern sans serif font for body text to create a sophisticated yet approachable feel, enhancing the overall luxury experience."
+    },
+    "sectionFlowStrategy": {
+      "openingExperience": "The hero section should immediately convey luxury and personalization, followed by a features section that outlines unique offerings and the benefits of choosing Aurum Bridal Studio.",
+      "midPageRhythm": "Pace the mid-page sections with alternating dense and light content; showcase testimonials and portfolio highlights to build credibility and emotional connection.",
+      "closingExperience": "The final sections should focus on client testimonials, including before-and-after images, and a strong call-to-action, reinforcing confidence and prompting bookings.",
+      "densityPattern": "Use denser sections for testimonials and service details, interspersed with lighter sections that allow for visual rest and engagement, ensuring a balanced reading experience."
+    },
+    "conversionStrategy": {
+      "primaryFrictionToReduce": "Concerns about pricing and availability should be addressed clearly, with a dedicated pricing section that highlights value and flexibility.",
+      "howDesignSupportsTrust": "Incorporate client testimonials prominently, along with before-and-after images and trust badges, to visually support credibility and alleviate concerns.",
+      "howDesignSupportsAction": "Ensure CTAs are visually distinct, easy to find, and repeated at strategic points throughout the page, with clear language that encourages clicks, such as 'Secure Your Date Now'.",
+      "whatMustNotHappen": [
+        "Users should not feel overwhelmed by information or choices.",
+        "CTAs should not blend into the background or be hard to find, risking missed opportunities for engagement."
+      ]
+    },
+    "implementationNotes": [
+      "Use high-quality images that reflect the luxury experience offered by Aurum Bridal Studio, ensuring they are optimized for fast loading times.",
+      "Ensure mobile responsiveness with touch-friendly elements and easy navigation for users on smartphones, maintaining the elegant aesthetic across devices."
+    ],
+    "_meta": {
+      "phase": "design_rewrite",
+      "attempt": 1
+    },
+    "_review": {
+      "pass": false,
+      "score": 4,
+      "summary": "The design brief has several strengths but lacks sufficient specificity and clarity in key areas, particularly in the hero and conversion strategies.",
+      "issues": [
+        {
+          "severity": "high",
+          "type": "hero",
+          "message": "The hero direction is underdeveloped; it lacks a compelling headline and clear emotional appeal that directly addresses the target audience's motivations.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "conversion",
+          "message": "While there are CTAs mentioned, the strategy does not sufficiently address how to alleviate buyer objections regarding pricing and availability.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "specificity",
+          "message": "The brief lacks concrete examples of how to implement the suggested design elements, making it less practical for downstream planning.",
+          "field": ""
+        }
+      ],
+      "requiredFixes": [
+        "Enhance the hero section with a more compelling headline and emotional appeal that speaks directly to brides' desires for a flawless wedding look.",
+        "Provide clearer strategies for addressing pricing and availability objections within the conversion strategy."
+      ],
+      "strengths": [
+        "The brief outlines a clear visual style and tone that aligns with the luxury branding of Aurum Bridal Studio."
+      ],
+      "_meta": {
+        "phase": "design_review",
+        "attempt": 1
+      }
+    }
+  },
+  "page_plan": {
+    "slug": "home",
+    "title": "Aurum Bridal Studio - Luxury Bridal Makeup & Styling",
+    "pageType": "service-business",
+    "sections": [
+      {
+        "type": "hero",
+        "purpose": "Lead with aspiration, premium positioning, and booking intent",
+        "variant": "background-image"
+      },
+      {
+        "type": "trust-bar",
+        "purpose": "Reinforce trust immediately after the hero with fast-scanning proof signals",
+        "variant": "simple"
+      },
+      {
+        "type": "gallery",
+        "purpose": "Show the visual finish and atmosphere early",
+        "variant": "grid"
+      },
+      {
+        "type": "services",
+        "purpose": "Present key services with a richer editorial feel",
+        "variant": "image-cards"
+      },
+      {
+        "type": "about-team",
+        "purpose": "Build trust through expertise and point of view",
+        "variant": "story"
+      },
+      {
+        "type": "testimonials",
+        "purpose": "Use selective proof that feels premium rather than crowded",
+        "variant": "single-highlight"
+      },
+      {
+        "type": "cta-band",
+        "purpose": "Close with a strong booking CTA and softer secondary path",
+        "variant": "dual"
+      },
+      {
+        "type": "footer",
+        "purpose": "Provide navigation and trust closure",
+        "variant": "multi-column"
+      }
+    ],
+    "_meta": {
+      "phase": "page_plan",
+      "attempt": 1
+    }
+  },
+  "section_keyword_plan": {
+    "sections": [
+      {
+        "type": "hero",
+        "keywords": [
+          "luxury bridal makeup Delhi",
+          "premium wedding beauty experience",
+          "personalized bridal consultations",
+          "aspirational bridal looks",
+          "exclusive bridal makeup studio",
+          "high-touch wedding styling",
+          "elegant bridal transformations",
+          "bride's dream makeup",
+          "luxury bridal services",
+          "Delhi bridal makeup experts",
+          "bespoke wedding beauty",
+          "flawless bridal appearance",
+          "wedding day beauty solutions"
+        ]
+      },
+      {
+        "type": "trust-bar",
+        "keywords": [
+          "trusted bridal makeup artist",
+          "client testimonials bridal makeup",
+          "awards for bridal beauty",
+          "featured in bridal magazines",
+          "real bride experiences",
+          "highly rated bridal services",
+          "expert bridal makeup reviews",
+          "client satisfaction ratings",
+          "endorsements from wedding planners",
+          "recognition in bridal industry"
+        ]
+      },
+      {
+        "type": "gallery",
+        "keywords": [
+          "bridal transformations portfolio",
+          "before and after bridal makeup",
+          "stunning bridal looks gallery",
+          "luxury bridal makeup styles",
+          "visual showcase of bridal beauty",
+          "real wedding makeup examples",
+          "expertise in bridal beauty",
+          "bride's makeup journey",
+          "portfolio of bridal artistry",
+          "captivating bridal images"
+        ]
+      },
+      {
+        "type": "services",
+        "keywords": [
+          "luxury bridal styling packages",
+          "bridal makeup services Delhi",
+          "customized bridal looks",
+          "pre-wedding makeup trials",
+          "bridal party makeup services",
+          "wedding makeup options",
+          "expert bridal techniques",
+          "high-quality bridal products",
+          "destination bridal makeup",
+          "special occasion makeup services"
+        ]
+      },
+      {
+        "type": "about-team",
+        "keywords": [
+          "meet our bridal makeup artists",
+          "expertise in bridal styling",
+          "our story luxury bridal",
+          "team of bridal beauty professionals",
+          "commitment to personalized service",
+          "values of Aurum Bridal Studio",
+          "background of our makeup artists",
+          "passion for bridal beauty",
+          "bridal makeup artistry experience",
+          "dedicated bridal styling team"
+        ]
+      },
+      {
+        "type": "testimonials",
+        "keywords": [
+          "client testimonials bridal makeup",
+          "happy brides testimonials",
+          "real wedding makeup stories",
+          "bridal beauty success stories",
+          "trusted bridal makeup feedback",
+          "client satisfaction reviews",
+          "bride experiences with Aurum",
+          "transformational bridal makeup reviews",
+          "premium service testimonials",
+          "real bride experiences"
+        ]
+      },
+      {
+        "type": "cta-band",
+        "keywords": [
+          "book your bridal consultation",
+          "secure your bridal date",
+          "easy booking for bridal services",
+          "inquire about bridal makeup",
+          "schedule your bridal trial",
+          "luxury bridal consultation booking",
+          "contact us for bridal inquiries",
+          "reserve your bridal makeup appointment",
+          "get in touch for bridal beauty",
+          "start your bridal journey today"
+        ]
+      },
+      {
+        "type": "footer",
+        "keywords": [
+          "contact Aurum Bridal Studio",
+          "navigate our bridal services",
+          "find us in Delhi",
+          "explore our bridal offerings",
+          "connect with our team",
+          "bridal makeup inquiries",
+          "easy access to service information",
+          "trustworthy bridal service navigation",
+          "reach out for bridal consultations",
+          "bridal makeup contact details"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "section_keyword_plan",
+      "attempt": 1
+    }
+  },
+  "rag_dir": "sandbox/unit_cli_html_generator/chroma_db",
+  "business_rag_dir": "sandbox/unit_cli_html_generator/chroma_business_playbooks",
+  "page_document": {
+    "meta": {
+      "title": "Aurum Bridal Studio - Luxury Bridal Makeup & Styling",
+      "description": "Experience the elegance of luxury bridal makeup and styling at Aurum Bridal Studio in Delhi. Personalized consultations for a flawless wedding look.",
+      "pageType": "service-business",
+      "themeVariant": "premium",
+      "slug": "home"
+    },
+    "brand": {
+      "tone": "elegant",
+      "primaryColor": "#F2D4D4",
+      "secondaryColor": "#FFFFFF",
+      "accentColor": "#D4AF37",
+      "fontHeading": "Playfair Display",
+      "fontBody": "Lato"
+    },
+    "assets": [],
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Book Your Consultation",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "sections": [
+      {
+        "id": "section-hero-001",
+        "type": "hero",
+        "variant": "background-image",
+        "visible": true,
+        "order": 0,
+        "layoutHint": "full-width with soft overlay for text",
+        "motionHint": "fade-up stagger with soft reveal",
+        "content": {
+          "eyebrow": "Transform Your Bridal Vision",
+          "heading": "Luxury Bridal Makeup & Styling in Delhi",
+          "subheading": "Unleash your beauty with our exclusive, high-touch services tailored for the modern bride.",
+          "supportingPoints": [
+            "Indulge in a bespoke bridal experience with personalized consultations that bring your unique style to life.",
+            "Our award-winning team specializes in creating stunning, polished looks that ensure you shine on your special day.",
+            "Relax in our luxurious studio, where every detail is designed to make your bridal journey unforgettable."
+          ],
+          "trustChips": [
+            "As featured in Vogue Weddings and Harper's Bazaar",
+            "Over 150 delighted brides with glowing testimonials",
+            "Recognized by the Bridal Beauty Awards for excellence in service"
+          ],
+          "buttons": [
+            {
+              "text": "Schedule Your Exclusive Consultation",
+              "actionId": "action-primary",
+              "style": "primary"
+            }
+          ],
+          "badge": "Delhi's Premier Luxury Bridal Makeup Studio",
+          "ctaNote": "Reserve your date today and let us craft your dream wedding look."
+        },
+        "style": {
+          "backgroundColor": "#F2D4D4",
+          "textColor": "#FFFFFF",
+          "padding": "80px 0",
+          "surface": "soft-gradient",
+          "emphasis": "high"
+        },
+        "_meta": {
+          "phase": "section_rewrite:hero",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-trust-bar-002",
+        "type": "trust-bar",
+        "variant": "simple",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "trustBadges": [
+            {
+              "image": "logo-vogue-weddings.png",
+              "alt": "Featured in Vogue Weddings"
+            },
+            {
+              "image": "award-winning-artist.png",
+              "alt": "Award-winning Artists"
+            },
+            {
+              "image": "100-happy-brides.png",
+              "alt": "100+ Happy Brides"
+            }
+          ],
+          "heading": "Trusted by Brides in Delhi",
+          "subheading": "Discover the unparalleled luxury of bridal makeup and styling that transforms your wedding vision into reality.",
+          "eyebrow": "Why Choose Aurum Bridal Studio?",
+          "badge": "Exclusive Luxury Experience",
+          "ctaNote": "Book Your Personalized Consultation Today!",
+          "supportingPoints": [
+            "Recognized as a top bridal studio in Delhi, with awards for excellence in luxury makeup artistry.",
+            "Featured in Vogue Weddings for our innovative and personalized bridal looks.",
+            "Over 100 brides have entrusted us with their special day, each leaving with unforgettable transformations."
+          ],
+          "trustChips": [
+            "Client Satisfaction Ratings: 4.9/5",
+            "Endorsements from Leading Wedding Planners"
+          ],
+          "items": [
+            "{'text': 'Expert Bridal Makeup Reviews', 'icon': 'star'}",
+            "{'text': 'Real Bride Experiences', 'icon': 'heart'}",
+            "{'text': 'Highly Rated Bridal Services', 'icon': 'thumbs-up'}"
+          ]
+        },
+        "style": {
+          "backgroundColor": "#FFFFFF",
+          "textColor": "#4A4A4A",
+          "padding": "20px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:trust-bar",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-gallery-003",
+        "type": "gallery",
+        "variant": "grid",
+        "visible": true,
+        "order": 2,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "images": [
+            {
+              "src": "bridal-makeup-1.jpg",
+              "alt": "Stunning Bridal Makeup Look"
+            },
+            {
+              "src": "bridal-makeup-2.jpg",
+              "alt": "Elegant Bridal Styling"
+            },
+            {
+              "src": "bridal-makeup-3.jpg",
+              "alt": "Before and After Transformation"
+            },
+            {
+              "src": "bridal-makeup-4.jpg",
+              "alt": "Classic Bridal Look with Soft Pastels"
+            },
+            {
+              "src": "bridal-makeup-5.jpg",
+              "alt": "Glamorous Evening Bridal Styling"
+            },
+            {
+              "src": "bridal-makeup-6.jpg",
+              "alt": "Bridal Party Makeup Coordination"
+            }
+          ],
+          "heading": "Discover Our Exquisite Bridal Transformations",
+          "subheading": "A curated gallery showcasing the artistry and personalized luxury of Aurum Bridal Studio.",
+          "eyebrow": "Our Signature Portfolio",
+          "badge": "As Featured in Bridal Magazine - [Link]",
+          "ctaNote": "Elevate your bridal beauty experience\u2014book a private consultation today!",
+          "supportingPoints": [
+            "Explore our portfolio of breathtaking bridal transformations, each tailored to reflect the unique vision of our brides.",
+            "Experience the magic of our before-and-after showcases, illustrating the artistry and precision behind every look.",
+            "View stunning real wedding examples that highlight our commitment to luxury and the latest bridal trends."
+          ],
+          "trustChips": [
+            "Over 500 Happy Brides",
+            "5-Star Ratings on WeddingWire",
+            "Expert Makeup Artists with 10+ Years Experience"
+          ],
+          "items": [
+            {
+              "title": "Timeless Elegance",
+              "description": "A classic bridal look enhanced with soft pastels, perfect for a romantic wedding."
+            },
+            {
+              "title": "Glamorous Transformation",
+              "description": "Dramatic evening styling designed for the bride who wants to dazzle on her special day."
+            },
+            {
+              "title": "Bridal Party Cohesion",
+              "description": "Expertly coordinated styles for the entire bridal party, ensuring a unified and beautiful appearance."
+            },
+            {
+              "title": "Radiant Beauty",
+              "description": "A fresh and luminous look ideal for summer weddings, capturing the essence of natural beauty."
+            },
+            {
+              "title": "Bridal Glamour",
+              "description": "Artistry that enhances your natural features, creating a look that feels both luxurious and uniquely you."
+            },
+            {
+              "title": "Stunning Transformations",
+              "description": "Witness the breathtaking before-and-after transformations that define our signature style."
+            }
+          ]
+        },
+        "style": {
+          "backgroundColor": "#FFFFFF",
+          "padding": "60px 0",
+          "textColor": "#111827",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:gallery",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-services-004",
+        "type": "services",
+        "variant": "image-cards",
+        "visible": true,
+        "order": 3,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "services": [
+            {
+              "title": "Bespoke Bridal Styling Packages",
+              "description": "Experience the artistry of our luxury bridal styling packages, tailored to enhance your unique beauty. Choose from an array of styles, including traditional elegance, contemporary chic, or exotic destination looks, all crafted to align with your vision.",
+              "image": "bridal-styling-packages.jpg"
+            },
+            {
+              "title": "Personalized Pre-Wedding Makeup Trials",
+              "description": "Discover your perfect bridal look with our personalized pre-wedding makeup trials. Our expert artists use premium products to ensure you radiate confidence and beauty on your special day.",
+              "image": "makeup-trial.jpg"
+            },
+            {
+              "title": "Elegant Bridal Party Makeup Services",
+              "description": "Make your entire bridal party shine with our customized makeup services. We work closely with each member to create looks that harmonize with your wedding theme, ensuring everyone feels beautiful.",
+              "image": "bridal-party-styling.jpg"
+            },
+            {
+              "title": "Luxury Destination Bridal Makeup",
+              "description": "Planning a destination wedding? Our specialized team provides high-quality bridal makeup solutions that travel with you, ensuring you look flawless in any setting, from beaches to castles.",
+              "image": "destination-bridal-makeup.jpg"
+            },
+            {
+              "title": "Stunning Special Occasion Makeup",
+              "description": "Whether it's an engagement celebration or a post-wedding reception, our special occasion makeup services deliver breathtaking looks for every memorable moment. Let us help you shine.",
+              "image": "special-occasion-makeup.jpg"
+            }
+          ],
+          "heading": "Elevate Your Bridal Beauty Experience",
+          "subheading": "Discover our exclusive luxury makeup and styling services tailored for the modern bride.",
+          "eyebrow": "Crafted for Your Unique Vision",
+          "badge": "Award-Winning Makeup Artists",
+          "ctaNote": "Don't wait! Secure your luxury bridal experience today and let us bring your dream look to life.",
+          "supportingPoints": [
+            "Utilizing high-quality, long-lasting bridal products.",
+            "In-depth consultations to capture your vision.",
+            "Expertise in the latest bridal trends and styles."
+          ],
+          "trustChips": [
+            "Featured in Vogue Weddings",
+            "5-Star Client Reviews",
+            "Certified Makeup Artists"
+          ],
+          "items": [
+            {
+              "title": "Bespoke Bridal Styling Packages",
+              "description": ""
+            },
+            {
+              "title": "Personalized Pre-Wedding Makeup Trials",
+              "description": ""
+            },
+            {
+              "title": "Elegant Bridal Party Makeup Services",
+              "description": ""
+            },
+            {
+              "title": "Luxury Destination Bridal Makeup",
+              "description": ""
+            },
+            {
+              "title": "Stunning Special Occasion Makeup",
+              "description": ""
+            }
+          ]
+        },
+        "style": {
+          "backgroundColor": "#F2D4D4",
+          "padding": "60px 0",
+          "textColor": "#111827",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:services",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-about-team-005",
+        "type": "about-team",
+        "variant": "story",
+        "visible": true,
+        "order": 4,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Discover the Artistry Behind Your Dream Bridal Look",
+          "body": "At Aurum Bridal Studio, we pride ourselves on delivering an unparalleled bridal beauty experience tailored to your unique vision. Our elite team of makeup artists and stylists, each with over a decade of experience, specializes in crafting exquisite, personalized bridal looks that enhance your natural beauty. From intricate hairstyles to flawless makeup, our artists are dedicated to ensuring you feel radiant and confident on your special day. With backgrounds in high-fashion and celebrity styling, we bring a wealth of expertise to every consultation, ensuring that your bridal look is not just beautiful, but a true reflection of you.",
+          "images": [
+            {
+              "src": "makeup-artist-1.jpg",
+              "alt": "Expert Makeup Artist at Aurum Bridal Studio"
+            },
+            {
+              "src": "makeup-artist-2.jpg",
+              "alt": "Professional Hair Stylist at Aurum Bridal Studio"
+            },
+            {
+              "src": "makeup-artist-3.jpg",
+              "alt": "Stunning Bridal Makeup Transformation"
+            }
+          ],
+          "subheading": "Your Journey to Timeless Beauty Begins Here",
+          "eyebrow": "Crafting Unforgettable Moments",
+          "badge": "Award-Winning Bridal Makeup Artists",
+          "ctaNote": "Elevate your bridal experience\u2014schedule your exclusive consultation now!",
+          "supportingPoints": [
+            "Personalized consultations that delve into your unique style and wedding vision.",
+            "A specialized team with expertise in the latest bridal trends and timeless classics.",
+            "Commitment to creating a bespoke experience that ensures every bride feels uniquely beautiful.",
+            "Our artists have trained at prestigious beauty academies and possess extensive experience in high-profile weddings."
+          ],
+          "trustChips": [
+            "Featured in Vogue Weddings",
+            "5-Star Rated on WeddingWire",
+            "Trusted by Hundreds of Brides"
+          ],
+          "items": []
+        },
+        "style": {
+          "backgroundColor": "#FFFFFF",
+          "padding": "60px 0",
+          "textColor": "#111827",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:about-team",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-testimonials-006",
+        "type": "testimonials",
+        "variant": "single-highlight",
+        "visible": true,
+        "order": 5,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "testimonial": {
+            "quote": "Aurum Bridal Studio made my wedding day truly magical! I felt like a stunning princess, and my makeup stayed flawless from morning until night. The team captured my vision perfectly and their attention to detail was unmatched. I wholeheartedly recommend them to any bride!",
+            "author": "Priya Sharma",
+            "image": "testimonial-priya.jpg"
+          },
+          "heading": "Elevate Your Wedding Experience",
+          "subheading": "Experience the luxury of personalized bridal makeup that creates unforgettable memories.",
+          "eyebrow": "What Our Brides Say",
+          "badge": "As Featured In: Bridal Beauty Magazine",
+          "ctaNote": "Secure your exclusive consultation today\u2014transform your bridal vision into reality!",
+          "supportingPoints": [
+            "Over 95% of our brides describe their experience as extraordinary.",
+            "Tailored consultations ensure your unique beauty shines through.",
+            "Our curated portfolio showcases breathtaking bridal transformations that resonate with real wedding stories."
+          ],
+          "trustChips": [
+            "5-Star Rating on WeddingWire",
+            "Featured in Top Bridal Magazines",
+            "Trusted by Hundreds of Delhi Brides"
+          ],
+          "items": []
+        },
+        "style": {
+          "backgroundColor": "#F2D4D4",
+          "padding": "40px 0",
+          "textColor": "#111827",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:testimonials",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-cta-band-007",
+        "type": "cta-band",
+        "variant": "dual",
+        "visible": true,
+        "order": 6,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "ctaPrimary": {
+            "text": "Schedule Your Exclusive Consultation",
+            "actionId": "action-primary"
+          },
+          "ctaSecondary": {
+            "text": "View Our Stunning Transformations",
+            "actionId": "action-portfolio"
+          },
+          "heading": "Begin Your Luxurious Bridal Experience",
+          "subheading": "Indulge in personalized bridal makeup and styling that reflects your unique beauty, right here in Delhi.",
+          "eyebrow": "Your Perfect Look Awaits",
+          "badge": "Award-Winning Bridal Makeup Studio",
+          "ctaNote": "Reserve your date with us and let our experts design the flawless look you desire for your wedding day.",
+          "supportingPoints": [
+            "Enjoy exclusive one-on-one consultations that delve into your personal style and vision.",
+            "We use only the finest luxury products to ensure a stunning, long-lasting finish.",
+            "Our flexible scheduling accommodates your wedding timeline, ensuring peace of mind."
+          ],
+          "trustChips": [
+            "Featured in Vogue Weddings",
+            "5-Star Client Reviews",
+            "Trusted by Hundreds of Brides"
+          ],
+          "buttons": [
+            {
+              "text": "Schedule Your Exclusive Consultation",
+              "actionId": "action-primary",
+              "style": "primary"
+            },
+            {
+              "text": "View Our Stunning Transformations",
+              "actionId": "action-primary",
+              "style": "secondary"
+            }
+          ]
+        },
+        "style": {
+          "backgroundColor": "#D4AF37",
+          "textColor": "#FFFFFF",
+          "padding": "60px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:cta-band",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-hero-001",
+        "type": "footer",
+        "variant": "multi-column",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "headline": "Transform Your Bridal Vision into Reality with Aurum Bridal Studio",
+          "subheading": "Indulge in a bespoke luxury experience for your wedding day, right here in Delhi.",
+          "cta": {
+            "label": "Schedule Your Personal Consultation",
+            "url": "#contact",
+            "style": "primary"
+          },
+          "supportingPoints": [
+            "Tailored consultations to curate your perfect bridal look, ensuring every detail reflects your unique style.",
+            "Skilled artists with a passion for creating breathtaking bridal transformations that leave a lasting impression.",
+            "Exclusive access to high-end products and techniques, delivering an unparalleled luxury experience."
+          ],
+          "trustSupport": {
+            "badge": "As Featured In: Bridal Magazine",
+            "description": "Celebrated for our commitment to excellence in bridal beauty, with glowing testimonials from delighted brides."
+          },
+          "heading": "",
+          "eyebrow": "",
+          "badge": "",
+          "ctaNote": "",
+          "trustChips": [
+            "{'label': 'Client Testimonial', 'description': '\"Aurum Bridal Studio made my wedding day unforgettable! The makeup was flawless, and the service was exceptional.\" - Priya S.'}",
+            "{'label': 'Portfolio Highlight', 'description': 'Explore our gallery of stunning bridal transformations that showcase our artistry and attention to detail.'}"
+          ],
+          "companyName": "Aurum Bridal Studio",
+          "tagline": "Luxury bridal makeup and styling services",
+          "columns": [
+            {
+              "title": "Our Expertise",
+              "links": []
+            },
+            {
+              "title": "Client Love",
+              "links": []
+            },
+            {
+              "title": "Book Now",
+              "links": []
+            }
+          ],
+          "copyrightYear": "2023"
+        },
+        "style": {
+          "backgroundImage": "url('/path/to/hero-image.jpg')",
+          "backgroundSize": "cover",
+          "textColor": "#FFFFFF",
+          "overlayColor": "rgba(0, 0, 0, 0.5)",
+          "padding": "80px 20px",
+          "textAlign": "center",
+          "backgroundColor": "#ffffff",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:footer",
+          "attempt": 1
+        }
+      }
+    ],
+    "_meta": {
+      "phase": "page_document",
+      "attempt": 1
+    }
+  }
+}

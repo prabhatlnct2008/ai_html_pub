@@ -1,0 +1,986 @@
+{
+  "model": "gpt-4o-mini",
+  "renderer": "tailwind",
+  "business_context": {
+    "businessName": "The Premium Salon Guys",
+    "businessDescription": "A new premium salon near Saket offering modern hair, grooming, and beauty services with a polished in-studio experience.",
+    "businessType": "service-business",
+    "targetAudience": "Urban professionals, style-conscious women and men, and nearby residents looking for a premium salon experience",
+    "primaryCta": "Book Your Appointment",
+    "tone": "elegant",
+    "pageType": "local-business",
+    "mainOffer": "Comprehensive hair, grooming, and beauty services",
+    "location": "14/311, Panchsheel Vihar, near Saket, New Delhi",
+    "differentiators": [
+      "Premium in-studio experience",
+      "Modern and trendy services"
+    ],
+    "trustDrivers": [
+      "Experienced stylists",
+      "High-quality products used"
+    ],
+    "customerMotivations": [
+      "Desire for a premium grooming experience",
+      "Looking for the latest beauty trends"
+    ],
+    "likelyObjections": [
+      "Concerns about pricing",
+      "Skepticism about service quality"
+    ],
+    "visualStyleHints": [
+      "Sophisticated color palette",
+      "Clean and modern design"
+    ],
+    "_meta": {
+      "phase": "infer_context",
+      "attempt": 1
+    }
+  },
+  "site_plan": {
+    "siteGoal": "Drive online bookings for premium hair, grooming, and beauty services.",
+    "targetAudience": "Urban professionals, style-conscious women and men, and nearby residents looking for a premium salon experience.",
+    "pages": [
+      {
+        "slug": "home",
+        "title": "The Premium Salon Guys",
+        "purpose": "To provide a comprehensive overview of services, build trust, and encourage bookings.",
+        "pageType": "service-business",
+        "isHomepage": true,
+        "suggestedSections": [
+          "hero",
+          "features",
+          "benefits",
+          "testimonials",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "about-team",
+        "title": "Meet Our Expert Stylists",
+        "purpose": "To build trust by showcasing the experience and qualifications of the stylists.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "trust-bar",
+          "about-team",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "services",
+        "title": "Our Premium Services",
+        "purpose": "To detail the comprehensive hair, grooming, and beauty services offered.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "services",
+          "benefits",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "title": "Client Testimonials",
+        "purpose": "To showcase customer satisfaction and build trust through positive reviews.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "testimonials",
+          "results",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "pricing",
+        "title": "Transparent Pricing",
+        "purpose": "To provide clear pricing information to address potential concerns about cost.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "pricing",
+          "faq",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "faq",
+        "title": "Frequently Asked Questions",
+        "purpose": "To address common objections and concerns to reduce buyer hesitation.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "faq",
+          "cta-band",
+          "footer"
+        ]
+      },
+      {
+        "slug": "contact",
+        "title": "Get in Touch",
+        "purpose": "To provide a way for potential clients to reach out and book appointments.",
+        "pageType": "service-business",
+        "isHomepage": false,
+        "suggestedSections": [
+          "hero",
+          "contact",
+          "cta-band",
+          "footer"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "site_plan",
+      "attempt": 1
+    }
+  },
+  "keyword_strategy": {
+    "siteIntent": "Drive online bookings for premium hair, grooming, and beauty services in Saket, New Delhi.",
+    "pageKeywordStrategy": [
+      {
+        "slug": "home",
+        "primaryIntent": "Overview of premium salon services and encourage bookings.",
+        "coreKeywords": [
+          "premium salon Saket",
+          "best hair salon near me",
+          "grooming services New Delhi"
+        ],
+        "trustKeywords": [
+          "experienced stylists Saket",
+          "high-quality beauty products",
+          "trusted salon reviews"
+        ],
+        "supportingKeywords": [
+          "modern hair services",
+          "beauty salon appointments",
+          "luxury salon experience"
+        ]
+      },
+      {
+        "slug": "about-team",
+        "primaryIntent": "Showcase the expertise and qualifications of the stylists.",
+        "coreKeywords": [
+          "expert stylists Saket",
+          "professional hair stylists New Delhi"
+        ],
+        "trustKeywords": [
+          "stylists with experience",
+          "qualified beauty professionals"
+        ],
+        "supportingKeywords": [
+          "meet our team",
+          "stylists portfolio",
+          "hair experts near me"
+        ]
+      },
+      {
+        "slug": "services",
+        "primaryIntent": "Detail comprehensive hair, grooming, and beauty services offered.",
+        "coreKeywords": [
+          "haircuts and styling Saket",
+          "beauty services New Delhi",
+          "premium grooming services"
+        ],
+        "trustKeywords": [
+          "high-quality salon services",
+          "trusted beauty treatments"
+        ],
+        "supportingKeywords": [
+          "hair coloring services",
+          "facials and skincare",
+          "bridal makeup packages"
+        ]
+      },
+      {
+        "slug": "testimonials",
+        "primaryIntent": "Showcase customer satisfaction and build trust through positive reviews.",
+        "coreKeywords": [
+          "client testimonials Saket",
+          "salon reviews New Delhi"
+        ],
+        "trustKeywords": [
+          "customer satisfaction stories",
+          "trusted salon feedback"
+        ],
+        "supportingKeywords": [
+          "happy clients",
+          "salon success stories",
+          "premium service reviews"
+        ]
+      },
+      {
+        "slug": "pricing",
+        "primaryIntent": "Provide clear pricing information to address potential concerns about cost.",
+        "coreKeywords": [
+          "salon pricing Saket",
+          "affordable beauty services New Delhi"
+        ],
+        "trustKeywords": [
+          "transparent pricing policy",
+          "no hidden costs salon"
+        ],
+        "supportingKeywords": [
+          "pricing details",
+          "value for money salon",
+          "service packages pricing"
+        ]
+      },
+      {
+        "slug": "faq",
+        "primaryIntent": "Address common objections and concerns to reduce buyer hesitation.",
+        "coreKeywords": [
+          "salon frequently asked questions",
+          "beauty service queries"
+        ],
+        "trustKeywords": [
+          "common concerns about salons",
+          "trusted salon FAQs"
+        ],
+        "supportingKeywords": [
+          "how to book an appointment",
+          "service quality questions",
+          "hygiene standards salon"
+        ]
+      },
+      {
+        "slug": "contact",
+        "primaryIntent": "Provide a way for potential clients to reach out and book appointments.",
+        "coreKeywords": [
+          "contact premium salon Saket",
+          "book salon appointment New Delhi"
+        ],
+        "trustKeywords": [
+          "easy booking process",
+          "customer support salon"
+        ],
+        "supportingKeywords": [
+          "get in touch with us",
+          "schedule your appointment",
+          "salon inquiries"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "keyword_strategy",
+      "attempt": 1
+    }
+  },
+  "shared_settings": {
+    "brand": {
+      "tone": "elegant",
+      "primaryColor": "#002147",
+      "secondaryColor": "#F0F0F0",
+      "accentColor": "#FFD700",
+      "fontHeading": "Montserrat",
+      "fontBody": "Open Sans"
+    },
+    "themeVariant": "premium",
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Book Your Appointment",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "header": {
+      "siteName": "The Premium Salon Guys",
+      "showNav": true
+    },
+    "footer": {
+      "companyName": "The Premium Salon Guys",
+      "tagline": "Your destination for modern beauty and grooming.",
+      "columns": [
+        {
+          "title": "Quick Links",
+          "links": [
+            {
+              "text": "Home",
+              "href": "#home"
+            },
+            {
+              "text": "Meet Our Expert Stylists",
+              "href": "#about-team"
+            },
+            {
+              "text": "Our Premium Services",
+              "href": "#services"
+            },
+            {
+              "text": "Client Testimonials",
+              "href": "#testimonials"
+            },
+            {
+              "text": "Transparent Pricing",
+              "href": "#pricing"
+            },
+            {
+              "text": "Frequently Asked Questions",
+              "href": "#faq"
+            },
+            {
+              "text": "Get in Touch",
+              "href": "#contact"
+            }
+          ]
+        }
+      ],
+      "copyrightYear": "2026"
+    },
+    "navigation": [
+      {
+        "label": "Home",
+        "href": "#home"
+      },
+      {
+        "label": "Meet Our Expert Stylists",
+        "href": "#about-team"
+      },
+      {
+        "label": "Our Premium Services",
+        "href": "#services"
+      },
+      {
+        "label": "Client Testimonials",
+        "href": "#testimonials"
+      },
+      {
+        "label": "Transparent Pricing",
+        "href": "#pricing"
+      },
+      {
+        "label": "Frequently Asked Questions",
+        "href": "#faq"
+      },
+      {
+        "label": "Get in Touch",
+        "href": "#contact"
+      }
+    ],
+    "_meta": {
+      "phase": "shared_settings",
+      "attempt": 1
+    }
+  },
+  "design_brief": {
+    "heroStrategy": {
+      "layout": "Full-width hero section featuring a high-resolution image of a stylish salon interior or a stylist providing a service, creating an immediate sense of luxury and professionalism.",
+      "goal": "Instantly communicate the premium nature of services and motivate users to book an appointment within seconds of landing on the page.",
+      "headlineStyle": "Bold, modern sans serif that reads 'Elevate Your Look with Premium Grooming & Beauty Services' to immediately convey the unique value proposition.",
+      "supportingCopyStyle": "Engaging subheading like 'Expert Stylists. Latest Trends. Unmatched Experience.' positioned directly below the headline to reinforce the offering.",
+      "ctaApproach": "Make the primary CTA obvious and low-friction",
+      "trustSupport": "Incorporate a trust bar just below the hero with icons representing high-quality products, years of stylist experience, and customer satisfaction ratings."
+    },
+    "navigationStrategy": {
+      "style": "Sleek, modern, and sticky navigation that remains visible as users scroll, ensuring easy access to key sections without distraction.",
+      "links": [
+        "Home",
+        "Services",
+        "About Our Team",
+        "Testimonials",
+        "Pricing",
+        "Contact"
+      ],
+      "ctaPlacement": "The primary CTA 'Book Your Appointment' should be placed in the top right corner of the navigation bar, ensuring it is always accessible.",
+      "notes": "Navigation should be straightforward, with hover effects that highlight links to enhance usability and encourage exploration."
+    },
+    "visualSystem": {
+      "designIntent": "Sophisticated and polished, emphasizing a premium salon experience with a modern touch.",
+      "primaryColorRole": "Rich navy or charcoal used for backgrounds and main text to establish a sense of luxury and professionalism.",
+      "secondaryColorRole": "Soft white for text and backgrounds to create contrast and ensure readability.",
+      "accentColorRole": "Bright gold for all CTAs and highlights, ensuring they draw attention without overwhelming the user.",
+      "contrastStrategy": "Balance rich colors with ample white space to maintain a clean look, ensuring elements stand out and are easy to navigate.",
+      "surfaceStyle": "Use subtle textures or gradients in backgrounds to add depth, with card elements having slight shadows to create a layered effect."
+    },
+    "typographyStrategy": {
+      "headingApproach": "Bold, modern sans serif for headings to ensure prominence and easy readability.",
+      "bodyApproach": "Clean, straightforward sans serif for body text to promote clarity and facilitate quick comprehension.",
+      "hierarchyNotes": "Utilize size and weight variations effectively; headings should be significantly larger than body text with clear distinctions to guide scanning.",
+      "fontPairingDirection": "Pair a bold sans serif for headings with a clean sans serif for body text to maintain a cohesive and elegant feel throughout."
+    },
+    "sectionFlowStrategy": {
+      "openingExperience": "The hero section should capture attention immediately, followed by a concise overview of services that highlights premium offerings and unique selling points.",
+      "midPageRhythm": "Pace sections with alternating short paragraphs and visuals to maintain engagement, leading into testimonials that build trust and credibility.",
+      "closingExperience": "End with a strong CTA section that reiterates benefits and encourages immediate booking, supported by trust signals like customer satisfaction ratings.",
+      "densityPattern": "Alternate between denser sections (like testimonials) and lighter sections (like service highlights) to create a dynamic and engaging flow."
+    },
+    "conversionStrategy": {
+      "primaryFrictionToReduce": "Concerns about service quality and pricing, which may deter potential clients.",
+      "howDesignSupportsTrust": "Incorporate customer testimonials and trust signals throughout the page, especially near CTAs, to reassure users of service quality.",
+      "howDesignSupportsAction": "Ensure CTAs are visually distinct with clear action-oriented language, strategically placed after trust-building content to facilitate clicks.",
+      "whatMustNotHappen": [
+        "Overwhelm users with excessive information that could cause decision fatigue.",
+        "Neglect to display visible trust signals that could lead to skepticism regarding service quality."
+      ]
+    },
+    "implementationNotes": [
+      "Ensure mobile responsiveness with touch-friendly CTAs and navigation elements to cater to on-the-go users.",
+      "Optimize all images for fast loading to maintain user engagement and reduce bounce rates, ensuring a smooth browsing experience."
+    ],
+    "_meta": {
+      "phase": "design_rewrite",
+      "attempt": 1
+    },
+    "_review": {
+      "pass": false,
+      "score": 4,
+      "summary": "The design brief lacks specificity and clarity in several key areas, which could lead to a generic and ineffective homepage.",
+      "issues": [
+        {
+          "severity": "high",
+          "type": "hero",
+          "message": "The hero section lacks a strong, clear direction that emphasizes the unique value proposition and immediate booking action.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "conversion",
+          "message": "While trust signals are mentioned, their placement and effectiveness in reducing buyer hesitation are not clearly defined.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "sectionFlow",
+          "message": "The pacing of sections does not adequately align with the buyer journey, potentially leading to disengagement.",
+          "field": ""
+        },
+        {
+          "severity": "medium",
+          "type": "specificity",
+          "message": "Some recommendations are vague and lack concrete direction for implementation, which could hinder effective rendering.",
+          "field": ""
+        }
+      ],
+      "requiredFixes": [
+        "Enhance the hero section with a more compelling headline and clear call-to-action that directly addresses the target audience's motivations.",
+        "Provide more detailed guidance on the placement and design of trust signals to effectively alleviate customer objections."
+      ],
+      "strengths": [
+        "The brief outlines a sophisticated visual style and a clear target audience, which are essential for creating a premium salon experience."
+      ],
+      "_meta": {
+        "phase": "design_review",
+        "attempt": 1
+      }
+    }
+  },
+  "page_plan": {
+    "slug": "home",
+    "title": "The Premium Salon Guys",
+    "pageType": "service-business",
+    "sections": [
+      {
+        "type": "hero",
+        "purpose": "Lead with offer and CTA",
+        "variant": "background-image"
+      },
+      {
+        "type": "trust-bar",
+        "purpose": "Build credibility with trust signals",
+        "variant": "simple"
+      },
+      {
+        "type": "benefits",
+        "purpose": "Highlight advantages of choosing premium services",
+        "variant": "icon-list"
+      },
+      {
+        "type": "testimonials",
+        "purpose": "Provide social proof through client reviews",
+        "variant": "cards"
+      },
+      {
+        "type": "cta-band",
+        "purpose": "Encourage immediate booking with a strong call to action",
+        "variant": "centered"
+      },
+      {
+        "type": "footer",
+        "purpose": "Provide additional navigation and contact information",
+        "variant": "multi-column"
+      }
+    ],
+    "_meta": {
+      "phase": "page_plan",
+      "attempt": 1
+    }
+  },
+  "section_keyword_plan": {
+    "sections": [
+      {
+        "type": "hero",
+        "keywords": [
+          "premium salon experience",
+          "luxury grooming services",
+          "modern beauty treatments",
+          "Saket hair salon",
+          "expert stylists New Delhi",
+          "book salon appointment online",
+          "elevate your look",
+          "high-end beauty services",
+          "exclusive salon offers",
+          "stylish salon interior"
+        ]
+      },
+      {
+        "type": "trust-bar",
+        "keywords": [
+          "trusted salon reviews",
+          "high-quality beauty products",
+          "experienced stylists",
+          "customer satisfaction ratings",
+          "certified salon professionals",
+          "premium service guarantees",
+          "top-rated salon in Saket",
+          "client satisfaction testimonials",
+          "trusted beauty brands",
+          "salon quality assurance"
+        ]
+      },
+      {
+        "type": "benefits",
+        "keywords": [
+          "advantages of premium services",
+          "why choose us",
+          "personalized beauty consultations",
+          "latest hair trends",
+          "exclusive grooming packages",
+          "luxurious salon atmosphere",
+          "tailored beauty solutions",
+          "expert advice on styling",
+          "time-saving beauty services",
+          "enhanced self-confidence"
+        ]
+      },
+      {
+        "type": "testimonials",
+        "keywords": [
+          "client success stories",
+          "happy salon clients",
+          "customer feedback Saket",
+          "real salon experiences",
+          "trusted salon testimonials",
+          "premium service reviews",
+          "satisfied customers New Delhi",
+          "client satisfaction stories",
+          "before and after salon photos",
+          "positive salon experiences"
+        ]
+      },
+      {
+        "type": "cta-band",
+        "keywords": [
+          "schedule your appointment now",
+          "book your premium service",
+          "easy online booking",
+          "secure your spot today",
+          "luxury salon appointments",
+          "exclusive offers for bookings",
+          "immediate appointment booking",
+          "hassle-free salon reservations",
+          "contact us for appointments",
+          "get started with premium services"
+        ]
+      },
+      {
+        "type": "footer",
+        "keywords": [
+          "contact information Saket salon",
+          "follow us on social media",
+          "salon location details",
+          "customer support contact",
+          "explore our services",
+          "get in touch with us",
+          "frequently asked questions",
+          "salon hours of operation",
+          "newsletter sign-up",
+          "stay updated with promotions"
+        ]
+      }
+    ],
+    "_meta": {
+      "phase": "section_keyword_plan",
+      "attempt": 1
+    }
+  },
+  "rag_dir": "sandbox/unit_cli_html_generator/chroma_db",
+  "business_rag_dir": "sandbox/unit_cli_html_generator/chroma_business_playbooks",
+  "page_document": {
+    "meta": {
+      "title": "The Premium Salon Guys",
+      "description": "Experience modern hair, grooming, and beauty services at The Premium Salon Guys, located near Saket, New Delhi. Elevate your look with our expert stylists and the latest trends.",
+      "pageType": "service-business",
+      "themeVariant": "premium",
+      "slug": "home"
+    },
+    "brand": {
+      "tone": "elegant",
+      "primaryColor": "#002147",
+      "secondaryColor": "#F0F0F0",
+      "accentColor": "#FFD700",
+      "fontHeading": "Montserrat",
+      "fontBody": "Open Sans"
+    },
+    "assets": [],
+    "actions": [
+      {
+        "id": "action-primary",
+        "label": "Book Your Appointment",
+        "type": "url",
+        "value": "#contact",
+        "style": "primary"
+      }
+    ],
+    "sections": [
+      {
+        "id": "section-hero-001",
+        "type": "hero",
+        "variant": "background-image",
+        "visible": true,
+        "order": 0,
+        "layoutHint": "full-width",
+        "motionHint": "fade-up",
+        "content": {
+          "eyebrow": "Discover Elegance",
+          "heading": "Elevate Your Look with Premium Grooming & Beauty Services",
+          "subheading": "Expert Stylists. Latest Trends. Unmatched Experience.",
+          "supportingPoints": [
+            "At The Premium Salon Guys, we redefine luxury with personalized grooming and beauty services that cater specifically to the discerning tastes of urban professionals.",
+            "Conveniently located at 14/311, Panchsheel Vihar, near Saket, New Delhi, we offer a serene escape where style meets sophistication for all your grooming needs.",
+            "Our skilled stylists leverage cutting-edge techniques and premium products to ensure you leave our salon not just looking good, but feeling revitalized and confident."
+          ],
+          "trustChips": [
+            "Expert Stylists with over a decade of experience in high-end salons",
+            "Only the finest, high-quality products used for a flawless finish",
+            "Customer Satisfaction Ratings: 4.9/5 from our loyal clientele, reflecting our commitment to excellence"
+          ],
+          "buttons": [
+            {
+              "text": "Book Your Appointment",
+              "actionId": "action-primary",
+              "style": "primary"
+            }
+          ],
+          "badge": "",
+          "ctaNote": "Exclusive offers await! Secure your spot today and indulge in the premium experience you deserve!"
+        },
+        "style": {
+          "backgroundColor": "#002147",
+          "textColor": "#ffffff",
+          "padding": "100px 0",
+          "surface": "soft-gradient",
+          "emphasis": "high"
+        },
+        "_meta": {
+          "phase": "section_rewrite:hero",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-trust-bar-001",
+        "type": "trust-bar",
+        "variant": "simple",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "trustSignals": [
+            "Over 1,000 Satisfied Clients",
+            "5-Star Ratings on Google and Yelp",
+            "Exclusive Use of Luxury Brands"
+          ],
+          "heading": "Why The Premium Salon Guys Stands Out",
+          "subheading": "Elevate Your Beauty Experience with Our Expert Services",
+          "eyebrow": "Unmatched Expertise and Quality",
+          "badge": "Best Salon Experience in Saket",
+          "ctaNote": "Experience the difference\u2014book your appointment today!",
+          "supportingPoints": [
+            "Our skilled stylists bring years of expertise, ensuring personalized beauty services that reflect the latest trends.",
+            "We pride ourselves on using only premium products from renowned brands, guaranteeing exceptional results.",
+            "With our transparent pricing and commitment to excellence, you can enjoy luxury services without hidden surprises."
+          ],
+          "trustChips": [
+            "Certified Salon Experts",
+            "Client Success Stories",
+            "Commitment to Quality Assurance"
+          ],
+          "items": [
+            "{'title': 'Expert Stylists', 'description': 'Our team of certified professionals is trained in cutting-edge techniques to provide you with the latest styles.', 'icon': '\ud83d\udc69\\u200d\ud83c\udfa8'}",
+            "{'title': 'Luxury Products', 'description': 'We use only the finest salon products to ensure your hair and skin receive the utmost care and attention.', 'icon': '\ud83d\udc8e'}",
+            "{'title': 'Transparent Pricing', 'description': 'Enjoy clarity with our straightforward pricing model\u2014no hidden fees, just premium service guarantees.', 'icon': '\ud83d\udcb0'}"
+          ]
+        },
+        "style": {
+          "backgroundColor": "#F0F0F0",
+          "textColor": "#002147",
+          "padding": "20px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:trust-bar",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-benefits-001",
+        "type": "benefits",
+        "variant": "icon-list",
+        "visible": true,
+        "order": 2,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Why The Premium Salon Guys Stands Out",
+          "points": [
+            {
+              "icon": "\ud83d\udc87\u200d\u2640\ufe0f",
+              "text": "Indulge in personalized hair and grooming services, including precision cuts, vibrant color treatments, and bespoke facial care tailored to your individual style."
+            },
+            {
+              "icon": "\ud83c\udf1f",
+              "text": "Stay ahead of the curve with our exclusive access to the latest trends in hair and beauty, ensuring you always look your best for any occasion."
+            },
+            {
+              "icon": "\ud83e\uddd6\u200d\u2642\ufe0f",
+              "text": "Receive expert styling advice from our seasoned professionals who are committed to enhancing your confidence and showcasing your unique features."
+            },
+            {
+              "icon": "\ud83d\udecb\ufe0f",
+              "text": "Relax in our luxurious, modern salon space designed to provide a serene escape, making every appointment a rejuvenating retreat."
+            },
+            {
+              "icon": "\u23f0",
+              "text": "Enjoy efficient beauty services that seamlessly fit into your busy schedule, without ever compromising on quality or results."
+            }
+          ],
+          "subheading": "Unlock a New Level of Beauty and Confidence",
+          "eyebrow": "Transform Your Look with Premium Care",
+          "badge": "",
+          "ctaNote": "Don\u2019t wait to elevate your style! Schedule your appointment now and experience the difference!",
+          "supportingPoints": [
+            "Our dedicated consultations ensure you receive personalized recommendations that truly meet your needs.",
+            "We pride ourselves on using only top-tier products for exceptional, lasting results."
+          ],
+          "trustChips": [
+            "Skilled Stylists",
+            "Premium Products",
+            "Satisfaction Guaranteed"
+          ],
+          "items": [
+            {
+              "title": "Exclusive Membership Benefits",
+              "description": "Join our loyalty program for special discounts, early access to new services, and exclusive events."
+            },
+            {
+              "title": "State-of-the-Art Technology",
+              "description": "Experience cutting-edge beauty treatments utilizing the latest technology for superior results."
+            }
+          ]
+        },
+        "style": {
+          "backgroundColor": "#F0F0F0",
+          "textColor": "#002147",
+          "padding": "60px 20px",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:benefits",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-testimonials-001",
+        "type": "testimonials",
+        "variant": "cards",
+        "visible": true,
+        "order": 3,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "What Our Clients Are Raving About",
+          "testimonials": [
+            {
+              "quote": "I had an incredible transformation! The stylist perfectly captured my vision, and I left feeling rejuvenated and confident.",
+              "author": "Aarav Sharma"
+            },
+            {
+              "quote": "The atmosphere is chic and inviting, with impeccable service. I wholeheartedly recommend The Premium Salon Guys for a lavish experience in Saket!",
+              "author": "Meera Kapoor"
+            },
+            {
+              "quote": "The high-quality products they use have made a noticeable difference in my hair's health. Their expertise in current trends is remarkable.",
+              "author": "Sanjay Verma"
+            },
+            {
+              "quote": "Initially, I hesitated due to pricing, but the exceptional quality of service and stunning results made it worth every rupee. It truly is a premium experience!",
+              "author": "Priya Singh"
+            },
+            {
+              "quote": "From the moment I entered, I felt truly pampered. The meticulous attention to detail and stylist expertise is unparalleled. I can't wait to return!",
+              "author": "Rahul Mehta"
+            }
+          ],
+          "subheading": "Discover Why Our Clients Choose Us",
+          "eyebrow": "Authentic Experiences from Our Valued Clients",
+          "badge": "Real Client Testimonials from The Premium Salon Guys",
+          "ctaNote": "Experience the luxury and quality that our clients rave about\u2014book your appointment today!",
+          "supportingPoints": [],
+          "trustChips": [],
+          "items": []
+        },
+        "style": {
+          "backgroundColor": "#F0F0F0",
+          "textColor": "#002147",
+          "padding": "60px 20px",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:testimonials",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-cta-band-001",
+        "type": "cta-band",
+        "variant": "centered",
+        "visible": true,
+        "order": 4,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "heading": "Elevate Your Style at The Premium Salon Guys",
+          "subheading": "Indulge in a luxurious salon experience tailored just for you.",
+          "button": {
+            "text": "Schedule Your Exclusive Consultation",
+            "actionId": "action-primary",
+            "style": "primary"
+          },
+          "eyebrow": "Transformative Beauty Awaits You",
+          "badge": "Limited Offer: Enjoy 20% Off Your First Visit",
+          "ctaNote": "Take advantage of our exclusive deals available for appointments booked this week!",
+          "supportingPoints": [
+            "Receive a personalized consultation with our seasoned stylists who understand your unique style needs.",
+            "Experience seamless online booking for a hassle-free appointment scheduling.",
+            "Join us for premier grooming and beauty treatments designed to enhance your natural beauty."
+          ],
+          "trustChips": [
+            "Stylists with Over a Decade of Expertise in Trendy Styles",
+            "Premium Products That Deliver Exceptional Results",
+            "95% Customer Satisfaction Rating from Our Valued Clients"
+          ],
+          "buttons": [
+            {
+              "text": "Book Your Appointment",
+              "actionId": "action-primary",
+              "style": "primary"
+            }
+          ]
+        },
+        "style": {
+          "backgroundColor": "#001f3f",
+          "textColor": "#ffffff",
+          "padding": "80px 20px",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:cta-band",
+          "attempt": 1
+        }
+      },
+      {
+        "id": "section-hero-001",
+        "type": "footer",
+        "variant": "multi-column",
+        "visible": true,
+        "order": 1,
+        "layoutHint": "",
+        "motionHint": "",
+        "content": {
+          "headline": "Transform Your Style with The Premium Salon Guys",
+          "subheading": "Experience Modern Grooming and Beauty Like Never Before in Saket.",
+          "cta": {
+            "text": "Schedule Your Exclusive Appointment Today",
+            "url": "#contact",
+            "style": "primary"
+          },
+          "supportingPoints": [
+            "Discover our wide range of premium hair, grooming, and beauty services tailored for the modern professional.",
+            "Enjoy a sophisticated in-studio experience designed to enhance your unique style and confidence.",
+            "Our expert stylists utilize only the finest products to deliver exceptional results that exceed your expectations."
+          ],
+          "trustSupport": {
+            "icons": [
+              {
+                "src": "path/to/quality-products-icon.png",
+                "alt": "High-quality products"
+              },
+              {
+                "src": "path/to/experience-icon.png",
+                "alt": "Years of stylist experience"
+              },
+              {
+                "src": "path/to/satisfaction-rating-icon.png",
+                "alt": "Customer satisfaction ratings"
+              }
+            ]
+          },
+          "heading": "",
+          "eyebrow": "",
+          "badge": "",
+          "ctaNote": "",
+          "trustChips": [],
+          "companyName": "The Premium Salon Guys",
+          "tagline": "Unleashing Your True Potential with Every Service",
+          "columns": [
+            {
+              "title": "Comprehensive Services",
+              "links": []
+            },
+            {
+              "title": "Expert Stylists",
+              "links": []
+            },
+            {
+              "title": "Luxurious Experience",
+              "links": []
+            }
+          ],
+          "copyrightYear": "2026"
+        },
+        "style": {
+          "backgroundImage": "url('path/to/salon-interior.jpg')",
+          "backgroundSize": "cover",
+          "color": "#F0F0F0",
+          "backgroundColor": "#ffffff",
+          "textColor": "#111827",
+          "padding": "72px 0",
+          "surface": "solid",
+          "emphasis": "medium"
+        },
+        "_meta": {
+          "phase": "section_rewrite:footer",
+          "attempt": 1
+        }
+      }
+    ],
+    "_meta": {
+      "phase": "page_document",
+      "attempt": 1
+    }
+  }
+}
