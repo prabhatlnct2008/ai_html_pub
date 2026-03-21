@@ -175,6 +175,9 @@ class BaseRenderer:
     def _has_fullbleed_image(self) -> bool:
         return bool(self.content.get("fullbleedImageUrl"))
 
+    def _get_gallery_images(self) -> list[str]:
+        return [v for k, v in self.content.items() if k.startswith("galleryImage") and v]
+
     def _img_tag(self, url: str, alt: str = "", extra_cls: str = "") -> str:
         cls = f"w-full h-full object-cover {extra_cls}".strip()
         return f'<img src="{esc(url)}" alt="{esc(alt)}" class="{cls}" loading="lazy"/>'
@@ -2185,6 +2188,55 @@ class BaseRenderer:
             f'</footer>'
         )
 
+    def render_gallery(self, section_id: str = "") -> str:
+        """Render a photo gallery grid from galleryImageN content keys."""
+        s = self.style
+        sid = f' id="{esc(section_id)}"' if section_id else ""
+        gallery_imgs = self._get_gallery_images()
+
+        heading = esc(self.content.get("galleryHeading", "Our Facility"))
+        subheading = esc(self.content.get("gallerySubheading", ""))
+        captions = self.content.get("galleryCaptions", [])
+
+        if not gallery_imgs:
+            return ""
+
+        items_html = ""
+        for i, url in enumerate(gallery_imgs):
+            caption = esc(captions[i]) if i < len(captions) else ""
+            span_cls = "col-span-2 row-span-2" if i == 0 else ""
+            aspect = "aspect-square" if i > 0 else "aspect-[4/3]"
+            caption_el = (
+                f'<div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3">'
+                f'<p class="text-sm font-medium text-white">{caption}</p></div>'
+                if caption else ""
+            )
+            items_html += (
+                f'<div class="{span_cls} group relative overflow-hidden {esc(s.get("card_radius", "rounded-xl"))}">'
+                f'<div class="{aspect} overflow-hidden">'
+                f'{self._img_tag(url, caption, "transition-transform duration-500 group-hover:scale-105")}'
+                f'</div>'
+                f'{caption_el}'
+                f'</div>'
+            )
+
+        eyebrow = esc(s.get("eyebrow_style", ""))
+        return (
+            f'<section{sid} class="{esc(s.get("section_py", "py-16"))}">'
+            f'<div class="{esc(s.get("container", ""))}">'
+            f'<div class="mb-10 text-center">'
+            f'<p class="{eyebrow}">Gallery</p>'
+            f'<h2 class="{esc(s.get("heading_size", ""))} {esc(s.get("heading_weight", ""))} '
+            f'{esc(s.get("heading_tracking", ""))} {esc(s.get("heading_color", ""))}">{heading}</h2>'
+            + (f'<p class="mx-auto mt-3 max-w-2xl {esc(s.get("body_text", ""))} {esc(s.get("body_size", ""))}">{subheading}</p>' if subheading else "") +
+            f'</div>'
+            f'<div class="grid grid-cols-2 md:grid-cols-4 gap-4">'
+            f'{items_html}'
+            f'</div>'
+            f'</div>'
+            f'</section>'
+        )
+
     def render_section(self, archetype: str, section_id: str = "", variant: str = "") -> str:
         """Dispatch archetype string to the appropriate render method."""
         dispatch = {
@@ -2199,6 +2251,7 @@ class BaseRenderer:
             "form_panel": lambda: self.render_form_panel(section_id=section_id),
             "list_strip": lambda: self.render_list_strip(section_id=section_id),
             "fullbleed_media": lambda: self.render_fullbleed_media(section_id=section_id),
+            "gallery": lambda: self.render_gallery(section_id=section_id),
             "footer_columns": lambda: self.render_footer(),
         }
         fn = dispatch.get(archetype)
