@@ -12,7 +12,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import base64
 import json
 import mimetypes
 import os
@@ -163,39 +162,55 @@ def fetch_section_images(
     return images
 
 
-def _download_as_data_uri(url: str) -> str | None:
-    """Download an image URL and return it as a base64 data URI."""
+def _download_image(url: str, dest: Path) -> bool:
+    """Download an image from *url* and save it to *dest*. Returns True on success."""
     try:
         ctx = build_ssl_context()
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
             content_type = resp.headers.get("Content-Type", "")
-            # Fall back to guessing from URL if header is generic
-            if not content_type or content_type == "application/octet-stream":
-                guessed, _ = mimetypes.guess_type(url.split("?")[0])
-                content_type = guessed or "image/jpeg"
             raw = resp.read()
-        b64 = base64.b64encode(raw).decode("ascii")
-        return f"data:{content_type};base64,{b64}"
+        # Determine correct extension from content-type
+        ext = mimetypes.guess_extension(content_type.split(";")[0].strip()) if content_type else None
+        if ext and dest.suffix != ext:
+            dest = dest.with_suffix(ext)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(raw)
+        return True
     except Exception as exc:
         print(f"   [download] Warning: could not download {url[:80]}: {exc}")
-        return None
+        return False
 
 
-def embed_images(images: dict[str, str]) -> dict[str, str]:
-    """Replace remote URLs with base64 data URIs by downloading each image."""
-    embedded: dict[str, str] = {}
+# Map content keys to simple filenames
+_IMAGE_FILENAMES = {
+    "heroImageUrl": "hero",
+    "aboutImageUrl": "about",
+    "fullbleedImageUrl": "fullbleed",
+}
+
+
+def download_images(images: dict[str, str], images_dir: Path) -> dict[str, str]:
+    """Download remote images into *images_dir* and return dict with local relative paths."""
+    local: dict[str, str] = {}
+    images_dir.mkdir(parents=True, exist_ok=True)
     for key, url in images.items():
-        print(f"   [download] Downloading {key}: {url[:80]}...")
-        data_uri = _download_as_data_uri(url)
-        if data_uri:
-            embedded[key] = data_uri
-            print(f"   [download] {key}: embedded ({len(data_uri) // 1024} KB)")
+        base_name = _IMAGE_FILENAMES.get(key, key)
+        # Guess extension from URL, default to .jpg
+        guessed_ext = mimetypes.guess_extension(
+            mimetypes.guess_type(url.split("?")[0])[0] or "image/jpeg"
+        ) or ".jpg"
+        dest = images_dir / f"{base_name}{guessed_ext}"
+        print(f"   [download] {key} -> {dest} ...")
+        if _download_image(url, dest):
+            # Store path relative to the HTML file's parent (images/hero.jpg)
+            local[key] = f"images/{dest.name}"
+            print(f"   [download] {key}: saved ({dest.stat().st_size // 1024} KB)")
         else:
-            # Keep original URL as fallback
-            embedded[key] = url
+            # Keep original remote URL as fallback
+            local[key] = url
             print(f"   [download] {key}: keeping remote URL (download failed)")
-    return embedded
+    return local
 
 
 # ---------------------------------------------------------------------------
@@ -592,13 +607,15 @@ def main() -> int:
     content = generate_content(api_key, args.name, args.description, pattern["id"])
 
     # Fetch Pixabay images if key available
+    out = Path(args.output)
     if pixabay_key and not args.no_images:
         print("3/4 Fetching images from Pixabay...")
         btype = content.get("businessType", args.description)
         images = fetch_section_images(pixabay_key, args.name, btype, args.description)
         if images:
-            print("   Downloading images for embedding...")
-            images = embed_images(images)
+            images_dir = out.parent / "images"
+            print(f"   Downloading images to {images_dir}/ ...")
+            images = download_images(images, images_dir)
         content.update(images)
     else:
         if not pixabay_key:
@@ -612,7 +629,6 @@ def main() -> int:
     print("4/4 Rendering page...")
     html = assemble_page(args.name, content, pattern, style)
 
-    out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8")
 
