@@ -12,7 +12,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import mimetypes
 import os
 import re
 import ssl
@@ -159,6 +161,41 @@ def fetch_section_images(
         print(f"   [pixabay] Fullbleed image: {fullbleed_url[:80]}...")
 
     return images
+
+
+def _download_as_data_uri(url: str) -> str | None:
+    """Download an image URL and return it as a base64 data URI."""
+    try:
+        ctx = build_ssl_context()
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            content_type = resp.headers.get("Content-Type", "")
+            # Fall back to guessing from URL if header is generic
+            if not content_type or content_type == "application/octet-stream":
+                guessed, _ = mimetypes.guess_type(url.split("?")[0])
+                content_type = guessed or "image/jpeg"
+            raw = resp.read()
+        b64 = base64.b64encode(raw).decode("ascii")
+        return f"data:{content_type};base64,{b64}"
+    except Exception as exc:
+        print(f"   [download] Warning: could not download {url[:80]}: {exc}")
+        return None
+
+
+def embed_images(images: dict[str, str]) -> dict[str, str]:
+    """Replace remote URLs with base64 data URIs by downloading each image."""
+    embedded: dict[str, str] = {}
+    for key, url in images.items():
+        print(f"   [download] Downloading {key}: {url[:80]}...")
+        data_uri = _download_as_data_uri(url)
+        if data_uri:
+            embedded[key] = data_uri
+            print(f"   [download] {key}: embedded ({len(data_uri) // 1024} KB)")
+        else:
+            # Keep original URL as fallback
+            embedded[key] = url
+            print(f"   [download] {key}: keeping remote URL (download failed)")
+    return embedded
 
 
 # ---------------------------------------------------------------------------
@@ -559,6 +596,9 @@ def main() -> int:
         print("3/4 Fetching images from Pixabay...")
         btype = content.get("businessType", args.description)
         images = fetch_section_images(pixabay_key, args.name, btype, args.description)
+        if images:
+            print("   Downloading images for embedding...")
+            images = embed_images(images)
         content.update(images)
     else:
         if not pixabay_key:
