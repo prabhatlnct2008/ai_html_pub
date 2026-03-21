@@ -17,6 +17,7 @@ import mimetypes
 import os
 import re
 import ssl
+import time
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -238,6 +239,7 @@ def fetch_section_images(
     if hero_url:
         images["heroImageUrl"] = hero_url
         print(f"   [pixabay] Hero image: {hero_url[:80]}...")
+    time.sleep(1)
 
     # About image — broader search
     about_query = f"{business_type} professional"
@@ -248,6 +250,7 @@ def fetch_section_images(
     if about_url:
         images["aboutImageUrl"] = about_url
         print(f"   [pixabay] About image: {about_url[:80]}...")
+    time.sleep(1)
 
     # Fullbleed image — cinematic/atmospheric
     fullbleed_query = f"{business_type} background"
@@ -264,6 +267,7 @@ def fetch_section_images(
     if gallery_queries:
         used_urls: set[str] = set(images.values())
         for i, gq in enumerate(gallery_queries[:6]):
+            time.sleep(1)
             candidates = fetch_pixabay_candidates(pixabay_key, gq, per_page=10)
             for url in candidates:
                 if url in used_urls:
@@ -290,23 +294,32 @@ def fetch_section_images(
 
 
 def _download_image(url: str, dest: Path) -> bool:
-    """Download an image from *url* and save it to *dest*. Returns True on success."""
-    try:
-        ctx = build_ssl_context()
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
-            content_type = resp.headers.get("Content-Type", "")
-            raw = resp.read()
-        # Determine correct extension from content-type
-        ext = mimetypes.guess_extension(content_type.split(";")[0].strip()) if content_type else None
-        if ext and dest.suffix != ext:
-            dest = dest.with_suffix(ext)
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(raw)
-        return True
-    except Exception as exc:
-        print(f"   [download] Warning: could not download {url[:80]}: {exc}")
-        return False
+    """Download an image from *url* and save it to *dest*. Retries on 429 with backoff."""
+    delays = [2, 4, 8, 16]
+    for attempt in range(len(delays) + 1):
+        try:
+            ctx = build_ssl_context()
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+                content_type = resp.headers.get("Content-Type", "")
+                raw = resp.read()
+            ext = mimetypes.guess_extension(content_type.split(";")[0].strip()) if content_type else None
+            if ext and dest.suffix != ext:
+                dest = dest.with_suffix(ext)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(raw)
+            return True
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429 and attempt < len(delays):
+                wait = delays[attempt]
+                print(f"   [download] Rate limited, retrying in {wait}s...")
+                time.sleep(wait)
+                continue
+            print(f"   [download] Warning: could not download {url[:80]}: {exc}")
+            return False
+        except Exception as exc:
+            print(f"   [download] Warning: could not download {url[:80]}: {exc}")
+            return False
 
 
 # Map content keys to simple filenames
@@ -327,7 +340,10 @@ def download_images(images: dict[str, str], images_dir: Path) -> dict[str, str]:
     """Download remote images into *images_dir* and return dict with local relative paths."""
     local: dict[str, str] = {}
     images_dir.mkdir(parents=True, exist_ok=True)
-    for key, url in images.items():
+    items = list(images.items())
+    for idx, (key, url) in enumerate(items):
+        if idx > 0:
+            time.sleep(1)  # Pace downloads to avoid Pixabay 429s
         base_name = _IMAGE_FILENAMES.get(key, key)
         # Guess extension from URL, default to .jpg
         guessed_ext = mimetypes.guess_extension(
