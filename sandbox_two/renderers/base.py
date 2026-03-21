@@ -163,6 +163,23 @@ class BaseRenderer:
         )
 
     # -------------------------------------------------------------------
+    # Image helpers
+    # -------------------------------------------------------------------
+
+    def _has_hero_image(self) -> bool:
+        return bool(self.content.get("heroImageUrl"))
+
+    def _has_about_image(self) -> bool:
+        return bool(self.content.get("aboutImageUrl"))
+
+    def _has_fullbleed_image(self) -> bool:
+        return bool(self.content.get("fullbleedImageUrl"))
+
+    def _img_tag(self, url: str, alt: str = "", extra_cls: str = "") -> str:
+        cls = f"w-full h-full object-cover {extra_cls}".strip()
+        return f'<img src="{esc(url)}" alt="{esc(alt)}" class="{cls}" loading="lazy"/>'
+
+    # -------------------------------------------------------------------
     # Sub-renderer methods
     # -------------------------------------------------------------------
 
@@ -221,6 +238,8 @@ class BaseRenderer:
 
     def _build_hero_right(self) -> str:
         stat_cards = self.content.get("heroStatCards", [])
+        hero_img = self.content.get("heroImageUrl")
+        site_name = self.content.get("siteName", "")
 
         if self.family == "concierge":
             bullets = self.content.get("heroBullets", [])
@@ -230,23 +249,27 @@ class BaseRenderer:
                     f'<div class="rounded-2xl border border-rose-100/60 bg-white/80 px-4 py-3 '
                     f'text-sm font-medium text-stone-800 shadow-sm backdrop-blur">{esc(b)}</div>'
                 )
+            inner = (self._img_tag(hero_img, site_name) if hero_img
+                     else f'<div class="flex h-full items-center justify-center text-stone-300">'
+                          f'{self._placeholder_image_svg()}</div>')
             return (
                 f'<div class="relative">'
                 f'<div class="aspect-[4/5] overflow-hidden rounded-[2rem] bg-gradient-to-br from-rose-50 to-orange-50 '
                 f'ring-1 ring-stone-200/40 shadow-[0_20px_50px_rgba(190,24,93,0.06)]">'
-                f'<div class="flex h-full items-center justify-center text-stone-300">'
-                f'{self._placeholder_image_svg()}'
-                f'</div></div>'
+                f'{inner}'
+                f'</div>'
                 f'<div class="absolute -left-4 bottom-8 grid gap-2 lg:-left-6">{floating_cards}</div>'
                 f'</div>'
             )
 
         elif self.family == "direct":
+            inner = (self._img_tag(hero_img, site_name) if hero_img
+                     else f'<div class="flex h-full items-center justify-center text-slate-300">'
+                          f'{self._placeholder_image_svg("h-14 w-14")}</div>')
             return (
                 f'<div class="aspect-[4/3] overflow-hidden rounded-lg bg-slate-50 ring-1 ring-slate-200">'
-                f'<div class="flex h-full items-center justify-center text-slate-300">'
-                f'{self._placeholder_image_svg("h-14 w-14")}'
-                f'</div></div>'
+                f'{inner}'
+                f'</div>'
             )
 
         elif self.family == "saas":
@@ -257,23 +280,27 @@ class BaseRenderer:
                     f'<div class="text-lg font-bold tracking-tight text-slate-900">{esc(s.get("value",""))}</div>'
                     f'<div class="text-xs text-slate-500">{esc(s.get("label",""))}</div></div>'
                 )
+            inner = (self._img_tag(hero_img, site_name) if hero_img
+                     else f'<div class="flex h-full items-center justify-center text-slate-300">'
+                          f'{self._placeholder_dashboard_svg()}</div>')
             return (
                 f'<div class="relative">'
                 f'<div class="aspect-[4/3] overflow-hidden rounded-2xl border border-slate-200 '
                 f'bg-gradient-to-br from-slate-100 to-white shadow-lg ring-1 ring-slate-900/5">'
-                f'<div class="flex h-full items-center justify-center text-slate-300">'
-                f'{self._placeholder_dashboard_svg()}'
-                f'</div></div>'
+                f'{inner}'
+                f'</div>'
                 f'<div class="absolute -bottom-4 left-4 right-4 flex gap-2">{cards_html}</div>'
                 f'</div>'
             )
 
         elif self.family == "editorial":
+            inner = (self._img_tag(hero_img, site_name) if hero_img
+                     else f'<div class="flex h-full items-center justify-center text-stone-300">'
+                          f'{self._placeholder_image_svg("h-20 w-20")}</div>')
             return (
-                f'<div class="aspect-[4/5] border border-stone-200 bg-gradient-to-br from-stone-100 via-[#ebe4d8] to-stone-50">'
-                f'<div class="flex h-full items-center justify-center text-stone-300">'
-                f'{self._placeholder_image_svg("h-20 w-20")}'
-                f'</div></div>'
+                f'<div class="aspect-[4/5] overflow-hidden border border-stone-200 bg-gradient-to-br from-stone-100 via-[#ebe4d8] to-stone-50">'
+                f'{inner}'
+                f'</div>'
             )
 
         elif self.family == "clinic":
@@ -284,13 +311,23 @@ class BaseRenderer:
                     f'<div class="rounded-xl border border-teal-100 bg-white px-4 py-3.5 '
                     f'text-sm font-medium text-slate-800">{esc(t)}</div>'
                 )
+            inner = (self._img_tag(hero_img, site_name) if hero_img
+                     else f'<div class="flex h-full items-center justify-center text-teal-200">'
+                          f'{self._placeholder_image_svg("h-16 w-16")}</div>')
             return (
                 f'<div class="rounded-2xl bg-gradient-to-br from-teal-50 to-cyan-50/40 p-5 ring-1 ring-teal-100/60">'
                 f'<div class="aspect-[4/3] overflow-hidden rounded-xl bg-white/70 ring-1 ring-teal-100/40">'
-                f'<div class="flex h-full items-center justify-center text-teal-200">'
-                f'{self._placeholder_image_svg("h-16 w-16")}'
-                f'</div></div>'
+                f'{inner}'
+                f'</div>'
                 f'<div class="mt-4 grid gap-2">{trust_items}</div>'
+                f'</div>'
+            )
+
+        # Fallback for families without explicit hero right (sports, cafe, etc.)
+        if hero_img:
+            return (
+                f'<div class="aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200">'
+                f'{self._img_tag(hero_img, site_name)}'
                 f'</div>'
             )
 
@@ -316,43 +353,58 @@ class BaseRenderer:
         return f'{heading_html}{text_html}{bullets_html}'
 
     def _build_about_right(self) -> str:
+        about_img = self.content.get("aboutImageUrl")
+        site_name = self.content.get("siteName", "")
+
         if self.family == "concierge":
+            inner = (self._img_tag(about_img, f"About {site_name}") if about_img
+                     else f'<div class="flex h-full items-center justify-center text-stone-300">'
+                          f'{self._placeholder_image_svg()}</div>')
             return (
                 f'<div class="aspect-[4/5] overflow-hidden rounded-[2rem] bg-gradient-to-br from-rose-50 to-orange-50/60 '
                 f'ring-1 ring-stone-200/40 shadow-[0_16px_40px_rgba(190,24,93,0.05)]">'
-                f'<div class="flex h-full items-center justify-center text-stone-300">'
-                f'{self._placeholder_image_svg()}'
-                f'</div></div>'
+                f'{inner}</div>'
             )
         elif self.family == "direct":
+            inner = (self._img_tag(about_img, f"About {site_name}") if about_img
+                     else f'<div class="flex h-full items-center justify-center text-slate-300">'
+                          f'{self._placeholder_image_svg("h-14 w-14")}</div>')
             return (
                 f'<div class="aspect-[4/3] overflow-hidden rounded-lg bg-slate-50 ring-1 ring-slate-200">'
-                f'<div class="flex h-full items-center justify-center text-slate-300">'
-                f'{self._placeholder_image_svg("h-14 w-14")}'
-                f'</div></div>'
+                f'{inner}</div>'
             )
         elif self.family == "saas":
+            inner = (self._img_tag(about_img, f"About {site_name}") if about_img
+                     else f'<div class="flex h-full items-center justify-center text-slate-300">'
+                          f'{self._placeholder_image_svg("h-16 w-16")}</div>')
             return (
                 f'<div class="aspect-[4/3] overflow-hidden rounded-2xl border border-slate-200 '
                 f'bg-gradient-to-br from-slate-100 to-white shadow-md ring-1 ring-slate-900/5">'
-                f'<div class="flex h-full items-center justify-center text-slate-300">'
-                f'{self._placeholder_image_svg("h-16 w-16")}'
-                f'</div></div>'
+                f'{inner}</div>'
             )
         elif self.family == "editorial":
+            inner = (self._img_tag(about_img, f"About {site_name}") if about_img
+                     else f'<div class="flex h-full items-center justify-center text-stone-300">'
+                          f'{self._placeholder_image_svg("h-20 w-20")}</div>')
             return (
-                f'<div class="aspect-[3/4] border border-stone-200 bg-gradient-to-br from-stone-100 to-[#ebe4d8]">'
-                f'<div class="flex h-full items-center justify-center text-stone-300">'
-                f'{self._placeholder_image_svg("h-20 w-20")}'
-                f'</div></div>'
+                f'<div class="aspect-[3/4] overflow-hidden border border-stone-200 bg-gradient-to-br from-stone-100 to-[#ebe4d8]">'
+                f'{inner}</div>'
             )
         elif self.family == "clinic":
+            inner = (self._img_tag(about_img, f"About {site_name}") if about_img
+                     else f'<div class="flex h-full items-center justify-center text-teal-200">'
+                          f'{self._placeholder_image_svg("h-16 w-16")}</div>')
             return (
                 f'<div class="aspect-[4/3] overflow-hidden rounded-2xl bg-gradient-to-br from-teal-50 to-cyan-50/30 '
                 f'ring-1 ring-teal-100/60">'
-                f'<div class="flex h-full items-center justify-center text-teal-200">'
-                f'{self._placeholder_image_svg("h-16 w-16")}'
-                f'</div></div>'
+                f'{inner}</div>'
+            )
+
+        # Fallback for other families
+        if about_img:
+            return (
+                f'<div class="aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200">'
+                f'{self._img_tag(about_img, f"About {site_name}")}</div>'
             )
         return ""
 
@@ -1924,20 +1976,32 @@ class BaseRenderer:
         subheading = self.content.get("heroSubheading", "")
         cta_primary = self.content.get("heroCtaPrimary", "")
 
-        # ── SVG camera/image placeholder icon ────────────────────────────────
-        svg_icon = (
-            f'<svg class="{c["icon_color"]} w-20 h-20" xmlns="http://www.w3.org/2000/svg" '
-            f'fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">'
-            f'<path stroke-linecap="round" stroke-linejoin="round" '
-            f'd="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 '
-            f'7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 '
-            f'21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 '
-            f'2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 '
-            f'48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />'
-            f'<path stroke-linecap="round" stroke-linejoin="round" '
-            f'd="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />'
-            f'</svg>'
-        )
+        # ── Background: real image or SVG placeholder ────────────────────────
+        fullbleed_img = self.content.get("fullbleedImageUrl") or self.content.get("heroImageUrl")
+        site_name = self.content.get("siteName", "")
+
+        if fullbleed_img:
+            bg_content = (
+                f'<img src="{esc(fullbleed_img)}" alt="{esc(site_name)}" '
+                f'class="absolute inset-0 w-full h-full object-cover" loading="lazy"/>'
+            )
+        else:
+            svg_icon = (
+                f'<svg class="{c["icon_color"]} w-20 h-20" xmlns="http://www.w3.org/2000/svg" '
+                f'fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">'
+                f'<path stroke-linecap="round" stroke-linejoin="round" '
+                f'd="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 '
+                f'7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 '
+                f'21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 '
+                f'2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 '
+                f'48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />'
+                f'<path stroke-linecap="round" stroke-linejoin="round" '
+                f'd="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />'
+                f'</svg>'
+            )
+            bg_content = (
+                f'<div class="absolute inset-0 flex items-center justify-center">{svg_icon}</div>'
+            )
 
         # ── Build text overlay parts ─────────────────────────────────────────
         text_parts = []
@@ -1975,10 +2039,7 @@ class BaseRenderer:
             f'<section{sid} class="relative overflow-hidden">\n'
             f'  <!-- Full-bleed background area -->\n'
             f'  <div class="relative {c["aspect"]} w-full {c["bg_gradient"]}">\n'
-            f'    <!-- Centered image placeholder icon -->\n'
-            f'    <div class="absolute inset-0 flex items-center justify-center">\n'
-            f'      {svg_icon}\n'
-            f'    </div>\n'
+            f'    {bg_content}\n'
             f'    <!-- Gradient overlay from bottom -->\n'
             f'    <div class="absolute inset-0 {c["overlay"]}"></div>{extra_html}\n'
             f'    <!-- Text overlay at bottom-left -->\n'

@@ -20,9 +20,12 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+import urllib.parse
+
 from renderers import RENDERER_CLASSES, esc
 
 MODEL = "gpt-4o-mini"
+PIXABAY_ENDPOINT = "https://pixabay.com/api/"
 
 # ---------------------------------------------------------------------------
 # Utilities
@@ -89,6 +92,73 @@ def chat_json(api_key: str, system_prompt: str, user_prompt: str, temperature: f
         detail = exc.read().decode("utf-8", errors="ignore")
         raise RuntimeError(f"OpenAI API error {exc.code}: {detail}") from exc
     return parse_json(payload["choices"][0]["message"]["content"])
+
+
+# ---------------------------------------------------------------------------
+# Pixabay image search
+# ---------------------------------------------------------------------------
+
+def fetch_pixabay_image(
+    api_key: str,
+    query: str,
+    orientation: str = "horizontal",
+    per_page: int = 5,
+    min_width: int = 1280,
+) -> str | None:
+    """Search Pixabay and return the URL of the best-matching photo, or None."""
+    params = urllib.parse.urlencode({
+        "key": api_key,
+        "q": query[:100],
+        "image_type": "photo",
+        "orientation": orientation,
+        "per_page": per_page,
+        "min_width": min_width,
+        "safesearch": "true",
+    })
+    url = f"{PIXABAY_ENDPOINT}?{params}"
+    try:
+        ctx = build_ssl_context()
+        with urllib.request.urlopen(url, timeout=15, context=ctx) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        hits = data.get("hits", [])
+        if hits:
+            return hits[0].get("largeImageURL") or hits[0].get("webformatURL")
+    except Exception as exc:
+        print(f"   [pixabay] Warning: {exc}")
+    return None
+
+
+def fetch_section_images(
+    pixabay_key: str,
+    business_name: str,
+    business_type: str,
+    description: str,
+) -> dict[str, str]:
+    """Fetch hero + about images from Pixabay. Returns dict of image URLs."""
+    images: dict[str, str] = {}
+
+    # Hero image — search by business type + core activity
+    hero_query = f"{business_type} {description.split(',')[0].strip()}"
+    hero_url = fetch_pixabay_image(pixabay_key, hero_query)
+    if hero_url:
+        images["heroImageUrl"] = hero_url
+        print(f"   [pixabay] Hero image: {hero_url[:80]}...")
+
+    # About image — broader search
+    about_query = f"{business_type} professional"
+    about_url = fetch_pixabay_image(pixabay_key, about_query)
+    if about_url:
+        images["aboutImageUrl"] = about_url
+        print(f"   [pixabay] About image: {about_url[:80]}...")
+
+    # Fullbleed image — cinematic/atmospheric
+    fullbleed_query = f"{business_type} background"
+    fullbleed_url = fetch_pixabay_image(pixabay_key, fullbleed_query, min_width=1920)
+    if fullbleed_url:
+        images["fullbleedImageUrl"] = fullbleed_url
+        print(f"   [pixabay] Fullbleed image: {fullbleed_url[:80]}...")
+
+    return images
 
 
 # ---------------------------------------------------------------------------
@@ -455,6 +525,7 @@ def main() -> int:
     parser.add_argument("--description", required=True, help="Business description")
     parser.add_argument("--output", required=True, help="Output HTML path")
     parser.add_argument("--pattern", default="", help="Force pattern: concierge_split, direct_conversion, product_led_b2b, editorial_luxury, trust_panel_clinic, sports_energy, cafe_warmth, therapist_calm, education_academy, creative_portfolio")
+    parser.add_argument("--no-images", action="store_true", help="Skip Pixabay image fetching (use placeholders)")
     args = parser.parse_args()
 
     api_key = load_env_var("OPENAI_API_KEY")
@@ -462,11 +533,13 @@ def main() -> int:
         print("OPENAI_API_KEY not found in environment, .env.local, or .env")
         return 1
 
+    pixabay_key = load_env_var("PIXABAY_API_KEY")
+
     if args.pattern and args.pattern in PATTERN_COMBOS:
         pattern = PATTERN_COMBOS[args.pattern]
         print(f"Pattern (forced): {pattern['label']}")
     else:
-        print("1/3 Detecting business type...")
+        print("1/4 Detecting business type...")
         ctx = chat_json(
             api_key,
             "Classify this business. Return JSON: {\"businessType\": \"short label\", \"keywords\": [\"kw1\",\"kw2\",...]}",
@@ -478,13 +551,25 @@ def main() -> int:
         pattern = pick_pattern(btype, f"{args.description} {kws}")
         print(f"   Detected: {btype} -> Pattern: {pattern['label']}")
 
-    print("2/3 Generating content...")
+    print("2/4 Generating content...")
     content = generate_content(api_key, args.name, args.description, pattern["id"])
+
+    # Fetch Pixabay images if key available
+    if pixabay_key and not args.no_images:
+        print("3/4 Fetching images from Pixabay...")
+        btype = content.get("businessType", args.description)
+        images = fetch_section_images(pixabay_key, args.name, btype, args.description)
+        content.update(images)
+    else:
+        if not pixabay_key:
+            print("3/4 Skipping images (PIXABAY_API_KEY not set)")
+        else:
+            print("3/4 Skipping images (--no-images)")
 
     renderer_cls = RENDERER_CLASSES.get(pattern["family"], RENDERER_CLASSES["saas"])
     style = renderer_cls.get_style(content.get("primaryColor", "#2563eb"), content.get("accentColor", "#f97316"))
 
-    print("3/3 Rendering page...")
+    print("4/4 Rendering page...")
     html = assemble_page(args.name, content, pattern, style)
 
     out = Path(args.output)
