@@ -46,8 +46,8 @@ class SportsRenderer(BaseRenderer):
             "gap": "gap-8",
             "gap_sm": "gap-4",
             # List markers
-            "bullet_marker": "text-orange-400",
-            "check_marker": "text-orange-400",
+            "bullet_marker": "<span class='mt-1.5 h-2 w-2 shrink-0 rounded-full bg-orange-400'></span>",
+            "check_marker": "<span class='text-orange-400'>&#10003;</span>",
             # Buttons
             "primary_btn": "inline-flex items-center justify-center rounded-lg bg-orange-500 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-[0_4px_14px_rgba(249,115,22,0.4)] transition hover:bg-orange-400",
             "secondary_btn": "inline-flex items-center justify-center rounded-lg border border-slate-600 bg-transparent px-6 py-3 text-sm font-bold uppercase tracking-wider text-slate-200 transition hover:border-slate-400 hover:text-white",
