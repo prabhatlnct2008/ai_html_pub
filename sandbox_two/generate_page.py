@@ -221,8 +221,12 @@ def fetch_section_images(
     business_name: str,
     business_type: str,
     description: str,
+    gallery_queries: list[str] | None = None,
 ) -> dict[str, str]:
-    """Fetch hero + about images from Pixabay, validated by GPT-4o-mini vision."""
+    """Fetch hero + about images from Pixabay, validated by GPT-4o-mini vision.
+
+    Pass *gallery_queries* (list of search terms) to fetch gallery images.
+    """
     images: dict[str, str] = {}
 
     # Hero image — search by business type + core activity
@@ -256,6 +260,32 @@ def fetch_section_images(
         images["fullbleedImageUrl"] = fullbleed_url
         print(f"   [pixabay] Fullbleed image: {fullbleed_url[:80]}...")
 
+    # Gallery images — diverse set for showcasing facility/space
+    if gallery_queries:
+        used_urls: set[str] = set(images.values())
+        for i, gq in enumerate(gallery_queries[:6]):
+            candidates = fetch_pixabay_candidates(pixabay_key, gq, per_page=10)
+            for url in candidates:
+                if url in used_urls:
+                    continue
+                print(f"   [vision] Validating gallery image {i + 1} ({gq})...")
+                if validate_image_with_vision(
+                    openai_key, url, business_name, business_type,
+                    f"gallery photo: {gq}",
+                ):
+                    images[f"galleryImage{i + 1}"] = url
+                    used_urls.add(url)
+                    print(f"   [pixabay] Gallery {i + 1}: {url[:80]}...")
+                    break
+            else:
+                # Fallback: use first non-duplicate candidate
+                for url in candidates:
+                    if url not in used_urls:
+                        images[f"galleryImage{i + 1}"] = url
+                        used_urls.add(url)
+                        print(f"   [pixabay] Gallery {i + 1} (fallback): {url[:80]}...")
+                        break
+
     return images
 
 
@@ -284,6 +314,12 @@ _IMAGE_FILENAMES = {
     "heroImageUrl": "hero",
     "aboutImageUrl": "about",
     "fullbleedImageUrl": "fullbleed",
+    "galleryImage1": "gallery1",
+    "galleryImage2": "gallery2",
+    "galleryImage3": "gallery3",
+    "galleryImage4": "gallery4",
+    "galleryImage5": "gallery5",
+    "galleryImage6": "gallery6",
 }
 
 
@@ -483,6 +519,46 @@ PATTERN_COMBOS = {
             {"archetype": "footer_columns"},
         ],
     },
+    "telemed_care": {
+        "id": "telemed_care",
+        "label": "Telemedicine Care",
+        "family": "telemed",
+        "best_for": ["telemedicine", "telehealth", "virtual care", "online doctor", "remote health", "video consultation", "opioid", "suboxone", "MAT", "medication-assisted"],
+        "sections": [
+            {"archetype": "split_two_col", "variant": "hero", "id": "home"},
+            {"archetype": "stat_row", "id": "results"},
+            {"archetype": "card_grid", "variant": "services", "id": "services"},
+            {"archetype": "step_sequence", "id": "how-it-works"},
+            {"archetype": "quote_block", "id": "testimonial"},
+            {"archetype": "quote_grid", "id": "reviews"},
+            {"archetype": "split_two_col", "variant": "about", "id": "about"},
+            {"archetype": "accordion", "id": "faq"},
+            {"archetype": "centered_stack", "variant": "cta_band", "id": "cta"},
+            {"archetype": "form_panel", "id": "contact"},
+            {"archetype": "footer_columns"},
+        ],
+    },
+    "rehab_sanctuary": {
+        "id": "rehab_sanctuary",
+        "label": "Rehab Sanctuary",
+        "family": "rehab",
+        "best_for": ["rehab", "rehabilitation", "addiction", "recovery", "sober", "detox", "substance abuse", "drug", "alcohol", "12 step"],
+        "sections": [
+            {"archetype": "fullbleed_media", "id": "home"},
+            {"archetype": "stat_row", "id": "results"},
+            {"archetype": "card_grid", "variant": "services", "id": "programs"},
+            {"archetype": "step_sequence", "id": "how-it-works"},
+            {"archetype": "split_two_col", "variant": "about", "id": "about"},
+            {"archetype": "gallery", "id": "gallery"},
+            {"archetype": "quote_block", "id": "testimonial"},
+            {"archetype": "quote_grid", "id": "reviews"},
+            {"archetype": "card_grid", "variant": "team", "id": "team"},
+            {"archetype": "accordion", "id": "faq"},
+            {"archetype": "centered_stack", "variant": "cta_band", "id": "cta"},
+            {"archetype": "form_panel", "id": "contact"},
+            {"archetype": "footer_columns"},
+        ],
+    },
 }
 
 
@@ -565,6 +641,9 @@ Return JSON with this exact structure:
   "ctaBandHeading": "compelling CTA heading",
   "ctaBandSubheading": "brief CTA supporting text",
   "ctaBandButtonText": "CTA button text",
+  "galleryHeading": "heading for photo gallery section (if applicable)",
+  "gallerySubheading": "brief gallery description (if applicable)",
+  "galleryCaptions": ["caption for gallery photo 1", "caption for gallery photo 2", "caption 3", "caption 4", "caption 5", "caption 6"],
   "pricingPlans": [
     {"name": "Basic", "price": "$29/mo", "description": "For small teams", "features": ["feature 1", "feature 2", "feature 3"]},
     {"name": "Pro", "price": "$79/mo", "description": "For growing teams", "features": ["feature 1", "feature 2", "feature 3", "feature 4"]}
@@ -673,7 +752,7 @@ def main() -> int:
     parser.add_argument("--name", required=True, help="Business name")
     parser.add_argument("--description", required=True, help="Business description")
     parser.add_argument("--output", required=True, help="Output HTML path")
-    parser.add_argument("--pattern", default="", help="Force pattern: concierge_split, direct_conversion, product_led_b2b, editorial_luxury, trust_panel_clinic, sports_energy, cafe_warmth, therapist_calm, education_academy, creative_portfolio")
+    parser.add_argument("--pattern", default="", help="Force pattern: concierge_split, direct_conversion, product_led_b2b, editorial_luxury, trust_panel_clinic, sports_energy, cafe_warmth, therapist_calm, education_academy, creative_portfolio, telemed_care, rehab_sanctuary")
     parser.add_argument("--no-images", action="store_true", help="Skip Pixabay image fetching (use placeholders)")
     args = parser.parse_args()
 
@@ -708,7 +787,23 @@ def main() -> int:
     if pixabay_key and not args.no_images:
         print("3/4 Fetching images from Pixabay...")
         btype = content.get("businessType", args.description)
-        images = fetch_section_images(pixabay_key, api_key, args.name, btype, args.description)
+
+        # Build gallery queries if pattern includes a gallery section
+        gallery_queries = None
+        has_gallery = any(s.get("archetype") == "gallery" for s in pattern.get("sections", []))
+        if has_gallery:
+            gallery_queries = content.get("galleryCaptions", [])
+            if not gallery_queries:
+                gallery_queries = [
+                    f"{btype} facility exterior",
+                    f"{btype} interior lounge",
+                    f"{btype} room",
+                    f"{btype} therapy session",
+                    f"{btype} outdoor garden",
+                    f"{btype} dining area",
+                ]
+
+        images = fetch_section_images(pixabay_key, api_key, args.name, btype, args.description, gallery_queries=gallery_queries)
         if images:
             images_dir = out.parent / "images"
             print(f"   Downloading images to {images_dir}/ ...")
