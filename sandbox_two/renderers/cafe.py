@@ -46,8 +46,8 @@ class CafeRenderer(BaseRenderer):
             "gap": "gap-8",
             "gap_sm": "gap-4",
             # List markers
-            "bullet_marker": "text-amber-600",
-            "check_marker": "text-amber-600",
+            "bullet_marker": "<span class='mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-500'></span>",
+            "check_marker": "<span class='text-amber-600'>&#10003;</span>",
             # Buttons
             "primary_btn": "inline-flex items-center justify-center rounded-xl bg-amber-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-500",
             "secondary_btn": "inline-flex items-center justify-center rounded-xl border border-amber-300 bg-transparent px-6 py-3 text-sm font-semibold text-amber-800 transition hover:border-amber-400 hover:bg-amber-50",

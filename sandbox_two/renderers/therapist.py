@@ -46,8 +46,8 @@ class TherapistRenderer(BaseRenderer):
             "gap": "gap-10",
             "gap_sm": "gap-5",
             # List markers
-            "bullet_marker": "text-[#5b8a72]",
-            "check_marker": "text-[#5b8a72]",
+            "bullet_marker": "<span class='mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#5b8a72]'></span>",
+            "check_marker": "<span class='text-[#5b8a72]'>&#10003;</span>",
             # Buttons
             "primary_btn": "inline-flex items-center justify-center rounded-full bg-[#5b8a72] px-7 py-3 text-sm font-medium text-white shadow-[0_2px_12px_rgba(91,138,114,0.25)] transition hover:bg-[#4a7a62]",
             "secondary_btn": "inline-flex items-center justify-center rounded-full border border-[#5b8a72]/30 bg-transparent px-7 py-3 text-sm font-medium text-[#5b8a72] transition hover:bg-[#5b8a72]/5",

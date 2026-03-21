@@ -99,14 +99,14 @@ def chat_json(api_key: str, system_prompt: str, user_prompt: str, temperature: f
 # Pixabay image search
 # ---------------------------------------------------------------------------
 
-def fetch_pixabay_image(
+def fetch_pixabay_candidates(
     api_key: str,
     query: str,
     orientation: str = "horizontal",
-    per_page: int = 5,
+    per_page: int = 10,
     min_width: int = 1280,
-) -> str | None:
-    """Search Pixabay and return the URL of the best-matching photo, or None."""
+) -> list[str]:
+    """Search Pixabay and return a list of candidate image URLs."""
     params = urllib.parse.urlencode({
         "key": api_key,
         "q": query[:100],
@@ -122,39 +122,136 @@ def fetch_pixabay_image(
         with urllib.request.urlopen(url, timeout=15, context=ctx) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         hits = data.get("hits", [])
-        if hits:
-            return hits[0].get("largeImageURL") or hits[0].get("webformatURL")
+        return [
+            h.get("largeImageURL") or h.get("webformatURL")
+            for h in hits
+            if h.get("largeImageURL") or h.get("webformatURL")
+        ]
     except Exception as exc:
         print(f"   [pixabay] Warning: {exc}")
-    return None
+    return []
+
+
+def validate_image_with_vision(
+    openai_key: str,
+    image_url: str,
+    business_name: str,
+    business_type: str,
+    usage_context: str,
+) -> bool:
+    """Use GPT-4o-mini vision to check if an image is appropriate for the business."""
+    body = {
+        "model": "gpt-4o-mini",
+        "max_tokens": 80,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are an image reviewer for a website builder. "
+                    "Decide if the image is suitable for the described business and context. "
+                    "Reply with ONLY 'yes' or 'no'."
+                ),
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            f"Business: {business_name} ({business_type})\n"
+                            f"Image will be used as: {usage_context}\n"
+                            "Is this image appropriate and relevant for this business website?"
+                        ),
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_url, "detail": "low"},
+                    },
+                ],
+            },
+        ],
+    }
+    req = urllib.request.Request(
+        "https://api.openai.com/v1/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {openai_key}",
+        },
+        method="POST",
+    )
+    try:
+        ctx = build_ssl_context()
+        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+        answer = result["choices"][0]["message"]["content"].strip().lower()
+        return answer.startswith("yes")
+    except Exception as exc:
+        print(f"   [vision] Warning: validation failed ({exc}), accepting image")
+        return True  # Accept on error to avoid blocking
+
+
+def pick_best_image(
+    openai_key: str,
+    pixabay_key: str,
+    query: str,
+    business_name: str,
+    business_type: str,
+    usage_context: str,
+    min_width: int = 1280,
+) -> str | None:
+    """Search Pixabay, validate candidates with vision, return first approved URL."""
+    candidates = fetch_pixabay_candidates(pixabay_key, query, min_width=min_width)
+    if not candidates:
+        return None
+    for i, url in enumerate(candidates[:5]):  # Check up to 5 candidates
+        print(f"   [vision] Validating candidate {i + 1} for {usage_context}...")
+        if validate_image_with_vision(openai_key, url, business_name, business_type, usage_context):
+            print(f"   [vision] ✓ Approved candidate {i + 1}")
+            return url
+        print(f"   [vision] ✗ Rejected candidate {i + 1}")
+    # Fallback to first candidate if none pass
+    print(f"   [vision] No candidate approved, using first result as fallback")
+    return candidates[0]
 
 
 def fetch_section_images(
     pixabay_key: str,
+    openai_key: str,
     business_name: str,
     business_type: str,
     description: str,
 ) -> dict[str, str]:
-    """Fetch hero + about images from Pixabay. Returns dict of image URLs."""
+    """Fetch hero + about images from Pixabay, validated by GPT-4o-mini vision."""
     images: dict[str, str] = {}
 
     # Hero image — search by business type + core activity
     hero_query = f"{business_type} {description.split(',')[0].strip()}"
-    hero_url = fetch_pixabay_image(pixabay_key, hero_query)
+    hero_url = pick_best_image(
+        openai_key, pixabay_key, hero_query,
+        business_name, business_type, "hero banner image",
+    )
     if hero_url:
         images["heroImageUrl"] = hero_url
         print(f"   [pixabay] Hero image: {hero_url[:80]}...")
 
     # About image — broader search
     about_query = f"{business_type} professional"
-    about_url = fetch_pixabay_image(pixabay_key, about_query)
+    about_url = pick_best_image(
+        openai_key, pixabay_key, about_query,
+        business_name, business_type, "about section image",
+    )
     if about_url:
         images["aboutImageUrl"] = about_url
         print(f"   [pixabay] About image: {about_url[:80]}...")
 
     # Fullbleed image — cinematic/atmospheric
     fullbleed_query = f"{business_type} background"
-    fullbleed_url = fetch_pixabay_image(pixabay_key, fullbleed_query, min_width=1920)
+    fullbleed_url = pick_best_image(
+        openai_key, pixabay_key, fullbleed_query,
+        business_name, business_type, "fullbleed cinematic background",
+        min_width=1920,
+    )
     if fullbleed_url:
         images["fullbleedImageUrl"] = fullbleed_url
         print(f"   [pixabay] Fullbleed image: {fullbleed_url[:80]}...")
@@ -611,7 +708,7 @@ def main() -> int:
     if pixabay_key and not args.no_images:
         print("3/4 Fetching images from Pixabay...")
         btype = content.get("businessType", args.description)
-        images = fetch_section_images(pixabay_key, args.name, btype, args.description)
+        images = fetch_section_images(pixabay_key, api_key, args.name, btype, args.description)
         if images:
             images_dir = out.parent / "images"
             print(f"   Downloading images to {images_dir}/ ...")
